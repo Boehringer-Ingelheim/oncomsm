@@ -1,0 +1,40 @@
+Package: bhmbasket.predict
+Type: Package
+Title: Probability of Success for bhmbasket
+Version: 0.1.0.9000
+Authors@R: c(
+    person("Kevin", "Kunzmann", 
+      role = c("aut", "cre"), 
+      email = "kevin.kunzmann@boehringer-ingelheim.com",
+      comment = c(ORCID = "0000-0002-1140-7143")
+    )
+  )
+Description: This package implements methods to dynamically predict response status
+    of individuals in a basket trial with delayed binary response endpoint 
+    (e.g. tumor response) at arbitrary time points.
+License: file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Biarch: true
+Depends: 
+    R (>= 4.0.0)
+Imports: 
+    methods,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.1.1)
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    StanHeaders (>= 2.18.0)
+SystemRequirements: GNU make
+Suggests: 
+    rmarkdown,
+    knitr,
+    survival
+VignetteBuilder: knitr

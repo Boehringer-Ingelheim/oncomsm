@@ -1,0 +1,8 @@
+.Rproj.user
+inst/doc
+
+*.o
+*.cc
+*.html
+
+R/stanmodels.R

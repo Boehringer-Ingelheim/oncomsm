@@ -1,0 +1,30 @@
+---
+title: "Get Started"
+author: Kevin Kunzmann
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{get started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bhmbasket.predict)
+## library(survival)
+```
+
+```{r simulate-data}
+model <- this_function_needs_a_good_name(
+  0, 0.05,
+  2, .1,
+  3, 1
+)
+simulate_data(model, 10L, nsim = 10L)
+```
