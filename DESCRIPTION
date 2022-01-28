@@ -38,3 +38,8 @@ Suggests:
     knitr,
     survival
 VignetteBuilder: knitr
+Collate: 
+    'draw_samples.R'
+    'ThisModelNeedsAGoodName.R'
+    'bhmbasket.predict-package.R'
+    'stanmodels.R'

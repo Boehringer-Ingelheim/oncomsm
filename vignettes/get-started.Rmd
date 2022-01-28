@@ -26,5 +26,5 @@ model <- this_function_needs_a_good_name(
   2, .1,
   3, 1
 )
-simulate_data(model, 10L, nsim = 10L)
+draw_samples(model, 10L, nsim = 10L)
 ```
