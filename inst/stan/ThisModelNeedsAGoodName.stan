@@ -30,12 +30,15 @@ functions {
 data {
 
   int<lower=0> N_nonresponder;
-  int<lower=0> N_responder_exact;
   int<lower=0> N_interval_censored;
   int<lower=0> N_right_censored;
   int<lower=0> N_to_be_recruited;
 
-  vector[N_responder_exact] t;
+  int<lower=1> id_nonresponder[N_nonresponder];
+  int<lower=1> id_interval_censored[N_interval_censored];
+  int<lower=1> id_right_censored[N_right_censored];
+  int<lower=1> id_to_be_recruited[N_to_be_recruited];
+
   vector[N_right_censored] t1_right_censored;
   vector[N_interval_censored] t1_interval_censored;
   vector[N_interval_censored] t2_interval_censored;
@@ -58,8 +61,8 @@ data {
 parameters {
 
   real logor_response;
-  real<lower=1,upper=999> alpha; // shape aka k
-  real<lower=machine_precision(),upper=999> sigma; // scale aka lambda
+  real<lower=1-machine_precision(),upper=99> alpha; // shape aka k
+  real<lower=machine_precision(),upper=99> sigma; // scale aka lambda
 
 }
 
@@ -78,8 +81,8 @@ model {
 
   // prior
   logor_response ~ normal(prior_logor_loc, prior_logor_scale);
-  alpha ~ normal(prior_alpha_loc, prior_alpha_scale) T[1,999]; // the "risk" of response must be increasing
-  sigma ~ normal(prior_sigma_loc, prior_sigma_scale) T[machine_precision(),999];
+  alpha ~ normal(prior_alpha_loc, prior_alpha_scale) T[1,99]; // the "risk" of response must be increasing
+  sigma ~ normal(prior_sigma_loc, prior_sigma_scale) T[machine_precision(),99];
 
   // likelihood for the definite non-responders (death)
   // directly increase the log likelihood (target) by log(1 - pr_response) for each
@@ -88,18 +91,17 @@ model {
     target += log(1 - pr_response);
   }
 
-  // likelihood for the exact responders
-  for (i in 1:N_responder_exact) { // vectorize?
-    target += log(pr_response) + weibull_lpdf( t[i] | alpha, sigma );
-  }
+  print("pr_response: ", pr_response);
+  print("alpha: ", alpha);
+  print("sigma: ", sigma);
 
   // likelihood for the interval censored individuals is F(t2) - F(t1) where F
   // is the CDF
   for (i in 1:N_interval_censored) { // vectorize?
     target += log(
       (1 - pr_response) + pr_response * (
-        exp(weibull_lcdf( t2_interval_censored[i] | alpha, sigma )) -
-        exp(weibull_lcdf( t1_interval_censored[i] | alpha, sigma ))
+        weibull_cdf( t2_interval_censored[i], alpha, sigma ) -
+        weibull_cdf( t1_interval_censored[i], alpha, sigma )
       )
     );
   }
@@ -108,7 +110,7 @@ model {
   // t1_right_censored
   for (i in 1:N_right_censored) { // vectorize?
     target += log(
-      (1 - pr_response) + pr_response * weibull_lccdf( t1_right_censored[i] | alpha, sigma )
+      (1 - pr_response) + pr_response * (1 - weibull_cdf( t1_right_censored[i], alpha, sigma ))
     );
   }
 
