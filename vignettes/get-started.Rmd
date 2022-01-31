@@ -3,7 +3,7 @@ title: "Get Started"
 author: Kevin Kunzmann
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{get started}
+  %\VignetteIndexEntry{Get Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -11,37 +11,372 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 6,
+  fig.align = "center"
 )
 ```
 
 ```{r setup}
 library(bhmbasket.predict)
 library(survival)
-library(dplyr)
+library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
+library(survminer, warn.conflicts = FALSE, quietly = TRUE)
+```
 
+
+# Background
+
+In early oncology trials, (objective tumor) response based on the RECISTS criteria
+is often used as primary endpoint to establish the activity of an NME.
+Response is commonly analysed as binary variable at the end of a trial although
+a time to event approach might be more suitable. 
+Analyzing the response rate directly is, however, justifiable under some
+plausible assumptions.
+Firstly, it can be assumed that a response occurs relatively early after onset of 
+treatment or not at all since individuals with tumors not responding to treatment 
+are  ultimately progressing in their disease.
+This means that, given a moderate minimal follow-up time and counting individuals
+who need to switch to alternative treatments as non-respondents, further follow-up
+is highly unlikely to affect observed response rates and effects from 
+different exposure times or censoring tend to be negligible.  
+
+However, when continuously monitoring a trial with objective tumor response as
+primary endpoint, the assumption of sufficient follow-up is no longer fulfilled 
+and the different follow-up times my lead to biased analyses.
+One scenario in which this might become relevant is in the dynamic assessment 
+of the probability of success of a trial.
+Here, the probability of success ($\operatorname{PoS}$) is defined as the 
+unconditional probability of the test statistic $T_\tau$ w.l.o.g. exceeding a 
+critical value $c$
+$$
+\operatorname{Pr}\big[\,T_\tau\geq c\,\big]
+$$
+where $\tau$ is the stopping (calendar) time of the trial usually defined via
+a predefined number of individuals and a minimum follow-up time for the
+last recruited trial participant. 
+[discuss alternative definition of PoS?] 
+The dynamic version of this $\operatorname{PoS}$ is given by
+$$
+\operatorname{Pr}\big[\,T_\tau\geq c\,|\,D_{c\,t}\,\big]
+$$
+where $D_{c\,t}$ is the totality of all available data collected up to (calendar time)
+$c\,t$ (we reserve the index $t$ for each individual's time since study inclusion).
+
+In a broad sense, the dynamic calculation of a probability of success is thus 
+fundamentally a prediction problem and can be addressed by any suitable means of 
+predicting $T_\tau$.
+However, in the practice of clinical development plans there are a few additional
+features of such a prediction that should be taken into consideration when
+it comes to the choice of method.
+
+1. The prediction needs to work with little to no data since for $ct\approx 0$
+almost no trial-internal data is available.
+2. The predictions should be consistent with the prior assumptions that lead to
+the trial design. In particular, these will often include assumptions about the
+distribution of the unknown response rate. If no data has been observed yet, 
+the predictions should thus correspond to the predictive distribution obtained 
+from a binary model with the planning prior on the response rate.
+3. Ideally the prediction model would not only be able to predict the probability
+of (final) success $\operatorname{Pr}\big[\,T_\tau\geq c\,|\,D_{c\,t}\,\big]$,
+but also for alternative stopping times $\tau'$, e.g., a fixed calendar time.
+
+A parametric model adequately extending the binary analysis model to also 
+incorporate the time to event aspect of tumor response allows to address these
+requirements. 
+It allows to use the same priors on the response rate (independently of 
+assumptions on the time to event distribution for respondents) and is thus 
+trivially consistent with the planning assumptions as long as $\tau$ is defined
+in terms of a number of individuals (and potentially a minimal follow-up).
+This prior then allows to assess the probability of (final) success by sampling
+from the prior-predictive distribution of the model, even if no data has been
+observed yet.
+As the trial progresses, the model can be conditioned on any observed data and
+the probability of success can be predicted dynamically by conditioning on
+the observed data.
+Of course, a full generative model also allows to analyse the success probability
+under different stopping times and/or decision criteria. 
+
+Although additional co-data such as tumor growth information etc. could be
+modeled as well to improve the predictive power, this manuscript focuses on
+the most basic time-to-event model that is hopefully applicable to any trial
+using objective response and endpoint.
+
+
+# TTE via mixture cure-rate models
+
+Despite the popularity of time to event models based on hazard-rates in clinical
+research, 
+a mixture cure rate model might be more suitable for the problem at hand since it
+is easier to see the direct connection to the binary analysis model and thus any
+prior on the response rate can be incorporated directly.
+
+[mixture cure rate models]
+
+Here, it is assumed that the time-to-event distribution of ultimately responding 
+individuals is Weibull distributed with a shape parameter greater or equal to $1$.
+This implies a stable or increasing "hazard" of responding.
+This encodes the assumptions that very early responses are unlikely and that 
+late responses are increasingly unlikely  - by that time an individual's tumor has either
+responded already or the individual is most likely a non-respondent.
+[ofc other tte distributions are also plausible, e.g. lognormal]
+
+Note that the exact time of an objective response is never observed since the
+response status is only assessed during visits. 
+The data thus arises in the form of either interval-censored 
+(last non-respondent visit to confirmed response visit), right-censored (end of follow-up without clear response status),
+or definite non-responded (treatment switching due to progression etc.) status. 
+
+
+# Sampling from the prior distribution
+
+The advantages of using a fully generative model are best illustrated by sampling
+data from the prior predictive distribution of a planned trial.
+First, the prior distributions need to be defined. 
+An advantage of using a mixture-cure-rate model is that the parameter governing
+the (ultimate) response rate is independent of the assumptions on the time-to-event 
+component of the model.
+To facilitate an extension incorporating borrowing between different arms, 
+the response rate is parameterized via the log odds of response and a normal 
+prior on the log-odds is specified.
+This parameterization is also used in the popular ex/nex approach for borrowing
+information between groups with binary endpoint 
+For the sake of simplicity, (truncated) normal priors are also used for the 
+scale and shape of the Weibull time to event distribution for the ultimately
+responding individuals.
+```{r prior-specification}
+model <- this_function_needs_a_good_name(
+  logor_loc = 0, logor_scale = 0.3, 
+  alpha_loc = 2, alpha_scale = 1, 
+  sigma_loc = 6, sigma_scale = 2
+)
+```
+
+Again, this component of the model is completely independent of the response rate
+aspect and will typically not be pre-specified in the trial protocol.
+Here we assume a shape parameter of roughly $2$ and a scale of roughly $6$. 
+[todo: allow truncating scale prior higher than 0]
+A draw from the prior of the time to event distribution is shown below. 
+```{r tte-prior-sample}
+set.seed(42L)
+tibble( # use stan naming convention alpha/sigma; sample from truncated!
+    shape = rnorm(999, mean = model$prior_params$alpha[1], sd = model$prior_params$alpha[2]) %>% 
+      {.[. > 1][1:50]},
+    scale = rnorm(999, mean = model$prior_params$sigma[1], sd = model$prior_params$sigma[2]) %>% 
+      {.[. > 1][1:50]}
+  ) %>% 
+  tidyr::expand_grid(
+    t = seq(0, 18, by = .1) # months
+  ) %>% 
+  mutate(
+    pdf = purrr::pmap_dbl(list(t, shape, scale), dweibull)
+  ) %>% 
+  ggplot() +
+    aes(t, pdf, group = factor(interaction(shape, scale))) +
+    geom_line(alpha = .2) +
+    labs(x = "t [months]", y = "probability density function") + 
+    theme_bw()
+```
+
+The response rate prior is centered at log odds of $0$, i.e. a response 
+probability of $0.5$.
+A sample of the implied prior distribution on the response probability is shown below 
+[todo: don't be lazy, use trafo to compute actual pdf...]
+```{r pr-prior-sample}
+tibble(
+    pr = rnorm(1e4, mean = 0, sd = 0.3) %>% {1 / (1 + exp(-.))}
+  ) %>%
+  ggplot() +
+    aes(pr, y = (..count..)/sum(..count..)) +
+    geom_histogram(bins = 25) +
+  scale_y_continuous(labels = scales::percent) +
+    labs(x = "response probability", y = "") +
+    theme_bw()
+```
+
+Assume that the planned final sample size is $n=100$.
+This unrealistic high number is only chosen to reduce the sampling noise of the
+Kaplan-Meier estimator and make it easier to distinguish the influence of the prior.
+The following plot shows sampled Kaplan-Meier plots for the actual
+response times of $1000$ simulated trials.
+```{r plot-sample-prior-predictive-1}
+m <- 100L
+tbl_prior_predictive_smpl <- draw_samples(model, n_to_be_recruited = 100L, nsim = m, seed = 42L)
+
+plt <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_prior_predictive_smpl) %>% 
+  ggsurvplot(data = tbl_prior_predictive_smpl, palette = rep("black", m), alpha = .2)
+
+plt$plot + theme(legend.position = "none")
+```
+
+Sampling from a single parameter value can be mimicked easily by setting the
+corresponding prior scale to a very small value.
+For instance, consider the same model with all prior standard deviations set to $0.001$.
+```{r plot-sample-prior-predictive-2}
+tbl_prior_predictive2_smpl <- this_function_needs_a_good_name(
+    logor_loc = 0, logor_scale = .001, 
+    alpha_loc = 2, alpha_scale = .001, 
+    sigma_loc = 6, sigma_scale = .001
+  ) %>% 
+  draw_samples(n_to_be_recruited = 100L, nsim = m, seed = 42L)
+
+plt2 <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_prior_predictive2_smpl) %>% 
+  ggsurvplot(data = tbl_prior_predictive2_smpl, palette = rep("black", m), alpha = .2)
+
+plt2$plot + theme(legend.position = "none")
+```
+ 
+A prior predictive sample for a more realistic the number of planned subjects of
+$n=20$ is shown below.
+```{r plot-sample-prior-predictive-3}
+m <- 100L
+tbl_prior_predictive_smpl <- draw_samples(model, n_to_be_recruited = 20L, nsim = m, seed = 42L)
+
+plt <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_prior_predictive_smpl) %>% 
+  ggsurvplot(data = tbl_prior_predictive_smpl, palette = rep("black", m), alpha = .2)
+
+plt$plot + theme(legend.position = "none")
+``` 
+
+To calculate a probability of success from these predictions, the stopping 
+criterion must be defined and, if it depends on time as well, the recruitment 
+times relative to FPI must be sampled.
+
+Assume that the recruitment time follows a Weibull distribution with shape $2$
+and scale $12$.
+```{r sample-recruitment-times}
+set.seed(42)
+tbl_combined <- left_join(
+    tbl_prior_predictive_smpl,
+    expand.grid(
+      id = 1:20,
+      iter = 1:m
+    ) %>% 
+    group_by(iter) %>% 
+    mutate(
+      t_recruitment = sort(rweibull(20, shape = 2, scale = 12))
+    ) %>% 
+    ungroup(),
+    by = c("id", "iter")
+)
+
+# observed responses
+dbl_pr_responses <- tbl_combined %>% 
+  group_by(iter) %>% 
+  summarize(
+    pr_response = sum(t <= max(t_recruitment) + 6),
+    .groups = "drop"
+  ) %>% 
+  pull(pr_response)
+```
+
+Assuming that the individuals are sorted by time point of study inclusion,
+termination at exactly 6 months after inclusion of the last subject,
+and a critical value of more than $c=6$ responses at the final analysis,
+the probability of success would be `r mean(dbl_pr_responses > 6)`.
+
+
+# Dynamically predicting PoS
+
+The generative model outline above can also be used to predict the remainder of
+a partially observed trial.
+This approach can be seen both from a predictive as well as from an imputation
+perspective.
+The former was already presented in the introductory section above. 
+The latter follows from the fact that fact that a full generative model was 
+specified - predicting planned, yet unobserved future outcomes is the same
+as a fully Bayesian approach to multiple imputation.
+
+```{r load-data}
 tbl_data <- readr::read_delim(
-  "inst/example_data2.csv", 
-  delim = ";", 
+  system.file("example_data.csv", package = "bhmbasket.predict"),
+  delim = ";",
   col_types = readr::cols(
-    id = readr::col_integer(), 
-    t1 = readr::col_double(), 
+    id = readr::col_integer(),
+    t1 = readr::col_double(),
     t2 = readr::col_double()
   )
 )
+
+tbl_data %>% 
+  rename(
+    `subject id` = id,
+    `earliest possible response time point` = t1,
+    `latest possibleresponse time point` = t2
+  ) %>% 
+  knitr::kable(
+    caption = "Observed data at time point of prediction.")
 ```
+
+Examples of the imputes/predicted values of interest are shown below.
 
 ```{r simulate-data}
-model <- this_function_needs_a_good_name(
-  0, 0.05,
-  2, .1,
-  3, 1
-)
-tbl_smpl <- draw_samples(model, 0L, data = tbl_data, nsim = 10L)
+tbl_smpl <- draw_samples(model, 0L, data = tbl_data, nsim = m, seed = 42L)
+
+tbl_smpl %>% 
+  rename(
+    `subject id` = id,
+    `earliest possible response time point` = t1,
+    `latest possibleresponse time point` = t2,
+    `actual response time (sampled)` = t
+  ) %>% 
+  filter(iter <= 2) %>% 
+  knitr::kable(
+    caption = "Input data with two matched model-based predicted response times."
+  )
 ```
 
-```{r}
-tbl_smpl %>% 
-  survfit(Surv(t, is.finite(t)) ~ iter, data = .) %>% 
-  plot
+The corresponding Kaplan-Meier plots (100 samples) are shown below.
+
+```{r plot-dynamic-predition}
+plt <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_smpl) %>% 
+  ggsurvplot(data = tbl_smpl, palette = rep("black", m), alpha = .2)
+
+plt$plot + theme(legend.position = "none")
+```
+
+Assuming the same recruitment time model as before, one can again compute a 
+probability of success.
+
+```{r sample-recruitment-times-interim}
+set.seed(42)
+tbl_combined <- left_join(
+    tbl_smpl,
+    expand.grid(
+      id = 1:20,
+      iter = 1:m
+    ) %>% 
+    group_by(iter) %>% 
+    mutate(
+      t_recruitment = sort(rweibull(20, shape = 2, scale = 12))
+    ) %>% 
+    ungroup(),
+    by = c("id", "iter")
+)
+
+# observed responses
+dbl_pr_responses <- tbl_combined %>% 
+  group_by(iter) %>% 
+  summarize(
+    pr_response = sum(t <= max(t_recruitment) + 6),
+    .groups = "drop"
+  ) %>% 
+  pull(pr_response)
+```
+
+The probability of success is now `r mean(dbl_pr_responses > 6)`.
+
+
+# Extensions
+
+1. borrowing
+2. include covariate data
+3. model recruitment time
+
+
+# Session info
+
+```{r session-info}
+sessionInfo()
 ```

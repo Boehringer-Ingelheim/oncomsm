@@ -119,7 +119,9 @@ draw_samples.ThisModelNeedsAGoodName <- function(
     tbl_res,
     tidyr::expand_grid(id = stan_data$id_nonresponder, iter = as.integer(1:nsim), t = Inf)
   )
-  tbl_res <- dplyr::left_join(tbl_data, tbl_res, by = "id")
+  if (!is.null(data))  {
+    tbl_res <- dplyr::full_join(data, tbl_res, by = "id")
+  }
   attr(tbl_res, "stan_warnings") <- wrn
   tbl_res
 }
@@ -166,7 +168,7 @@ draw_samples.ThisModelNeedsAGoodName <- function(
   data$id_to_be_recruited <- base::as.array(tmp$id)
   if (n_additional > 0) {
     new_id_start <- max(c(1, tbl_data$id))
-    data$id_to_be_recruited <- c(data$id_to_be_recruited, new_id_start:(new_id_start + n_additional))
+    data$id_to_be_recruited <- c(data$id_to_be_recruited, new_id_start:(new_id_start - 1 + n_additional))
   }
   return(data)
 }

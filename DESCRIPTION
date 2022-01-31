@@ -39,7 +39,8 @@ SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
     knitr,
-    survival
+    survival,
+    survminer
 VignetteBuilder: knitr
 Collate: 
     'draw_samples.R'
