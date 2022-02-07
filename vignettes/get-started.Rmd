@@ -149,7 +149,8 @@ responding individuals.
 model <- this_function_needs_a_good_name(
   logor_loc = 0, logor_scale = 0.3, 
   alpha_loc = 2, alpha_scale = 1, 
-  sigma_loc = 6, sigma_scale = 2
+  sigma_loc = 6, sigma_scale = 2,
+  lograte_loc = log(1.5), lograte_scale = .25
 )
 ```
 
@@ -202,9 +203,17 @@ The following plot shows sampled Kaplan-Meier plots for the actual
 response times of $1000$ simulated trials.
 ```{r plot-sample-prior-predictive-1}
 m <- 100L
-tbl_prior_predictive_smpl <- draw_samples(model, n_to_be_recruited = 100L, nsim = m, seed = 42L)
+tbl_prior_predictive_smpl <- draw_samples(
+  model, 
+  n_to_be_recruited = 100L, 
+  nsim = m, 
+  seed = 42L
+)
 
-plt <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_prior_predictive_smpl) %>% 
+plt <- survfit(
+    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    data = tbl_prior_predictive_smpl
+  ) %>% 
   ggsurvplot(data = tbl_prior_predictive_smpl, palette = rep("black", m), alpha = .2)
 
 plt$plot + theme(legend.position = "none")
@@ -217,12 +226,24 @@ For instance, consider the same model with all prior standard deviations set to 
 tbl_prior_predictive2_smpl <- this_function_needs_a_good_name(
     logor_loc = 0, logor_scale = .001, 
     alpha_loc = 2, alpha_scale = .001, 
-    sigma_loc = 6, sigma_scale = .001
+    sigma_loc = 6, sigma_scale = .001,
+    lograte_loc = log(2), lograte_scale = .001
   ) %>% 
-  draw_samples(n_to_be_recruited = 100L, nsim = m, seed = 42L)
+  draw_samples(
+    n_to_be_recruited = 100L, 
+    nsim = m, 
+    seed = 42L
+  )
 
-plt2 <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_prior_predictive2_smpl) %>% 
-  ggsurvplot(data = tbl_prior_predictive2_smpl, palette = rep("black", m), alpha = .2)
+plt2 <- survfit(
+    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    data = tbl_prior_predictive2_smpl
+  ) %>% 
+  ggsurvplot(
+    data = tbl_prior_predictive2_smpl, 
+    palette = rep("black", m), 
+    alpha = .2
+  )
 
 plt2$plot + theme(legend.position = "none")
 ```
@@ -231,50 +252,61 @@ A prior predictive sample for a more realistic the number of planned subjects of
 $n=20$ is shown below.
 ```{r plot-sample-prior-predictive-3}
 m <- 100L
-tbl_prior_predictive_smpl <- draw_samples(model, n_to_be_recruited = 20L, nsim = m, seed = 42L)
+tbl_prior_predictive_smpl <- draw_samples(
+  model, 
+  n_to_be_recruited = 20L, 
+  nsim = m, 
+  seed = 42L
+)
 
-plt <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_prior_predictive_smpl) %>% 
-  ggsurvplot(data = tbl_prior_predictive_smpl, palette = rep("black", m), alpha = .2)
+plt <- survfit(
+    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    data = tbl_prior_predictive_smpl
+  ) %>% 
+  ggsurvplot(
+    data = tbl_prior_predictive_smpl, 
+    palette = rep("black", m), 
+    alpha = .2
+  )
 
 plt$plot + theme(legend.position = "none")
 ``` 
 
-To calculate a probability of success from these predictions, the stopping 
-criterion must be defined and, if it depends on time as well, the recruitment 
-times relative to FPI must be sampled.
+To calculate a probability of success from predicted responses, 
+the stopping criterion must be defined and, 
+if it depends on time as well, 
+the recruitment times relative to FPI must be sampled as well.
 
-Assume that the recruitment time follows a Weibull distribution with shape $2$
-and scale $12$.
+Here, a simple Poisson process with constant rate is used to model recruitment
+and a log-normal prior for the recruitment rate.
+
 ```{r sample-recruitment-times}
-set.seed(42)
-tbl_combined <- left_join(
-    tbl_prior_predictive_smpl,
-    expand.grid(
-      id = 1:20,
-      iter = 1:m
-    ) %>% 
-    group_by(iter) %>% 
-    mutate(
-      t_recruitment = sort(rweibull(20, shape = 2, scale = 12))
-    ) %>% 
-    ungroup(),
-    by = c("id", "iter")
-)
+plt <- survfit(
+    Surv(t_recruitment, is.finite(t_recruitment)) ~ iter, 
+    data = tbl_prior_predictive_smpl
+  ) %>% 
+  ggsurvplot(
+    data = tbl_prior_predictive_smpl, 
+    palette = rep("black", m), 
+    alpha = .2, 
+  )
 
-# observed responses
-dbl_pr_responses <- tbl_combined %>% 
+plt$plot + labs(y = "Pr[not recruited]") + theme(legend.position = "none")
+
+pos <- tbl_prior_predictive_smpl %>% 
   group_by(iter) %>% 
   summarize(
-    pr_response = sum(t <= max(t_recruitment) + 6),
+    responses = sum(dt_response + t_recruitment <= max(t_recruitment) + 6),
     .groups = "drop"
   ) %>% 
-  pull(pr_response)
+  pull(responses) %>% 
+  {mean(. > 6)}
 ```
 
-Assuming that the individuals are sorted by time point of study inclusion,
-termination at exactly 6 months after inclusion of the last subject,
+Assuming termination of the trial exactly 6 months after inclusion of the 
+last subject, 
 and a critical value of more than $c=6$ responses at the final analysis,
-the probability of success would be `r mean(dbl_pr_responses > 6)`.
+the probability of success would be `r pos`.
 
 
 # Dynamically predicting PoS
@@ -293,33 +325,45 @@ tbl_data <- readr::read_delim(
   system.file("example_data.csv", package = "bhmbasket.predict"),
   delim = ";",
   col_types = readr::cols(
-    id = readr::col_integer(),
-    t1 = readr::col_double(),
-    t2 = readr::col_double()
+    subject_id = readr::col_integer(),
+    t_recruitment = readr::col_double(),
+    dt_response_min = readr::col_double(),
+    dt_response_max = readr::col_double()
   )
 )
 
-tbl_data %>% 
-  rename(
-    `subject id` = id,
-    `earliest possible response time point` = t1,
-    `latest possibleresponse time point` = t2
+tbl_data %>%
+  transmute(
+    `subject id` = subject_id,
+    `recruitment time` = t_recruitment,
+    `earliest possible response time` = t_recruitment + dt_response_min,
+    `latest possibleresponse time` = t_recruitment + dt_response_max
   ) %>% 
   knitr::kable(
-    caption = "Observed data at time point of prediction.")
+    caption = "Observed data at time point of prediction."
+  )
 ```
 
-Examples of the imputes/predicted values of interest are shown below.
+Examples of the imputed/predicted values of interest are shown below.
 
 ```{r simulate-data}
-tbl_smpl <- draw_samples(model, 0L, data = tbl_data, nsim = m, seed = 42L)
+tbl_smpl <- draw_samples(
+  model, 
+  0L, 
+  data = tbl_data,
+  now = max(tbl_data$t_recruitment, na.rm = TRUE), 
+  nsim = m, 
+  seed = 42L
+)
 
 tbl_smpl %>% 
-  rename(
-    `subject id` = id,
-    `earliest possible response time point` = t1,
-    `latest possibleresponse time point` = t2,
-    `actual response time (sampled)` = t
+   transmute(
+     iter,
+    `subject id` = subject_id,
+    `recruitment time` = t_recruitment,
+    `earliest possible response time` = t_recruitment + dt_response_min,
+    `latest possibleresponse time` = t_recruitment + dt_response_max,
+    `sampled response time` = t_recruitment + dt_response
   ) %>% 
   filter(iter <= 2) %>% 
   knitr::kable(
@@ -330,49 +374,34 @@ tbl_smpl %>%
 The corresponding Kaplan-Meier plots (100 samples) are shown below.
 
 ```{r plot-dynamic-predition}
-plt <- survfit(Surv(t, is.finite(t)) ~ iter, data = tbl_smpl) %>% 
+plt <- survfit(
+    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    data = tbl_smpl
+  ) %>% 
   ggsurvplot(data = tbl_smpl, palette = rep("black", m), alpha = .2)
 
 plt$plot + theme(legend.position = "none")
 ```
 
-Assuming the same recruitment time model as before, one can again compute a 
-probability of success.
-
 ```{r sample-recruitment-times-interim}
-set.seed(42)
-tbl_combined <- left_join(
-    tbl_smpl,
-    expand.grid(
-      id = 1:20,
-      iter = 1:m
-    ) %>% 
-    group_by(iter) %>% 
-    mutate(
-      t_recruitment = sort(rweibull(20, shape = 2, scale = 12))
-    ) %>% 
-    ungroup(),
-    by = c("id", "iter")
-)
-
 # observed responses
-dbl_pr_responses <- tbl_combined %>% 
+pos <- tbl_smpl %>% 
   group_by(iter) %>% 
   summarize(
-    pr_response = sum(t <= max(t_recruitment) + 6),
+    responses = sum(dt_response + t_recruitment <= max(t_recruitment) + 6),
     .groups = "drop"
   ) %>% 
-  pull(pr_response)
+  pull(responses) %>% 
+  {mean(. > 6)}
 ```
 
-The probability of success is now `r mean(dbl_pr_responses > 6)`.
+The probability of success is now `r pos`.
 
 
 # Extensions
 
 1. borrowing
 2. include covariate data
-3. model recruitment time
 
 
 # Session info

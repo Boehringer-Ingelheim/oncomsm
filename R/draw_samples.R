@@ -11,6 +11,6 @@
 #' @param seed **optional** random seed for simulation
 #'
 #' @export
-draw_samples <- function(model, n_to_be_recruited, nsim, data = NULL, seed = NULL, ...) {
+draw_samples <- function(model, n_to_be_recruited, nsim, now = 0, data = NULL, seed = NULL, ...) {
   UseMethod("draw_samples")
 }

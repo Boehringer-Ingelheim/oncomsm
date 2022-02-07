@@ -6,6 +6,10 @@ functions {
     real u;
     real x;
     p = weibull_cdf(t, alpha, sigma);
+    if (1 - p < 1e-4) {
+      // unstable, simply use lower boundary
+      return t + 2*machine_precision();
+    }
     u = uniform_rng(p, 1);
     x = sigma * (-log1m(u))^(1/alpha);
     return x;
@@ -17,7 +21,15 @@ functions {
     real u;
     real x;
     p1 = weibull_cdf(t1, alpha, sigma);
+    if (1 - p1 < 1e-4) {
+      // unstable, simply use lower boundary
+      return t1;
+    }
     p2 = weibull_cdf(t2, alpha, sigma);
+    if (p2 - p1 < 1e-4) {
+      // unstable, simply use midpoint
+      return (t1 + t2)/2;
+    }
     u = uniform_rng(p1, p2);
     x = sigma * (-log1m(u))^(1/alpha);
     return x;
@@ -39,6 +51,11 @@ data {
   int<lower=1> id_right_censored[N_right_censored];
   int<lower=1> id_to_be_recruited[N_to_be_recruited];
 
+  real<lower=0> now;
+  vector<lower=0>[N_nonresponder] t_recruitment_nonresponder;
+  vector<lower=0>[N_interval_censored] t_recruitment_interval_censored;
+  vector<lower=0>[N_right_censored] t_recruitment_right_censored;
+
   vector[N_right_censored] t1_right_censored;
   vector[N_interval_censored] t1_interval_censored;
   vector[N_interval_censored] t2_interval_censored;
@@ -53,6 +70,20 @@ data {
   // sigma (weibull scale)
   real prior_sigma_loc;
   real<lower=machine_precision()> prior_sigma_scale;
+  // log(rate) exponential waiting time for recruitment
+  real prior_lograte_loc;
+  real<lower=machine_precision()> prior_lograte_scale;
+
+}
+
+
+transformed data {
+
+  int N_recruited = N_nonresponder + N_interval_censored + N_right_censored;
+  vector<lower=0>[N_recruited] t_recruitment = append_row(
+    t_recruitment_nonresponder,
+    append_row(t_recruitment_interval_censored, t_recruitment_right_censored)
+  );
 
 }
 
@@ -61,6 +92,7 @@ data {
 parameters {
 
   real logor_response;
+  real lograte;
   real<lower=1-machine_precision(),upper=99> alpha; // shape aka k
   real<lower=machine_precision(),upper=99> sigma; // scale aka lambda
 
@@ -70,8 +102,8 @@ parameters {
 
 transformed parameters {
 
-  // logit(p) = logor_response <=> p = 1/(1 + exp(-logor_response))
   real<lower=0, upper=1> pr_response = 1/(1 + exp(-logor_response));
+  real rate = exp(lograte);
 
 }
 
@@ -83,6 +115,10 @@ model {
   logor_response ~ normal(prior_logor_loc, prior_logor_scale);
   alpha ~ normal(prior_alpha_loc, prior_alpha_scale) T[1,99]; // the "risk" of response must be increasing
   sigma ~ normal(prior_sigma_loc, prior_sigma_scale) T[machine_precision(),99];
+  lograte ~ normal(prior_lograte_loc, prior_lograte_scale);
+
+  // likelihood of recruitment times
+  t_recruitment ~ exponential(rate);
 
   // likelihood for the definite non-responders (death)
   // directly increase the log likelihood (target) by log(1 - pr_response) for each
@@ -120,15 +156,27 @@ model {
 
 generated quantities {
 
+  real<lower=0> t_recruitment_to_be_recruited[N_to_be_recruited];
   real<lower=0> response_time_interval_censored[N_interval_censored];
   real<lower=0> response_time_right_censored[N_right_censored];
   real<lower=0> response_time_to_be_recruited[N_to_be_recruited];
   real pr_response_cond = 0.0; // buffer variable to make code more legible
   real S_t = 0.0; // buffer variable to make code more legible
 
+  if (N_to_be_recruited > 0) {
+    t_recruitment_to_be_recruited[1] = now + exponential_rng(rate);
+    for (i in 2:N_to_be_recruited) {
+      t_recruitment_to_be_recruited[i] = t_recruitment_to_be_recruited[i-1] + exponential_rng(rate);
+    }
+  }
+
   for (i in 1:N_interval_censored) {
     // definite responder, directly sample from truncated weibull
-    response_time_interval_censored[i] = ttweibull_rng(alpha, sigma, t1_interval_censored[i], t2_interval_censored[i]);
+    // can be unstable (nan) resample!!
+    response_time_interval_censored[i] = not_a_number();
+    while (is_nan(response_time_interval_censored[i])) {
+      response_time_interval_censored[i] = ttweibull_rng(alpha, sigma, t1_interval_censored[i], t2_interval_censored[i]);
+    }
   }
 
   for (i in 1:N_right_censored) {
@@ -136,7 +184,10 @@ generated quantities {
     S_t = 1 - weibull_cdf(t1_right_censored[i], alpha, sigma);
     pr_response_cond = S_t*pr_response / ( (1-pr_response) + pr_response*S_t );
     if (bernoulli_rng(pr_response_cond) == 1) {
-      response_time_right_censored[i] = tweibull_rng(alpha, sigma, t1_right_censored[i]);
+      response_time_right_censored[i] = not_a_number();
+      while (is_nan(response_time_right_censored[i])) {
+        response_time_right_censored[i] = tweibull_rng(alpha, sigma, t1_right_censored[i]);
+      }
     } else {
       // non responder, set to infinity
       response_time_right_censored[i] = positive_infinity();
