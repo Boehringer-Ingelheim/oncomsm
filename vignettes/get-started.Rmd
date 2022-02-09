@@ -28,13 +28,13 @@ library(survminer, warn.conflicts = FALSE, quietly = TRUE)
 
 # Background
 
-In early oncology trials, (objective tumor) response based on the RECISTS criteria
+In early oncology trials, (objective tumor) response based on the RECIST criteria
 is often used as primary endpoint to establish the activity of an NME.
 Response is commonly analysed as binary variable at the end of a trial although
 a time to event approach might be more suitable. 
 Analyzing the response rate directly is, however, justifiable under some
 plausible assumptions.
-Firstly, it can be assumed that a response occurs relatively early after onset of 
+It can be assumed that a response either occurs relatively early after onset of 
 treatment or not at all since individuals with tumors not responding to treatment 
 are  ultimately progressing in their disease.
 This means that, given a moderate minimal follow-up time and counting individuals
@@ -396,6 +396,68 @@ pos <- tbl_smpl %>%
 ```
 
 The probability of success is now `r pos`.
+
+
+## Predictive posterior
+
+Sometimes it is more convenient to express the decision boundary $c$ on the
+posterior probability scale.
+In this case, it is necessary to compute the "predictive posterior", 
+i.e., the posterior at the end of the trial.
+This should not be confused with the posterior predictive distribution 
+(generating data samples from the parameter posterior after observing data).
+
+To this end, we can convert the posterior predictive samples into  
+pseudo trials by mapping the sampled true response time into a censored 
+observation and applying the same model again to draw posterior samples.
+
+```{r}
+tbl_posterior_predictive_trials <- tbl_smpl %>% 
+  mutate(
+    dt_response_min = case_when(
+        !is.na(dt_response_min) ~ dt_response_min,  
+        TRUE ~ floor(dt_response) + 1/30 # assuming visits every full month
+      ),
+    dt_response_max = case_when(
+        !is.na(dt_response_max) ~ dt_response_max,
+        is.na(dt_response_max) & (dt_response_min == Inf) ~ NA_real_,
+        TRUE ~ ceiling(dt_response) + 1 # assuming visits every full month + confirmation
+      )
+  ) %>% 
+  select(-dt_response) %>% 
+  group_by(iter) %>% 
+  tidyr::nest() %>% 
+  ungroup()
+
+posterior_pr_response <- function(data) {
+  res <- draw_samples(
+    model, 
+    0L, 
+    data = data,
+    now = max(data$t_recruitment, na.rm = TRUE) + 6, 
+    nsim = 100, warmup = 500, 
+    seed = 42L,
+    return_only_params = TRUE
+  )
+  rstan::extract(res, "pr_response")[[1]]
+}
+
+posterior_response_probability <- purrr::map(
+    tbl_posterior_predictive_trials$data, 
+    posterior_pr_response
+  ) %>% 
+  unlist
+
+tibble(`Pr[response|data at end of study]` = posterior_response_probability) %>% 
+  ggplot() +
+    aes(`Pr[response|data at end of study]`, y = (..count..)/sum(..count..)) +
+    geom_histogram(bins = 25) +
+    scale_y_continuous(labels = scales::percent) +
+    theme_bw()
+```
+
+If another analysis model is used (e.g. only binary response ignoring TTE)
+the posterior predictive samples could also be plugged into this analysis model.
 
 
 # Extensions

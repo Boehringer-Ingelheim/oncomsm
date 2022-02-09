@@ -73,8 +73,10 @@ print.ThisModelNeedsAGoodName <- function(x, ...) {
 #' @include draw_samples.R
 #' @export
 draw_samples.ThisModelNeedsAGoodName <- function(
-  model, n_to_be_recruited, nsim, now = 0, data = NULL, seed = NULL, warmup = 1000L,
-  verbose = FALSE, show_messages = FALSE, refresh = 0, ...
+  model, n_to_be_recruited, nsim, now = 0, data = NULL, seed = NULL,
+  warmup = 1000L, verbose = FALSE, show_messages = FALSE, refresh = 0,
+  return_only_params = FALSE,
+  ...
 ) {
   # sample using stan
   assertthat::assert_that(nsim >= 10, msg = "nsim must be >= 10")
@@ -105,6 +107,10 @@ draw_samples.ThisModelNeedsAGoodName <- function(
     },
     warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
   ))
+  if (return_only_params) { # return stan samples directly
+    attr(res, "stan_warnings") <- wrn
+    return(res)
+  }
   # post-process sampled data
   tbl_res <- tibble::tibble(
     iter = integer(0L),
