@@ -437,7 +437,7 @@ posterior_pr_response <- function(data) {
     now = max(data$t_recruitment, na.rm = TRUE) + 6, 
     nsim = 100, warmup = 500, 
     seed = 42L,
-    return_only_params = TRUE
+    return_raw_stan_output = TRUE
   )
   rstan::extract(res, "pr_response")[[1]]
 }

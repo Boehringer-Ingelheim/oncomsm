@@ -75,7 +75,7 @@ print.ThisModelNeedsAGoodName <- function(x, ...) {
 draw_samples.ThisModelNeedsAGoodName <- function(
   model, n_to_be_recruited, nsim, now = 0, data = NULL, seed = NULL,
   warmup = 1000L, verbose = FALSE, show_messages = FALSE, refresh = 0,
-  return_only_params = FALSE,
+  return_raw_stan_output = FALSE,
   ...
 ) {
   # sample using stan
@@ -107,7 +107,7 @@ draw_samples.ThisModelNeedsAGoodName <- function(
     },
     warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
   ))
-  if (return_only_params) { # return stan samples directly
+  if (return_raw_stan_output) { # return stan samples directly
     attr(res, "stan_warnings") <- wrn
     return(res)
   }

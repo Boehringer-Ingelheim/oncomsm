@@ -1,0 +1,174 @@
+---
+title: "Dynamic Probability of Success in Phase I Oncology Trials"
+description: "Using mixture cure rate models to account for censoring when computing probability of success dynamically as response data accurues."
+author: 
+  - name: Kevin Kunzmann
+    email: kevin.kunzmann@boehringer-ingelheim.com
+    orcid_id: 0000-0002-1140-7143
+date: "`r format(Sys.time(), '%b %d %Y')`"
+output:
+  distill::distill_article:
+    toc: true
+    code_folding: true
+slug: kunzmann2022dpos
+citation_url: https://bitbucket.biscrum.com/users/kevin.kunzmann_boehringer-ingelheim.com/repos/bhmbasket.predict/browse
+bibliography: references.bib
+params:
+  debug: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE
+)
+library(bhmbasket.predict)
+library(tidyverse)
+```
+
+# Background 
+
+In early oncology trials, (objective tumor) response based on the RECIST criteria
+[@recist] is often used as primary endpoint to establish the activity of a 
+new molecular entity (NME).
+Here, the time of response is typically defined as the first time point fulfilling 
+all of the following
+
+1. no prior visits establishing progressive disease (PD)
+2. the criteria for a partial remission according to RECIST are met
+3. followed by either one visit establishing complete response (CR) or 
+partial response (PR)^[the notion of "confirmed response" is slightly more involved and not considered for the sake of simplicity]. 
+
+This implies that the exact time point of response is unobserved but that it
+can be assumed that the response time lies between the last stable disease (SD)
+and the first PR or CR visit. 
+Even though this definition implies that response is a time-to-first-event endpoint,
+it is often analysed as binary endpoint.
+This simplification is justifiable if it is plausible that the overwhelming majority
+of individuals whose tumor ultimately responds to treatment show an at least
+partial response at a relatively early visit or not at all.
+If this assumption holds, a relatively short follow up of a few months is 
+sufficient to determine with almost certainty whether or not an individual ultimately
+responds to treatment or not.
+Consequently, the information about the response rate lost when stopping the
+follow up of individuals still at risk a few months after inclusion of the
+last individual is minimal and censoring can be ignored for the final analysis.
+
+In a multi-arm basket trial, the following hierarchical model can be used to 
+analyse the binary response data inducing some degree of shrinkage.
+$$
+g_i \in 1\ldots m \\ 
+R_i \sim \operatorname{Bernoulli}(p_{g_i}), i=1\ldots n \\
+\operatorname{logit}(p_j) \stackrel{iid}{\sim} \operatorname{Normal}(0, \sigma^2), j=1\ldots m
+$$
+Inference on the response rates per arm can then be based on the posterior
+probability of the response probabilities $p_j$ given the observed data.
+Let 
+$$
+C_t := \operatorname{Pr}_{\,\Theta\,\sim\,\varphi}\big[p_1 \geq b_1 \vee \ldots \vee p_m\geq b_m \big]
+$$
+where $\varphi$ is a prior over the logodds $\Theta=(\Theta_1,\ldots,\Theta_m)$ and
+$b_j$ is the j-th arm-specific minimal boundary value for success.  
+A go-decision for continuing the clinical development could then be based on
+a sufficiently high posterior probability $\gamma$ of at least one arm exceeding the 
+target response after stopping the trial according to a stopping time $\tau$, i.e.
+$$
+C_\tau \geq \gamma.
+$$
+For instance, $\tau$ could be defined as the first time point when a certain
+minimum number of subjects is enrolled per arm. 
+
+In practice, arms with very low chance of meeting such a criterion
+could be curtailed before reaching $\tau$ based on a continuous assessment of 
+the probability of eventually meeting the success criterion.
+Also, while it is rarely of interest to declare success prematurely, 
+a high probability of success can be used to expedite planning and preparation of 
+subsequent activities in a clinical development plan.
+Hence, it is of interest to compute the dynamic Probability of Success 
+$$
+\operatorname{PoS}(t) := \operatorname{Pr}_{\,\Theta\,\sim\,\varphi}\big[\,C_\tau\geq \gamma\,|\, \text{data up to } t \,\big] \ .
+$$
+Here the data to condition on is intentionally left vague since, at interim,
+a substantial number of individuals might still be "at risk" of responding to the
+treatment (insufficient follow up, see assumption for binary data model above).
+In a broad sense, the calculation of a dynamic probability of success is thus 
+fundamentally a probabilistic prediction problem.
+It is complicated, however, by the fact the following desirable features.
+
+1. Prediction needs to work with little to no data since for $t\approx 0$
+almost no trial-internal data is available.
+2. Predictions should be consistent with the prior assumptions about the 
+response rates $\varphi$. 
+I.e., if no data has been observed yet, the predictions should correspond to the 
+predictive distribution obtained from the simple binary model with the planning prior 
+$\varphi$.
+3. Predictions for arbitrary stopping times should be possible to assess changes
+in the trial design.
+
+A parametric model adequately extending the binary analysis model to also 
+incorporate the time to event aspect of response allows to address these
+requirements.
+
+
+# A mixture cure rate model for time to response
+
+Mixture cure rate models have recently become more popular in oncology due to
+concerns about hazard-based approaches to describe response under immunotherapy
+[@felizzi2021].
+A similar rationale applies to the analysis of response rates while some
+individuals are still "at (substantial) risk" of responding to treatment.
+In a mixture cure rate model it is assumed that the population is a mixture of
+individuals who will ultimately respond to the treatment (proportion $p$) and 
+those who will not with "survival"^[the survival function here gives the probability for not experiencing a response before a given time] functions $S_r(t)$ for the responders and 
+$S_{0}(t)=1$ for the non-responders.
+The survival function for an individual with unknown final response status is thus
+$$
+S(\Delta t) = (1 - p) + p\,S_r(\Delta t)\ .
+$$
+Since the response probability $p$ is modeled directly, 
+the same prior as for a binary model can be used.
+The prior merely needs to be extended by a prior on the parameters of the survival
+function $S_r(t)$ (e.g. a Weibull distribution).
+
+Note that the exact time of an objective response is never observed since the
+response status is only assessed during visits. 
+The data thus arises in the form of either interval-censored 
+(last non-respondent visit to confirmed response visit), right-censored (end of follow-up without clear response status),
+or definite non-responded (treatment switching due to progression etc.) status. 
+
+todo: recruitment time
+
+todo: visit process (AR(1) errors?)
+
+
+# Technical reproducibility {.appendix}
+
+## Code version {.appendix}
+
+**Working directory status:**
+
+```{r git-info, coment="", warning=TRUE}
+git_info <- git2r::revparse_single(revision = "HEAD")
+git_status <- git2r::status()
+if (any(purrr::map_int(git_status, length) > 0))
+  warning("git status is not clean, files have been changed since last commit")
+print(git_status)
+```
+
+**Git repository information:**
+
+```{r git-repository}
+git_info$repo
+```
+
+**Author of last commit:**
+
+```{r git-last-authors}
+git_info$author
+```
+
+
+## R session information {.appendix}
+
+```{r session-info}
+pander::pander(sessionInfo(), compact = TRUE)
+```
