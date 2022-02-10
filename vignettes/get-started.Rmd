@@ -464,6 +464,7 @@ the posterior predictive samples could also be plugged into this analysis model.
 
 1. borrowing
 2. include covariate data
+3. model observation process (visits)
 
 
 # Session info
