@@ -21,16 +21,17 @@ Depends:
     R (>= 4.0.0)
 Imports: 
     methods,
-    Rcpp (>= 0.12.0),
+    Rcpp,
     RcppParallel (>= 5.0.1),
     rstan (>= 2.18.1),
     rstantools (>= 2.1.1),
     rlang (>= 0.4.12),
+    tibble (>= 3.1.6),
     dplyr (>= 1.0.7),
     tidyr (>= 1.1.4)
 LinkingTo: 
     BH (>= 1.66.0),
-    Rcpp (>= 0.12.0),
+    Rcpp,
     RcppEigen (>= 0.3.3.3.0),
     RcppParallel (>= 5.0.1),
     rstan (>= 2.18.1),
@@ -40,11 +41,15 @@ Suggests:
     rmarkdown,
     knitr,
     survival,
-    survminer
+    survminer,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Collate: 
+    'RcppExports.R'
     'draw_samples.R'
     'ThisModelNeedsAGoodName.R'
     'bhmbasket.predict-package.R'
+    'recist_to_tte.R'
     'stanmodels.R'
     'util.R'
+Config/testthat/edition: 3

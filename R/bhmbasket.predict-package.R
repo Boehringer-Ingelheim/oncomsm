@@ -20,5 +20,6 @@ NULL
 
 ## usethis namespace: start
 #' @importFrom magrittr %>%
+#' @importFrom Rcpp sourceCpp
 ## usethis namespace: end
 NULL

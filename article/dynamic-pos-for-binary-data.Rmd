@@ -109,6 +109,71 @@ incorporate the time to event aspect of response allows to address these
 requirements.
 
 
+# Input data description
+
+Assumed that for each individual $i$ the visit date and status 
+("SOT" = start of treatment) as well a whether or not the treatment continues 
+is recorded. 
+
+```{r example-recist-data}
+tbl_recist_data <- readr::read_delim(
+    file = system.file(package = "bhmbasket.predict", "example_recist_data.csv"),
+    delim = ";",
+    col_types = readr::cols(
+      subject_id = readr::col_factor(),
+      group_id = readr::col_factor(),
+      visit_date = readr::col_date(format = "%d.%m.%Y"),
+      visit_status = readr::col_factor(levels = c("SOT", "PD", "SD", "PR", "CR")),
+      end_of_treatment = readr::col_logical()
+    ) 
+  ) %>% 
+  mutate(
+    visit_t = difftime(visit_date, min(visit_date), units = "days") %>% {as.numeric(.)/30}
+  )
+tbl_recist_data %>% 
+  knitr::kable(
+    caption = "Example RECIST data set."
+  )
+tbl_bla <- tbl_recist_data %>% 
+  group_by(subject_id) %>% 
+  summarize(tmin = min(visit_t), tmax = max(visit_t))
+tbl_recist_data %>% 
+  ggplot() +
+    geom_segment(
+      aes(x = tmin, xend = tmax, y = subject_id, yend = subject_id), data = tbl_bla
+    ) +
+    geom_point(
+      aes(x = visit_t, y = subject_id, color = visit_status, shape = end_of_treatment), 
+      size = 5
+    ) +
+    labs(
+      x = "months since start of trial",
+      y = "subject",
+      caption = "Diamond indicates end-of-treatment."
+    ) +
+    scale_color_manual(
+      "RECIST",
+      values = c(
+        SOT = "gray",
+        CR = "darkgreen", 
+        PR = "blue", 
+        SD = "orange", 
+        PD = "red"
+      ), 
+      na.translate = FALSE
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "top"
+    )
+```
+
+```{r}
+recist_to_tte(tbl_recist_data) %>% 
+  knitr::kable()
+```
+
+
 # A mixture cure rate model for time to response
 
 Mixture cure rate models have recently become more popular in oncology due to

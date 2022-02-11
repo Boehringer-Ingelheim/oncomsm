@@ -4,7 +4,15 @@
 \alias{draw_samples}
 \title{Draw samples from a model}
 \usage{
-draw_samples(model, n_to_be_recruited, nsim, data = NULL, seed = NULL, ...)
+draw_samples(
+  model,
+  n_to_be_recruited,
+  nsim,
+  now = 0,
+  data = NULL,
+  seed = NULL,
+  ...
+)
 }
 \arguments{
 \item{model}{the model to simulate from}

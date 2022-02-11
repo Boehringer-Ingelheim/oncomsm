@@ -10,7 +10,9 @@ this_function_needs_a_good_name(
   alpha_loc,
   alpha_scale,
   sigma_loc,
-  sigma_scale
+  sigma_scale,
+  lograte_loc,
+  lograte_scale
 )
 }
 \arguments{
