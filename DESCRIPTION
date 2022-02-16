@@ -50,6 +50,7 @@ Collate:
     'draw_samples.R'
     'ExponentialRecruitment.R'
     'Model.R'
+    'RcppExports.R'
     'ThisModelNeedsAGoodName.R'
     'bhmbasket.predict-package.R'
     'recist_to_tte.R'
