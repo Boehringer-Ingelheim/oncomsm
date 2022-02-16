@@ -6,4 +6,3 @@ inst/doc
 *.html
 
 R/stanmodels.R
-R/RcppExports.R
