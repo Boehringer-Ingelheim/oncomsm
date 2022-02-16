@@ -4,27 +4,10 @@
 \alias{draw_samples}
 \title{Draw samples from a model}
 \usage{
-draw_samples(
-  model,
-  n_to_be_recruited,
-  nsim,
-  now = 0,
-  data = NULL,
-  seed = NULL,
-  ...
-)
+draw_samples(model, ...)
 }
 \arguments{
 \item{model}{the model to simulate from}
-
-\item{n_to_be_recruited}{int, number of individuals to sample for; these are
-future individuals and additional the (optional) individuals provided via the "data" argument.}
-
-\item{nsim}{int >= 10L, number of samples to draw}
-
-\item{data}{\strong{optional} data to condition on}
-
-\item{seed}{\strong{optional} random seed for simulation}
 }
 \description{
 simulate exact response times from the specified model,

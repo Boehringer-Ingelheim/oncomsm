@@ -45,11 +45,14 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Collate: 
-    'RcppExports.R'
+    'util.R'
     'draw_samples.R'
+    'ExponentialRecruitment.R'
+    'Model.R'
+    'RcppExports.R'
     'ThisModelNeedsAGoodName.R'
     'bhmbasket.predict-package.R'
     'recist_to_tte.R'
     'stanmodels.R'
-    'util.R'
+    'tmp.R'
 Config/testthat/edition: 3

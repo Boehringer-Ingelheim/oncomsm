@@ -38,52 +38,46 @@ functions {
 }
 
 
+// A = interval censored
+// B = right censored
+// C = non-responder
+// D = to be recruited
 
 data {
 
-  int<lower=0> N_nonresponder;
-  int<lower=0> N_interval_censored;
-  int<lower=0> N_right_censored;
-  int<lower=0> N_to_be_recruited;
+  int<lower=0> N_A;
+  int<lower=0> N_B;
+  int<lower=0> N_C;
+  int<lower=0> N_D;
 
-  int<lower=1> id_nonresponder[N_nonresponder];
-  int<lower=1> id_interval_censored[N_interval_censored];
-  int<lower=1> id_right_censored[N_right_censored];
-  int<lower=1> id_to_be_recruited[N_to_be_recruited];
+  int<lower=1> subject_id_A[N_A];
+  int<lower=1> subject_id_B[N_B];
+  int<lower=1> subject_id_C[N_C];
+  int<lower=1> subject_id_D[N_D];
 
-  real<lower=0> now;
-  vector<lower=0>[N_nonresponder] t_recruitment_nonresponder;
-  vector<lower=0>[N_interval_censored] t_recruitment_interval_censored;
-  vector<lower=0>[N_right_censored] t_recruitment_right_censored;
+  real<lower=0> dt1_A[N_A];
+  real<lower=machine_precision()> dt2_A[N_A];
+  real<lower=machine_precision()> dt1_B[N_B];
 
-  vector[N_right_censored] t1_right_censored;
-  vector[N_interval_censored] t1_interval_censored;
-  vector[N_interval_censored] t2_interval_censored;
+  real dvisit; // visit spacing
 
   // prior hyperparameters
   // response probability (via logit)
-  real prior_logor_loc;
-  real<lower=machine_precision()> prior_logor_scale;
+  real prior_logodds_loc;
+  real<lower=machine_precision()> prior_logodds_scale;
   // alpha (weibull shape)
   real prior_alpha_loc;
   real<lower=machine_precision()> prior_alpha_scale;
   // sigma (weibull scale)
   real prior_sigma_loc;
   real<lower=machine_precision()> prior_sigma_scale;
-  // log(rate) exponential waiting time for recruitment
-  real prior_lograte_loc;
-  real<lower=machine_precision()> prior_lograte_scale;
 
 }
 
 
 transformed data {
 
-  int N_recruited = N_nonresponder + N_interval_censored + N_right_censored;
-  vector<lower=0>[N_recruited] t_recruitment = append_row(
-    t_recruitment_nonresponder,
-    append_row(t_recruitment_interval_censored, t_recruitment_right_censored)
-  );
+  int N_all = N_A + N_B + N_C + N_D;
 
 }
 
@@ -91,8 +85,7 @@ transformed data {
 
 parameters {
 
-  real logor_response;
-  real lograte;
+  real theta;
   real<lower=1-machine_precision(),upper=99> alpha; // shape aka k
   real<lower=machine_precision(),upper=99> sigma; // scale aka lambda
 
@@ -102,8 +95,7 @@ parameters {
 
 transformed parameters {
 
-  real<lower=0, upper=1> pr_response = 1/(1 + exp(-logor_response));
-  real rate = exp(lograte);
+  real<lower=0, upper=1> p = 1/(1 + exp(-theta));
 
 }
 
@@ -112,41 +104,26 @@ transformed parameters {
 model {
 
   // prior
-  logor_response ~ normal(prior_logor_loc, prior_logor_scale);
+  theta ~ normal(prior_logodds_loc, prior_logodds_scale);
   alpha ~ normal(prior_alpha_loc, prior_alpha_scale) T[1,99]; // the "risk" of response must be increasing
   sigma ~ normal(prior_sigma_loc, prior_sigma_scale) T[machine_precision(),99];
-  lograte ~ normal(prior_lograte_loc, prior_lograte_scale);
 
-  // likelihood of recruitment times
-  t_recruitment ~ exponential(rate);
-
-  // likelihood for the definite non-responders (death)
-  // directly increase the log likelihood (target) by log(1 - pr_response) for each
-  // observed definite non-responder
-  for (i in 1:N_nonresponder) { // vectorize
-    target += log(1 - pr_response);
+  // likelihood for the definite non-responders
+  for (i in 1:N_C) {
+    target += log(1 - p);
   }
 
-  print("pr_response: ", pr_response);
-  print("alpha: ", alpha);
-  print("sigma: ", sigma);
-
-  // likelihood for the interval censored individuals is F(t2) - F(t1) where F
-  // is the CDF
-  for (i in 1:N_interval_censored) { // vectorize?
+  // likelihood for the interval censored individuals
+  for (i in 1:N_A) {
     target += log(
-      (1 - pr_response) + pr_response * (
-        weibull_cdf( t2_interval_censored[i], alpha, sigma ) -
-        weibull_cdf( t1_interval_censored[i], alpha, sigma )
-      )
+      (1 - p) + p*(weibull_cdf(dt2_A[i], alpha, sigma) - weibull_cdf(dt1_A[i], alpha, sigma))
     );
   }
 
-  // likelihood for the right censored individuals is non-response up to time
-  // t1_right_censored
-  for (i in 1:N_right_censored) { // vectorize?
+  // likelihood for the right censored individuals
+  for (i in 1:N_B) { // vectorize?
     target += log(
-      (1 - pr_response) + pr_response * (1 - weibull_cdf( t1_right_censored[i], alpha, sigma ))
+      (1 - p) + p * (1 - weibull_cdf( dt1_B[i], alpha, sigma ))
     );
   }
 
@@ -156,51 +133,75 @@ model {
 
 generated quantities {
 
-  real<lower=0> t_recruitment_to_be_recruited[N_to_be_recruited];
-  real<lower=0> response_time_interval_censored[N_interval_censored];
-  real<lower=0> response_time_right_censored[N_right_censored];
-  real<lower=0> response_time_to_be_recruited[N_to_be_recruited];
-  real pr_response_cond = 0.0; // buffer variable to make code more legible
+  int<lower=1> subject_id[N_all];
+  real<lower=0> dt[N_all];
+  real<lower=0> dt1[N_all];
+  real<lower=0> dt2[N_all];
+
+  real p_cond = 0.0; // buffer variable to make code more legible
   real S_t = 0.0; // buffer variable to make code more legible
+  int offset = 0;
+  int idx;
 
-  if (N_to_be_recruited > 0) {
-    t_recruitment_to_be_recruited[1] = now + exponential_rng(rate);
-    for (i in 2:N_to_be_recruited) {
-      t_recruitment_to_be_recruited[i] = t_recruitment_to_be_recruited[i-1] + exponential_rng(rate);
-    }
+  // definite responder
+  for (i in 1:N_A) { // definite responder, directly sample from truncated weibull
+    subject_id[i] = subject_id_A[i];
+    dt[i] = ttweibull_rng(alpha, sigma, dt1_A[i], dt2_A[i]);
+    dt1[i] = dt1_A[i];
+    dt2[i] = dt2_A[i];
   }
+  offset = N_A;
 
-  for (i in 1:N_interval_censored) {
-    // definite responder, directly sample from truncated weibull
-    // can be unstable (nan) resample!!
-    response_time_interval_censored[i] = not_a_number();
-    while (is_nan(response_time_interval_censored[i])) {
-      response_time_interval_censored[i] = ttweibull_rng(alpha, sigma, t1_interval_censored[i], t2_interval_censored[i]);
-    }
-  }
-
-  for (i in 1:N_right_censored) {
+  // right censored
+  for (i in 1:N_B) {
+    idx = i + offset;
+    subject_id[idx] = subject_id_B[i];
     // Pr[ responder | no response up to t ] is not constant, need to use Bayes Theorem
-    S_t = 1 - weibull_cdf(t1_right_censored[i], alpha, sigma);
-    pr_response_cond = S_t*pr_response / ( (1-pr_response) + pr_response*S_t );
-    if (bernoulli_rng(pr_response_cond) == 1) {
-      response_time_right_censored[i] = not_a_number();
-      while (is_nan(response_time_right_censored[i])) {
-        response_time_right_censored[i] = tweibull_rng(alpha, sigma, t1_right_censored[i]);
-      }
-    } else {
-      // non responder, set to infinity
-      response_time_right_censored[i] = positive_infinity();
+    S_t = 1 - weibull_cdf(dt1_B[i], alpha, sigma);
+    p_cond = S_t*p / ( (1-p) + p*S_t );
+    if (bernoulli_rng(p_cond) == 1) { // responder
+      dt[idx] = tweibull_rng(alpha, sigma, dt1_B[i]);
+      // assuming fixed visit intervals, increment lower boundary until next visit is after dt
+      dt1[idx] = 0;
+      while (dt1[idx] + dvisit < dt[idx]) {
+        dt1[idx] += dvisit;
+      };
+      dt2[idx] = dt1[idx] + dvisit; // corresponding upper bound
+    } else { // non responder, set to infinity
+      dt[idx] = positive_infinity();
+      dt1[idx] = positive_infinity();
+      dt2[idx] = positive_infinity();
     }
   }
+  offset += N_B;
 
-  for (i in 1:N_to_be_recruited) {
-    if (bernoulli_rng(pr_response) == 1) {
-      // responder
-      response_time_to_be_recruited[i] = weibull_rng(alpha, sigma);
-    } else {
-      // non-responder
-      response_time_to_be_recruited[i] = positive_infinity();
+  // definite non-responder
+  for (i in 1:N_C) {
+    idx = i + offset;
+    subject_id[idx] = subject_id_C[i];
+    dt[idx] = positive_infinity();
+    dt1[idx] = positive_infinity();
+    dt2[idx] = positive_infinity();
+  }
+  offset += N_C;
+
+
+  // new individuals
+  for (i in 1:N_D) {
+    idx = i + offset;
+    subject_id[idx] = subject_id_D[i];
+    if (bernoulli_rng(p) == 1) { // responder
+      dt[idx] = weibull_rng(alpha, sigma);
+      // assuming fixed visit intervals, increment lower boundary until next visit is after dt
+      dt1[idx] = 0;
+      while (dt1[idx] + dvisit < dt[idx]) {
+        dt1[idx] += dvisit;
+      };
+      dt2[idx] = dt1[idx] + dvisit; // corresponding upper bound
+    } else { // non-responder
+      dt[idx] = positive_infinity();
+      dt1[idx] = positive_infinity();
+      dt2[idx] = positive_infinity();
     }
   }
 

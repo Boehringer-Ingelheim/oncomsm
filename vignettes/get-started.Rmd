@@ -147,10 +147,10 @@ scale and shape of the Weibull time to event distribution for the ultimately
 responding individuals.
 ```{r prior-specification}
 model <- this_function_needs_a_good_name(
-  logor_loc = 0, logor_scale = 0.3, 
+  logodds_loc = 0, logodds_scale = 0.3, 
   alpha_loc = 2, alpha_scale = 1, 
   sigma_loc = 6, sigma_scale = 2,
-  lograte_loc = log(1.5), lograte_scale = .25
+  dvisit = 1.25
 )
 ```
 
@@ -205,13 +205,17 @@ response times of $1000$ simulated trials.
 m <- 100L
 tbl_prior_predictive_smpl <- draw_samples(
   model, 
-  n_to_be_recruited = 100L, 
+  data = tibble(
+      subject_id = as.character(1:100),
+      dt1 = rep(NA_real_, 100),
+      dt2 = rep(NA_real_, 100),
+    ),
   nsim = m, 
   seed = 42L
 )
 
 plt <- survfit(
-    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    Surv(dt, is.finite(dt)) ~ iter, 
     data = tbl_prior_predictive_smpl
   ) %>% 
   ggsurvplot(data = tbl_prior_predictive_smpl, palette = rep("black", m), alpha = .2)
@@ -224,19 +228,23 @@ corresponding prior scale to a very small value.
 For instance, consider the same model with all prior standard deviations set to $0.001$.
 ```{r plot-sample-prior-predictive-2}
 tbl_prior_predictive2_smpl <- this_function_needs_a_good_name(
-    logor_loc = 0, logor_scale = .001, 
+    logodds_loc = 0, logodds_scale = .001, 
     alpha_loc = 2, alpha_scale = .001, 
     sigma_loc = 6, sigma_scale = .001,
-    lograte_loc = log(2), lograte_scale = .001
+    dvisit = 1.25
   ) %>% 
   draw_samples(
-    n_to_be_recruited = 100L, 
+    data = tibble(
+      subject_id = as.character(1:100),
+      dt1 = rep(NA_real_, 100),
+      dt2 = rep(NA_real_, 100),
+    ), 
     nsim = m, 
     seed = 42L
   )
 
 plt2 <- survfit(
-    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    Surv(dt, is.finite(dt)) ~ iter, 
     data = tbl_prior_predictive2_smpl
   ) %>% 
   ggsurvplot(
@@ -254,13 +262,17 @@ $n=20$ is shown below.
 m <- 100L
 tbl_prior_predictive_smpl <- draw_samples(
   model, 
-  n_to_be_recruited = 20L, 
+  data = tibble(
+      subject_id = as.character(1:20),
+      dt1 = rep(NA_real_, 20),
+      dt2 = rep(NA_real_, 20)
+    ), 
   nsim = m, 
   seed = 42L
 )
 
 plt <- survfit(
-    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    Surv(dt, is.finite(dt)) ~ iter, 
     data = tbl_prior_predictive_smpl
   ) %>% 
   ggsurvplot(
@@ -281,29 +293,68 @@ Here, a simple Poisson process with constant rate is used to model recruitment
 and a log-normal prior for the recruitment rate.
 
 ```{r sample-recruitment-times}
+mdl_recruitment <- exponential_recruitment_model(
+    theta_loc = log(0.5), 
+    theta_scale = .5, 
+    dt_max = 5
+  )
+
+tbl_prior_predictive_recruitment <- draw_samples(
+    mdl_recruitment,
+    data = tibble(
+      subject_id = as.character(1:20),
+      t = rep(NA_real_, 20)
+    ),
+    now = 0,
+    nsim = m,
+    seed =42L
+  )
+
 plt <- survfit(
-    Surv(t_recruitment, is.finite(t_recruitment)) ~ iter, 
-    data = tbl_prior_predictive_smpl
+    Surv(t, is.finite(t)) ~ iter, 
+    data = tbl_prior_predictive_recruitment
   ) %>% 
   ggsurvplot(
-    data = tbl_prior_predictive_smpl, 
+    data = tbl_prior_predictive_recruitment, 
     palette = rep("black", m), 
     alpha = .2, 
   )
 
 plt$plot + labs(y = "Pr[not recruited]") + theme(legend.position = "none")
+```
 
-pos <- tbl_prior_predictive_smpl %>% 
+Putting both models together we can sample from the prior predictive 
+distribution to get samples of when patients are recruited and how long
+they have to wait for a response (if they experience it at all).
+
+```{r}
+mdl <- bhmbasket.predict::model(
+  model,
+  mdl_recruitment
+)
+
+tbl_prior_predictive <- draw_samples(
+  mdl, data = tibble(
+    subject_id = as.character(1:20),
+    t = rep(NA_real_),
+    dt1 = rep(NA_real_),
+    dt2 = rep(NA_real_)
+  ),
+  nsim = 100L,
+  seed = 42L
+)
+
+pos <- tbl_prior_predictive %>% 
   group_by(iter) %>% 
   summarize(
-    responses = sum(dt_response + t_recruitment <= max(t_recruitment) + 6),
+    responses = sum(dt2 + t <= max(t) + 3),
     .groups = "drop"
   ) %>% 
   pull(responses) %>% 
   {mean(. > 6)}
 ```
 
-Assuming termination of the trial exactly 6 months after inclusion of the 
+Assuming termination of the trial exactly 3 months after inclusion of the 
 last subject, 
 and a critical value of more than $c=6$ responses at the final analysis,
 the probability of success would be `r pos`.
@@ -322,22 +373,27 @@ as a fully Bayesian approach to multiple imputation.
 
 ```{r load-data}
 tbl_data <- readr::read_delim(
-  system.file("example_data.csv", package = "bhmbasket.predict"),
-  delim = ";",
-  col_types = readr::cols(
-    subject_id = readr::col_integer(),
-    t_recruitment = readr::col_double(),
-    dt_response_min = readr::col_double(),
-    dt_response_max = readr::col_double()
+    system.file("example_data.csv", package = "bhmbasket.predict"),
+    delim = ";",
+    col_types = readr::cols(
+      subject_id = readr::col_integer(),
+      t_recruitment = readr::col_double(),
+      dt_response_min = readr::col_double(),
+      dt_response_max = readr::col_double()
+    )
+  ) %>% 
+  rename(
+    t = t_recruitment,
+    dt1 = dt_response_min,
+    dt2 = dt_response_max
   )
-)
 
 tbl_data %>%
   transmute(
     `subject id` = subject_id,
-    `recruitment time` = t_recruitment,
-    `earliest possible response time` = t_recruitment + dt_response_min,
-    `latest possibleresponse time` = t_recruitment + dt_response_max
+    `recruitment time` = t,
+    `earliest possible response time` = t + dt1,
+    `latest possibleresponse time` = t + dt2
   ) %>% 
   knitr::kable(
     caption = "Observed data at time point of prediction."
@@ -348,10 +404,9 @@ Examples of the imputed/predicted values of interest are shown below.
 
 ```{r simulate-data}
 tbl_smpl <- draw_samples(
-  model, 
-  0L, 
+  mdl,
   data = tbl_data,
-  now = max(tbl_data$t_recruitment, na.rm = TRUE), 
+  now = max(tbl_data$t, na.rm = TRUE), 
   nsim = m, 
   seed = 42L
 )
@@ -360,12 +415,14 @@ tbl_smpl %>%
    transmute(
      iter,
     `subject id` = subject_id,
-    `recruitment time` = t_recruitment,
-    `earliest possible response time` = t_recruitment + dt_response_min,
-    `latest possibleresponse time` = t_recruitment + dt_response_max,
-    `sampled response time` = t_recruitment + dt_response
+    `recruitment time` = t,
+    `earliest possible response time` = t + dt1,
+    `latest possibleresponse time` = t + dt2,
+    `sampled response time` = t + dt
   ) %>% 
-  filter(iter <= 2) %>% 
+  filter(
+    iter <= 2
+  ) %>% 
   knitr::kable(
     caption = "Input data with two matched model-based predicted response times."
   )
@@ -375,7 +432,7 @@ The corresponding Kaplan-Meier plots (100 samples) are shown below.
 
 ```{r plot-dynamic-predition}
 plt <- survfit(
-    Surv(dt_response, is.finite(dt_response)) ~ iter, 
+    Surv(dt, is.finite(dt)) ~ iter, 
     data = tbl_smpl
   ) %>% 
   ggsurvplot(data = tbl_smpl, palette = rep("black", m), alpha = .2)
@@ -388,7 +445,7 @@ plt$plot + theme(legend.position = "none")
 pos <- tbl_smpl %>% 
   group_by(iter) %>% 
   summarize(
-    responses = sum(dt_response + t_recruitment <= max(t_recruitment) + 6),
+    responses = sum(dt + t <= max(t) + 3),
     .groups = "drop"
   ) %>% 
   pull(responses) %>% 
@@ -398,73 +455,13 @@ pos <- tbl_smpl %>%
 The probability of success is now `r pos`.
 
 
-## Predictive posterior
-
-Sometimes it is more convenient to express the decision boundary $c$ on the
-posterior probability scale.
-In this case, it is necessary to compute the "predictive posterior", 
-i.e., the posterior at the end of the trial.
-This should not be confused with the posterior predictive distribution 
-(generating data samples from the parameter posterior after observing data).
-
-To this end, we can convert the posterior predictive samples into  
-pseudo trials by mapping the sampled true response time into a censored 
-observation and applying the same model again to draw posterior samples.
-
-```{r}
-tbl_posterior_predictive_trials <- tbl_smpl %>% 
-  mutate(
-    dt_response_min = case_when(
-        !is.na(dt_response_min) ~ dt_response_min,  
-        TRUE ~ floor(dt_response) + 1/30 # assuming visits every full month
-      ),
-    dt_response_max = case_when(
-        !is.na(dt_response_max) ~ dt_response_max,
-        is.na(dt_response_max) & (dt_response_min == Inf) ~ NA_real_,
-        TRUE ~ ceiling(dt_response) + 1 # assuming visits every full month + confirmation
-      )
-  ) %>% 
-  select(-dt_response) %>% 
-  group_by(iter) %>% 
-  tidyr::nest() %>% 
-  ungroup()
-
-posterior_pr_response <- function(data) {
-  res <- draw_samples(
-    model, 
-    0L, 
-    data = data,
-    now = max(data$t_recruitment, na.rm = TRUE) + 6, 
-    nsim = 100, warmup = 500, 
-    seed = 42L,
-    return_raw_stan_output = TRUE
-  )
-  rstan::extract(res, "pr_response")[[1]]
-}
-
-posterior_response_probability <- purrr::map(
-    tbl_posterior_predictive_trials$data, 
-    posterior_pr_response
-  ) %>% 
-  unlist
-
-tibble(`Pr[response|data at end of study]` = posterior_response_probability) %>% 
-  ggplot() +
-    aes(`Pr[response|data at end of study]`, y = (..count..)/sum(..count..)) +
-    geom_histogram(bins = 25) +
-    scale_y_continuous(labels = scales::percent) +
-    theme_bw()
-```
-
-If another analysis model is used (e.g. only binary response ignoring TTE)
-the posterior predictive samples could also be plugged into this analysis model.
-
 
 # Extensions
 
 1. borrowing
 2. include covariate data
 3. model observation process (visits)
+4. predictive posterior
 
 
 # Session info
