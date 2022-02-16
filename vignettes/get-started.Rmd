@@ -23,6 +23,7 @@ library(survival)
 library(dplyr, warn.conflicts = FALSE)
 library(ggplot2)
 library(survminer, warn.conflicts = FALSE, quietly = TRUE)
+library(patchwork)
 ```
 
 
@@ -281,7 +282,8 @@ plt <- survfit(
     alpha = .2
   )
 
-plt$plot + theme(legend.position = "none")
+plt_nodata <- plt$plot + theme(legend.position = "none")
+plt_nodata
 ``` 
 
 To calculate a probability of success from predicted responses, 
@@ -430,14 +432,15 @@ tbl_smpl %>%
 
 The corresponding Kaplan-Meier plots (100 samples) are shown below.
 
-```{r plot-dynamic-predition}
+```{r plot-dynamic-prediction, fig.width=8}
 plt <- survfit(
     Surv(dt, is.finite(dt)) ~ iter, 
     data = tbl_smpl
   ) %>% 
   ggsurvplot(data = tbl_smpl, palette = rep("black", m), alpha = .2)
 
-plt$plot + theme(legend.position = "none")
+plt_conditional <- plt$plot + theme(legend.position = "none") + labs(title = "Conditional")
+plt_nodata + labs(title = "Prior-Predictive") + plt_conditional
 ```
 
 ```{r sample-recruitment-times-interim}
