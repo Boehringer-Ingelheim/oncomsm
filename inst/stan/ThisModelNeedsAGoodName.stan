@@ -113,14 +113,14 @@ model {
     target += log(1 - p);
   }
 
-  // likelihood for the interval censored individuals
+  // likelihood for the interval censored definite responders
   for (i in 1:N_A) {
     target += log(
-      (1 - p) + p*(weibull_cdf(dt2_A[i], alpha, sigma) - weibull_cdf(dt1_A[i], alpha, sigma))
+      p * (weibull_cdf(dt2_A[i], alpha, sigma) - weibull_cdf(dt1_A[i], alpha, sigma))
     );
   }
 
-  // likelihood for the right censored individuals
+  // likelihood for the right censored individuals (still at risk)
   for (i in 1:N_B) { // vectorize?
     target += log(
       (1 - p) + p * (1 - weibull_cdf( dt1_B[i], alpha, sigma ))
