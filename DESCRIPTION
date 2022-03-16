@@ -55,5 +55,4 @@ Collate:
     'bhmbasket.predict-package.R'
     'recist_to_tte.R'
     'stanmodels.R'
-    'tmp.R'
 Config/testthat/edition: 3
