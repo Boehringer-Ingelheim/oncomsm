@@ -1,44 +1,58 @@
-test_that("RECIST -> TTE example 1", {
-  tbl_tmp <- tibble::tibble(
-      subject_id = factor(c("A001")),
-      group_id = factor(c("G001")),
-      visit_date = as.Date(c("2042-01-01")),
-      visit_status = factor("SOT", levels = c("SOT", "PD", "SD", "PR", "CR")),
-      end_of_treatment = c(FALSE)
-    ) %>%
-    recist_to_tte()
-  expect_true(tbl_tmp$subject_id == "A001")
-  expect_equal(tbl_tmp$t_sot, 0)
-  expect_equal(tbl_tmp$dt1, 0)
-  expect_true(is.na(tbl_tmp$dt2))
-})
+test_that("convert visit data to time-to-event", {
 
-test_that("RECIST -> TTE example 2", {
-  tbl_tmp <- tibble::tibble(
-      subject_id = factor(c("A001")),
-      group_id = factor(c("G001")),
-      visit_date = as.Date(c("2042-01-01")),
-      visit_status = factor("SOT", levels = c("SOT", "PD", "SD", "PR", "CR")),
-      end_of_treatment = c(TRUE)
+  tbl_tte_1 <- tibble::tribble(
+      ~group_id, ~subject_id, ~t, ~status, ~eof,
+      "A",         "1",  0,    "S", TRUE
     ) %>%
-    recist_to_tte()
-  expect_equal(tbl_tmp$t_sot, 0)
-  expect_equal(tbl_tmp$dt1, Inf)
-  expect_equal(tbl_tmp$dt2, Inf)
-})
+    visits_to_tte()
+  expect_true(all(
+    tbl_tte_1$group_id == "A",
+    tbl_tte_1$subject_id == "1",
+    tbl_tte_1$t_recruitment == 0,
+    tbl_tte_1$dt1 == Inf,
+    tbl_tte_1$dt2 == Inf
+  ))
 
-test_that("RECIST -> TTE example 3", {
-  expect_error(
-    tibble::tibble(
-      subject_id = factor(c("A001")),
-      group_id = factor(c("G001")),
-      visit_date = as.Date(c("2042-01-01")),
-      visit_status = factor("PD", levels = c("SOT", "PD", "SD", "PR", "CR")),
-      end_of_treatment = c(FALSE)
+  tbl_tte_2 <- tibble::tribble(
+      ~group_id, ~subject_id, ~t, ~status, ~eof,
+      "A",         "1",  0,    "S", FALSE,
+      "A",         "1",  1,    "S", FALSE
     ) %>%
-    recist_to_tte(),
-    regexp = "first visit must be SOT"
-  )
-})
+    visits_to_tte()
+  expect_true(all(
+    tbl_tte_2$group_id == "A",
+    tbl_tte_2$subject_id == "1",
+    tbl_tte_2$t_recruitment == 0,
+    tbl_tte_2$dt1 == 1,
+    is.na(tbl_tte_2$dt2)
+  ))
 
-# todo: test cutoff + multiple individuals
+  tbl_tte_3 <- tibble::tribble(
+      ~group_id, ~subject_id, ~t, ~status, ~eof,
+      "A",         "1",  0,    "S", FALSE,
+      "A",         "1",  1,    "P", TRUE
+    ) %>%
+    visits_to_tte()
+  expect_true(all(
+    tbl_tte_3$group_id == "A",
+    tbl_tte_3$subject_id == "1",
+    tbl_tte_3$t_recruitment == 0,
+    tbl_tte_3$dt1 == Inf,
+    tbl_tte_3$dt2 == Inf
+  ))
+
+  tbl_tte_4 <- tibble::tribble(
+      ~group_id, ~subject_id, ~t, ~status, ~eof,
+      "A",         "1",  0,    "S", FALSE,
+      "A",         "1",  1,    "R", FALSE
+    ) %>%
+    visits_to_tte()
+  expect_true(all(
+    tbl_tte_4$group_id == "A",
+    tbl_tte_4$subject_id == "1",
+    tbl_tte_4$t_recruitment == 0,
+    tbl_tte_4$dt1 == 0,
+    tbl_tte_4$dt2 == 1
+  ))
+
+})

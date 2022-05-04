@@ -1,6 +1,3 @@
-*
-!.gitignore
-!recist_to_tte_.cpp
 *.o
 *.so
 *.dll

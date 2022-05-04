@@ -4,11 +4,11 @@
 \name{bhmbasket.predict-package}
 \alias{bhmbasket.predict-package}
 \alias{bhmbasket.predict}
-\title{The 'bhmbasket.predict' package.}
+\title{The bhmbasket.predict package.}
 \description{
-This package implements methods to dynamically predict response status
-of individuals in a basket trial with delayed binary response endpoint
-(e.g. tumor response) at arbitrary time points.
+This package implements methods to dynamically predict response
+status of individuals in a basket trial with delayed binary response
+endpoint (e.g. tumor response) at arbitrary time points during the trial.
 }
 \references{
 Stan Development Team (2021). RStan: the R interface to Stan. R package version 2.21.3. https://mc-stan.org

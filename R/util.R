@@ -12,5 +12,5 @@ extract_col_from_stan <- function(res, name) {
     {colnames(.) <- 1:ncol(.); .} %>%
     tibble::as_tibble() %>%
     tidyr::pivot_longer(everything(), names_to = "iter", values_to = name) %>%
-    dplyr::mutate(iter = as.integer(iter))
+    dplyr::mutate(iter = as.integer(.data$iter))
 }

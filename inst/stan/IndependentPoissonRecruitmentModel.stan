@@ -28,17 +28,22 @@ functions {
 
 data {
 
+  int<lower=1> M_groups;
+
   int<lower=0> N_old;
+  int<lower=1> group_id_old[N_old];
   int<lower=1> subject_id_old[N_old];
   real<lower=0> t_old[N_old];
   int<lower=0> N_new;
+  int<lower=1> group_id_new[N_new];
   int<lower=1> subject_id_new[N_new];
+
   real<lower=0> now;
 
-  // theta = log(rate) exponential waiting time for recruitment
-  real prior_theta_loc;
-  real<lower=machine_precision()> prior_theta_scale;
-  real<lower=machine_precision()> dt_max;
+  // prior hyperparamters
+  real log_monthly_rate_mean[M_groups];
+  real<lower=machine_precision()> log_monthly_rate_sd[M_groups];
+  real<lower=machine_precision()> maximal_recruitment_interval[M_groups];
 
 }
 
@@ -62,7 +67,7 @@ transformed data {
 
 parameters {
 
-  real theta;
+  real log_monthly_rate[M_groups];
 
 }
 
@@ -70,7 +75,7 @@ parameters {
 
 transformed parameters {
 
-  real rate  = exp(theta);
+  real rate[M_groups] = exp(log_monthly_rate);
 
 }
 
@@ -78,11 +83,18 @@ transformed parameters {
 
 model {
 
+  int idx;
+
   // prior
-  theta ~ normal(prior_theta_loc, prior_theta_scale);
+  for (g in 1:M_groups) {
+    log_monthly_rate[g] ~ normal(log_monthly_rate_mean[g], log_monthly_rate_sd[g]);
+  }
 
   // likelihood of recruitment times
-  dt_old_sorted ~ exponential(rate);
+  for (i in 1:N_old) {
+    idx = idx_old_sorted[i]; // need to match group and sorted dts
+    dt_old_sorted[i] ~ exponential(rate[group_id_old[idx]]);
+  }
 
 }
 
@@ -90,27 +102,35 @@ model {
 
 generated quantities {
 
-  real<lower=0> subject_id[N_total];
+  int<lower=1> group_id[N_total];
+  int<lower=1> subject_id[N_total];
   real<lower=0> t[N_total];
   int offset = 0;
   int idx;
+  real max_wait;
+  real t_last[M_groups];
+
+  for (g in 1:M_groups) {
+    t_last[g] = 0;
+  }
 
   // store input data for observed individuals
   for (i in 1:N_old) {
+    group_id[i] = group_id_old[i];
     subject_id[i] = subject_id_old[i];
     t[i] = t_old[i];
+    t_last[group_id[i]] = fmax(t_last[group_id[i]], t[i]);
   }
   offset = N_old;
 
   // sample data for new individuals
   for (i in 1:N_new) {
     idx = i + offset;
+    group_id[idx] = group_id_new[i];
     subject_id[idx] = subject_id_new[i];
-    if (i == 1) {
-      t[idx] = now + ttexponential_rng(rate, 0, dt_max);
-    } else {
-      t[idx] = t[idx - 1] + ttexponential_rng(rate, 0, dt_max);
-    }
+    max_wait = maximal_recruitment_interval[group_id[idx]];
+    t[idx] = t_last[group_id[idx]] + ttexponential_rng(rate[group_id[idx]], fmax(0, now - t_last[group_id[idx]]), max_wait);
+    t_last[group_id[idx]] = fmax(t_last[group_id[idx]], t[idx]);
   }
 
 }

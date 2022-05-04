@@ -1,8 +1,8 @@
-#' The 'bhmbasket.predict' package.
+#' The bhmbasket.predict package.
 #'
-#' @description This package implements methods to dynamically predict response status
-#' of individuals in a basket trial with delayed binary response endpoint
-#' (e.g. tumor response) at arbitrary time points.
+#' @description This package implements methods to dynamically predict response
+#' status of individuals in a basket trial with delayed binary response
+#' endpoint (e.g. tumor response) at arbitrary time points during the trial.
 #'
 #' @docType package
 #' @name bhmbasket.predict-package
@@ -10,6 +10,7 @@
 #' @useDynLib bhmbasket.predict, .registration = TRUE
 #' @import methods
 #' @import Rcpp
+#' @import dplyr
 #' @importFrom rstan sampling
 #' @importFrom rlang .data
 #'

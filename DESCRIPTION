@@ -18,17 +18,25 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Biarch: true
 Depends: 
-    R (>= 4.0.0)
+    R (>= 4.0.0),
+    bhmbasket
 Imports: 
     methods,
     Rcpp,
     RcppParallel (>= 5.0.1),
+    assertthat (>= 0.2.1),
     rstan (>= 2.18.1),
     rstantools (>= 2.1.1),
     rlang (>= 0.4.12),
     tibble (>= 3.1.6),
+    magrittr (>= 2.0.3), 
     dplyr (>= 1.0.7),
-    tidyr (>= 1.1.4)
+    tidyr (>= 1.1.4),
+    purrr (>= 0.3.4),
+    ggplot2,
+    patchwork,
+    uuid,
+    scales
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
@@ -40,19 +48,18 @@ SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
     knitr,
-    survival,
-    survminer,
-    patchwork,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Collate: 
     'util.R'
     'draw_samples.R'
-    'ExponentialRecruitment.R'
+    'IndependentMixtureCureRateModel.R'
+    'IndependentPoissonRecruitmentModel.R'
     'Model.R'
     'RcppExports.R'
-    'ThisModelNeedsAGoodName.R'
     'bhmbasket.predict-package.R'
-    'recist_to_tte.R'
+    'generate_visit_data.R'
+    'plot_visits.R'
     'stanmodels.R'
+    'visits_to_tte.R'
 Config/testthat/edition: 3

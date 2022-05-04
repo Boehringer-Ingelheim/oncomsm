@@ -45,32 +45,40 @@ functions {
 
 data {
 
+  int<lower=1> M_groups;
+
   int<lower=0> N_A;
   int<lower=0> N_B;
   int<lower=0> N_C;
   int<lower=0> N_D;
+
+  int<lower=1> group_id_A[N_A];
+  int<lower=1> group_id_B[N_B];
+  int<lower=1> group_id_C[N_C];
+  int<lower=1> group_id_D[N_D];
 
   int<lower=1> subject_id_A[N_A];
   int<lower=1> subject_id_B[N_B];
   int<lower=1> subject_id_C[N_C];
   int<lower=1> subject_id_D[N_D];
 
-  real<lower=0> dt1_A[N_A];
+  real<lower=machine_precision()> dt1_A[N_A];
   real<lower=machine_precision()> dt2_A[N_A];
   real<lower=machine_precision()> dt1_B[N_B];
 
-  real dvisit; // visit spacing
-
-  // prior hyperparameters
+  // prior hyperparamters
+  real visit_spacing[M_groups];
   // response probability (via logit)
-  real prior_logodds_loc;
-  real<lower=machine_precision()> prior_logodds_scale;
+  real logodds_mean[M_groups];
+  real<lower=machine_precision()> logodds_sd[M_groups];
+  real logodds_min[M_groups];
+  real logodds_max[M_groups];
   // alpha (weibull shape)
-  real prior_alpha_loc;
-  real<lower=machine_precision()> prior_alpha_scale;
+  real shape_mean[M_groups];
+  real<lower=machine_precision()> shape_sd[M_groups];
   // sigma (weibull scale)
-  real prior_sigma_loc;
-  real<lower=machine_precision()> prior_sigma_scale;
+  real scale_mean[M_groups];
+  real<lower=machine_precision()> scale_sd[M_groups];
 
 }
 
@@ -85,9 +93,9 @@ transformed data {
 
 parameters {
 
-  real theta;
-  real<lower=1-machine_precision(),upper=99> alpha; // shape aka k
-  real<lower=machine_precision(),upper=99> sigma; // scale aka lambda
+  real logodds[M_groups];
+  real<lower=1-machine_precision(),upper=99> shape[M_groups]; // shape aka k, important to bound from 0
+  real<lower=machine_precision(),upper=99> scale[M_groups]; // scale aka lambda
 
 }
 
@@ -95,7 +103,10 @@ parameters {
 
 transformed parameters {
 
-  real<lower=0, upper=1> p = 1/(1 + exp(-theta));
+  real<lower=0,upper=1> p[M_groups];
+  for (g in 1:M_groups) {
+    p[g] = 1/(1 + exp(-logodds[g]));
+  }
 
 }
 
@@ -103,27 +114,36 @@ transformed parameters {
 
 model {
 
+  int group_id;
+
   // prior
-  theta ~ normal(prior_logodds_loc, prior_logodds_scale);
-  alpha ~ normal(prior_alpha_loc, prior_alpha_scale) T[1,99]; // the "risk" of response must be increasing
-  sigma ~ normal(prior_sigma_loc, prior_sigma_scale) T[machine_precision(),99];
+  for (g in 1:M_groups) {
+    logodds[g] ~ normal(logodds_mean[g], logodds_sd[g]) T[logodds_min[g],logodds_max[g]];
+    shape[g] ~ normal(shape_mean[g], shape_sd[g]) T[1 - machine_precision(),99];
+    scale[g] ~ normal(scale_mean[g], scale_sd[g]) T[machine_precision(),99];
+  }
 
   // likelihood for the definite non-responders
   for (i in 1:N_C) {
-    target += log(1 - p);
+    group_id = group_id_C[i];
+    target += log(1 - p[group_id]);
   }
 
   // likelihood for the interval censored definite responders
   for (i in 1:N_A) {
+    group_id = group_id_A[i];
     target += log(
-      p * (weibull_cdf(dt2_A[i], alpha, sigma) - weibull_cdf(dt1_A[i], alpha, sigma))
+      p[group_id] * (weibull_cdf(dt2_A[i], shape[group_id], scale[group_id]) -
+        weibull_cdf(dt1_A[i], shape[group_id], scale[group_id])
+      )
     );
   }
 
   // likelihood for the right censored individuals (still at risk)
   for (i in 1:N_B) { // vectorize?
+    group_id = group_id_B[i];
     target += log(
-      (1 - p) + p * (1 - weibull_cdf( dt1_B[i], alpha, sigma ))
+      (1 - p[group_id]) + p[group_id] * (1 - weibull_cdf( dt1_B[i], shape[group_id], scale[group_id] ))
     );
   }
 
@@ -133,7 +153,9 @@ model {
 
 generated quantities {
 
+  int<lower=1> group_id[N_all];
   int<lower=1> subject_id[N_all];
+  int<lower=1> gg;
   real<lower=0> dt[N_all];
   real<lower=0> dt1[N_all];
   real<lower=0> dt2[N_all];
@@ -145,8 +167,10 @@ generated quantities {
 
   // definite responder
   for (i in 1:N_A) { // definite responder, directly sample from truncated weibull
+    gg = group_id_A[i];
+    group_id[i] = group_id_A[i];
     subject_id[i] = subject_id_A[i];
-    dt[i] = ttweibull_rng(alpha, sigma, dt1_A[i], dt2_A[i]);
+    dt[i] = ttweibull_rng(shape[gg], scale[gg], dt1_A[i], dt2_A[i]);
     dt1[i] = dt1_A[i];
     dt2[i] = dt2_A[i];
   }
@@ -154,19 +178,21 @@ generated quantities {
 
   // right censored
   for (i in 1:N_B) {
+    gg = group_id_B[i];
     idx = i + offset;
+    group_id[idx] = group_id_B[i];
     subject_id[idx] = subject_id_B[i];
     // Pr[ responder | no response up to t ] is not constant, need to use Bayes Theorem
-    S_t = 1 - weibull_cdf(dt1_B[i], alpha, sigma);
-    p_cond = S_t*p / ( (1-p) + p*S_t );
+    S_t = 1 - weibull_cdf(dt1_B[i], shape[gg], scale[gg]);
+    p_cond = S_t*p[gg] / ( (1 - p[gg]) + p[gg]*S_t );
     if (bernoulli_rng(p_cond) == 1) { // responder
-      dt[idx] = tweibull_rng(alpha, sigma, dt1_B[i]);
+      dt[idx] = tweibull_rng(shape[gg], scale[gg], dt1_B[i]);
       // assuming fixed visit intervals, increment lower boundary until next visit is after dt
       dt1[idx] = 0;
-      while (dt1[idx] + dvisit < dt[idx]) {
-        dt1[idx] += dvisit;
+      while (dt1[idx] + visit_spacing[gg] < dt[idx]) {
+        dt1[idx] += visit_spacing[gg];
       };
-      dt2[idx] = dt1[idx] + dvisit; // corresponding upper bound
+      dt2[idx] = dt1[idx] + visit_spacing[gg]; // corresponding upper bound
     } else { // non responder, set to infinity
       dt[idx] = positive_infinity();
       dt1[idx] = positive_infinity();
@@ -178,6 +204,7 @@ generated quantities {
   // definite non-responder
   for (i in 1:N_C) {
     idx = i + offset;
+    group_id[idx] = group_id_C[i];
     subject_id[idx] = subject_id_C[i];
     dt[idx] = positive_infinity();
     dt1[idx] = positive_infinity();
@@ -188,16 +215,18 @@ generated quantities {
 
   // new individuals
   for (i in 1:N_D) {
+    gg = group_id_D[i];
     idx = i + offset;
+    group_id[idx] = group_id_D[i];
     subject_id[idx] = subject_id_D[i];
-    if (bernoulli_rng(p) == 1) { // responder
-      dt[idx] = weibull_rng(alpha, sigma);
+    if (bernoulli_rng(p[gg]) == 1) { // responder
+      dt[idx] = weibull_rng(shape[gg], scale[gg]);
       // assuming fixed visit intervals, increment lower boundary until next visit is after dt
       dt1[idx] = 0;
-      while (dt1[idx] + dvisit < dt[idx]) {
-        dt1[idx] += dvisit;
+      while (dt1[idx] + visit_spacing[gg] < dt[idx]) {
+        dt1[idx] += visit_spacing[gg];
       };
-      dt2[idx] = dt1[idx] + dvisit; // corresponding upper bound
+      dt2[idx] = dt1[idx] + visit_spacing[gg]; // corresponding upper bound
     } else { // non-responder
       dt[idx] = positive_infinity();
       dt1[idx] = positive_infinity();

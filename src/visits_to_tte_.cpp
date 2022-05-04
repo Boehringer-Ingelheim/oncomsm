@@ -2,36 +2,42 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-DataFrame recist_to_tte_(DataFrame data) {
+DataFrame visits_to_tte_(DataFrame data) {
 
   // unpack old data for faster access
   const int n_visits = data.nrow();
+  CharacterVector group_id = data["group_id"];
   CharacterVector subject_id = data["subject_id"];
   NumericVector dt = data["dt"]; // delta t since start of treatment
   CharacterVector status = data["status"];
-  LogicalVector eot = data["eot"];
+  LogicalVector eof = data["eof"];
 
   // create containers for new data
   const int n_subjects = unique(subject_id).length();
+  CharacterVector group_id_out(n_subjects);
   CharacterVector subject_id_out(n_subjects);
   NumericVector dt_lower(n_subjects); // interval censoring
   NumericVector dt_upper(n_subjects);
 
+  String group_lagged = 0; // factor numbering starts at 1
   String subject_lagged = 0; // factor numbering starts at 1
   float dt_lagged = 0; // factor numbering starts at 1
   bool had_response = false;
   bool had_non_response = false;
   int subject_idx = -1;
   for (int visit = 0; visit < n_visits; visit++) {
+    const String group_ = group_id(visit);
     const String subject_ = subject_id(visit);
     const float dt_ = dt(visit);
     const String status_ = status(visit);
-    const bool eot_ = eot(visit);
+    const bool eof_ = eof(visit);
 
     if (visit > 0) { // keeping lagged values
+      group_lagged = group_id(visit - 1);
       subject_lagged = subject_id(visit - 1);
       dt_lagged = dt(visit - 1);
     } else { // use NA if not available
+      group_lagged = NA_STRING;
       subject_lagged = NA_STRING;
       dt_lagged = NA_REAL;
     }
@@ -41,6 +47,7 @@ DataFrame recist_to_tte_(DataFrame data) {
         // handle censoring of previous subject (if exists - non NA previous subject)
         if (!had_response & !had_non_response) {
           // at risk for response, earliest time point is last dt
+          group_id_out(subject_idx - 1) = group_lagged;
           subject_id_out(subject_idx - 1) = subject_lagged;
           dt_lower(subject_idx - 1) = dt_lagged;
           dt_upper(subject_idx - 1) = NA_REAL;
@@ -56,21 +63,24 @@ DataFrame recist_to_tte_(DataFrame data) {
     if (had_non_response | had_response) {
       continue; // can skip until next individual starts
     }
-    if ( (status_ == "PD") | (eot_ & !had_response) ) {
-      // definite non-responder, eot without response is non-response
+    if ( (status_ == "P") | (eof_ & !had_response) ) {
+      // definite non-responder, eof without response is non-response
       had_non_response = true;
+      group_id_out(subject_idx) = group_;
       subject_id_out(subject_idx) = subject_;
       dt_lower(subject_idx) = R_PosInf;
       dt_upper(subject_idx) = R_PosInf;
     }
-    if ((status_ == "PR") | (status_ == "CR")) { // a responder
+    if (status_ == "R") { // a responder
       had_response = true;
+      group_id_out(subject_idx) = group_;
       subject_id_out(subject_idx) = subject_;
       dt_lower(subject_idx) = fmin(dt_lagged, dt_);
       dt_upper(subject_idx) = dt_;
     }
     if (visit == n_visits - 1) { // last visit, no subsequent - check if censored
       if (!had_response & !had_non_response) { // at risk
+        group_id_out(subject_idx) = group_;
         subject_id_out(subject_idx) = subject_;
         dt_lower(subject_idx) = dt_;
         dt_upper(subject_idx) = NA_REAL;
@@ -78,6 +88,7 @@ DataFrame recist_to_tte_(DataFrame data) {
     }
   }
   return DataFrame::create(
+    Named("group_id") = group_id_out,
     Named("subject_id") = subject_id_out,
     Named("dt1") = dt_lower,
     Named("dt2") = dt_upper
