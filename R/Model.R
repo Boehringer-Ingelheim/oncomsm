@@ -20,7 +20,7 @@ draw_samples.OverallModel <- function(
 ) {
   if (is.null(now) & is.null(data))
     now <- 0
-  if (is.null(now) & !is.null(data))
+  if (is.null(now) & !is.null(data) & any(!is.na(data$t_recruitment)))
     now <- max(data$t_recruitment)
   tbl_responses <- draw_samples(
     model$tte_model,

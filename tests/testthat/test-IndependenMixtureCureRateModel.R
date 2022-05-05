@@ -36,4 +36,15 @@ test_that("can create IndependentMixtureCureRateModel for single arm", {
 
   draw_samples(mdl, visits_to_tte(tbl_data))
 
+  draw_samples(
+    mdl,
+    tibble::tibble(
+      group_id = "A",
+      subject_id = "1",
+      t_recruitment = NA_real_,
+      dt1 = NA_real_,
+      dt2 = NA_real_
+    )
+  )
+
 })
