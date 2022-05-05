@@ -17,27 +17,35 @@
 #' @export
 visits_to_tte <- function(tbl_visits, cutoff = Inf) {
 
+  # save all individuals for later
+  res <- dplyr::select(tbl_visits, .data$group_id, .data$subject_id)
+
   # restrict visit data to <= cutoff
   tbl_visits <- dplyr::filter(tbl_visits, .data$t <= cutoff)
 
-  # extract recruitment times (first visit)
-  tbl_recruitment_times <- tbl_visits %>%
-    dplyr::group_by(.data$subject_id) %>%
-    dplyr::summarize(t_recruitment = min(.data$t))
+  if (nrow(tbl_visits) > 0) {
+    # extract recruitment times (first visit)
+    tbl_recruitment_times <- tbl_visits %>%
+      dplyr::group_by(.data$group_id, .data$subject_id) %>%
+      dplyr::summarize(t_recruitment = min(.data$t))
 
-  # computed lower and upper bound on time since recruitment to response
-  tbl_interval_censored_event_times_since_sot <- tbl_visits %>%
-    dplyr::group_by(.data$subject_id) %>%
-    dplyr::mutate(dt = .data$t - min(.data$t)) %>%
-    visits_to_tte_() %>% # fast c implementation
-    tibble::as_tibble()
+    # computed lower and upper bound on time since recruitment to response
+    tbl_interval_censored_event_times_since_sot <- tbl_visits %>%
+      dplyr::group_by(.data$group_id, .data$subject_id) %>%
+      dplyr::mutate(dt = .data$t - min(.data$t)) %>%
+      visits_to_tte_() %>% # fast c implementation
+      tibble::as_tibble()
 
-  # combine
-  dplyr::left_join(
-    tbl_recruitment_times,
-    tbl_interval_censored_event_times_since_sot,
-    by = "subject_id"
-  ) %>%
-  dplyr::select("group_id", "subject_id", "t_recruitment", "dt1", "dt2")
+    # combine
+    res %>%
+      dplyr::left_join(tbl_recruitment_times, by = c("group_id", "subject_id")) %>%
+      dplyr::left_join(tbl_interval_censored_event_times_since_sot, by = c("group_id", "subject_id")) %>%
+      dplyr::select("group_id", "subject_id", "t_recruitment", "dt1", "dt2") %>%
+      return()
+  } else {
+    res %>%
+      mutate(t_recruitment = NA_real_, dt1 = NA_real_, dt2 = NA_real_) %>%
+      return()
+  }
 
 }

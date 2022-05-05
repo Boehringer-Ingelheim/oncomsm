@@ -56,3 +56,20 @@ test_that("convert visit data to time-to-event", {
   ))
 
 })
+
+test_that("convert visit data to time-to-event preserves individuals", {
+
+  tbl_tte <- tibble::tribble(
+      ~group_id, ~subject_id, ~t, ~status, ~eof,
+            "A",          "1", 2,     "S", TRUE
+    ) %>%
+    visits_to_tte(1)
+  expect_true(all(
+    tbl_tte$group_id == "A",
+    tbl_tte$subject_id == "1",
+    is.na(tbl_tte$t_recruitment),
+    is.na(tbl_tte$dt1),
+    is.na(tbl_tte$dt2)
+  ))
+
+})
