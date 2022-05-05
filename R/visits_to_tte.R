@@ -18,7 +18,8 @@
 visits_to_tte <- function(tbl_visits, cutoff = Inf) {
 
   # save all individuals for later
-  res <- dplyr::select(tbl_visits, .data$group_id, .data$subject_id)
+  res <- dplyr::select(tbl_visits, .data$group_id, .data$subject_id) %>%
+    dplyr::distinct()
 
   # restrict visit data to <= cutoff
   tbl_visits <- dplyr::filter(tbl_visits, .data$t <= cutoff)
