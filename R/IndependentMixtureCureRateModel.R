@@ -28,6 +28,7 @@ independent_mixture_cure_rate_model <- function(
 ) {
   res <- as.list(environment()) # store all input parameters
   res$group_id <- NULL
+  res <- lapply(res, base::as.array)
   attr(res, "group_id") <- group_id
   attr(res, "stanmodel") <- stanmodels$IndependentMixtureCureRateModel
   # assign class information and return
@@ -174,7 +175,7 @@ draw_samples.IndependentMixtureCureRateModel <- function(
 #'
 #' @export
 plot.IndependentMixtureCureRateModel <- function(
-  x, n = rep(1L, length(attr(model, "group_id"))), nsim = 1e4, seed = NULL, ...
+  x, n = rep(1L, length(attr(x, "group_id"))), nsim = 1e4, seed = NULL, ...
 ) {
 
   # prior sample from response probability

@@ -10,6 +10,7 @@ independent_poisson_recruitment_model <- function(
 ) {
   res <- as.list(environment()) # store all input parameters
   res$group_id <- NULL
+  res <- lapply(res, base::as.array)
   attr(res, "group_id") <- group_id
   attr(res, "stanmodel") <- stanmodels$IndependentPoissonRecruitmentModel
   # assign class information and return
