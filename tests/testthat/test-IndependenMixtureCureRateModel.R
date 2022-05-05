@@ -11,6 +11,7 @@ test_that("can create IndependentMixtureCureRateModel for single arm", {
       shape_sd = 1,
       median_time_to_response_mean = 3,
       median_time_to_response_sd = 2,
+      max_time_to_response = 5,
       visit_spacing = 1.4
     ),
     recruitement_model = independent_poisson_recruitment_model(
@@ -34,9 +35,9 @@ test_that("can create IndependentMixtureCureRateModel for single arm", {
     nonresponder_weibull_shape = 5
   )
 
-  draw_samples(mdl, visits_to_tte(tbl_data))
+  tmp <- draw_samples(mdl, visits_to_tte(tbl_data))
 
-  draw_samples(
+  tmp2 <- draw_samples(
     mdl,
     tibble::tibble(
       group_id = "A",

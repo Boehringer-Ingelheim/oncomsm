@@ -1,36 +1,26 @@
 functions {
 
-  // taken from https://discourse.mc-stan.org/t/rng-for-truncated-distributions/3122/7
-  real tweibull_rng(real alpha, real sigma, real t) {
-    real p;
-    real u;
-    real x;
-    p = weibull_cdf(t, alpha, sigma);
-    if (1 - p < 1e-4) {
-      // unstable, simply use lower boundary
-      return t + 2*machine_precision();
-    }
-    u = uniform_rng(p, 1);
-    x = sigma * (-log1m(u))^(1/alpha);
-    return x;
-  }
-
   real ttweibull_rng(real alpha, real sigma, real t1, real t2) {
     real p1;
     real p2;
     real u;
     real x;
     p1 = weibull_cdf(t1, alpha, sigma);
-    if (1 - p1 < 1e-4) {
+    if (1 - p1 < 1e-3) {
       // unstable, simply use lower boundary
       return t1;
     }
     p2 = weibull_cdf(t2, alpha, sigma);
-    if (p2 - p1 < 1e-4) {
-      // unstable, simply use midpoint
-      return (t1 + t2)/2;
+    if (1 - p2 < 1e-3) {
+      // unstable, simply use upper boundary
+      return t2;
     }
-    u = uniform_rng(p1, p2);
+    if (p2 - p1 < 1e-3) {
+      // unstable, simply use midpoint
+      u = (p1 + p2)/2;
+    } else {
+      u = uniform_rng(p1, p2);
+    }
     x = sigma * (-log1m(u))^(1/alpha);
     return x;
   }
@@ -79,6 +69,8 @@ data {
   // weibull median
   real median_time_to_response_mean[M_groups];
   real<lower=machine_precision()> median_time_to_response_sd[M_groups];
+  // response time truncation
+  real max_time_to_response[M_groups];
 
 }
 
@@ -95,7 +87,6 @@ parameters {
 
   real logodds[M_groups];
   real<lower=1-machine_precision(),upper=99> shape[M_groups]; // shape aka k, important to bound from 0
-  //real<lower=machine_precision(),upper=99> scale[M_groups]; // scale aka lambda
   real<lower=1.0/30.0,upper=99> median_time_to_response[M_groups];
 
 }
@@ -190,7 +181,8 @@ generated quantities {
     S_t = 1 - weibull_cdf(dt1_B[i], shape[gg], scale[gg]);
     p_cond = S_t*p[gg] / ( (1 - p[gg]) + p[gg]*S_t );
     if (bernoulli_rng(p_cond) == 1) { // responder
-      dt[idx] = tweibull_rng(shape[gg], scale[gg], dt1_B[i]);
+      // upper truncation is just for numerical stability
+      dt[idx] = ttweibull_rng(shape[gg], scale[gg], dt1_B[i], max_time_to_response[gg]);
       // assuming fixed visit intervals, increment lower boundary until next visit is after dt
       dt1[idx] = 0;
       while (dt1[idx] + visit_spacing[gg] < dt[idx]) {
@@ -224,7 +216,8 @@ generated quantities {
     group_id[idx] = group_id_D[i];
     subject_id[idx] = subject_id_D[i];
     if (bernoulli_rng(p[gg]) == 1) { // responder
-      dt[idx] = weibull_rng(shape[gg], scale[gg]);
+      // truncation is just for numerical stability
+      dt[idx] = ttweibull_rng(shape[gg], scale[gg], 1.0/30.0, max_time_to_response[gg]);
       // assuming fixed visit intervals, increment lower boundary until next visit is after dt
       dt1[idx] = 0;
       while (dt1[idx] + visit_spacing[gg] < dt[idx]) {

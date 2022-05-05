@@ -11,6 +11,7 @@
 #' @param shape_sd numeric vector with the standard deviations of the normal prior on the shape parameter of the Weibull distribution for time to response
 #' @param median_time_to_response_mean numeric vector with the means of the normal prior on the median time to response
 #' @param median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the median for time to response
+#' @param max_time_to_response numeric vector with the maximal time to response per group
 #' @param visit_spacing vector of deterministic spacing between future visits (in months)
 #'
 #' @return An object of class "IndependentMixtureCureRateModel" holding all relevant
@@ -24,6 +25,7 @@ independent_mixture_cure_rate_model <- function(
   logodds_mean, logodds_sd, logodds_min = rep(-Inf, length(group_id)), logodds_max = rep(Inf, length(group_id)), # (truncated) normal prior on log(odds)
   shape_mean, shape_sd, # normal prior for Weibull alpha parameter (shape)
   median_time_to_response_mean, median_time_to_response_sd, # normal prior for Weibull scale parameter
+  max_time_to_response,
   visit_spacing # (deterministic) spacing between (future) visits
 ) {
   res <- as.list(environment()) # store all input parameters
