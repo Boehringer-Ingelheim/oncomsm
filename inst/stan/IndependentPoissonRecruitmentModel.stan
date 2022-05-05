@@ -104,7 +104,7 @@ generated quantities {
 
   int<lower=1> group_id[N_total];
   int<lower=1> subject_id[N_total];
-  real<lower=0> t[N_total];
+  real<lower=0> t_recruitment[N_total];
   int offset = 0;
   int idx;
   real max_wait;
@@ -118,8 +118,8 @@ generated quantities {
   for (i in 1:N_old) {
     group_id[i] = group_id_old[i];
     subject_id[i] = subject_id_old[i];
-    t[i] = t_old[i];
-    t_last[group_id[i]] = fmax(t_last[group_id[i]], t[i]);
+    t_recruitment[i] = t_old[i];
+    t_last[group_id[i]] = fmax(t_last[group_id[i]], t_recruitment[i]);
   }
   offset = N_old;
 
@@ -129,8 +129,8 @@ generated quantities {
     group_id[idx] = group_id_new[i];
     subject_id[idx] = subject_id_new[i];
     max_wait = maximal_recruitment_interval[group_id[idx]];
-    t[idx] = t_last[group_id[idx]] + ttexponential_rng(rate[group_id[idx]], fmax(0, now - t_last[group_id[idx]]), max_wait);
-    t_last[group_id[idx]] = fmax(t_last[group_id[idx]], t[idx]);
+    t_recruitment[idx] = t_last[group_id[idx]] + ttexponential_rng(rate[group_id[idx]], fmax(0, now - t_last[group_id[idx]]), max_wait);
+    t_last[group_id[idx]] = fmax(t_last[group_id[idx]], t_recruitment[idx]);
   }
 
 }
