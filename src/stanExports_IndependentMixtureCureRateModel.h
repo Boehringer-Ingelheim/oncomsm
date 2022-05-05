@@ -19,7 +19,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_IndependentMixtureCureRateModel");
-    reader.add_event(239, 237, "end", "model_IndependentMixtureCureRateModel");
+    reader.add_event(243, 241, "end", "model_IndependentMixtureCureRateModel");
     return reader;
 }
 template <typename T0__, typename T1__, typename T2__, class RNG>
@@ -179,8 +179,8 @@ private:
         std::vector<double> logodds_max;
         std::vector<double> shape_mean;
         std::vector<double> shape_sd;
-        std::vector<double> scale_mean;
-        std::vector<double> scale_sd;
+        std::vector<double> median_time_to_response_mean;
+        std::vector<double> median_time_to_response_sd;
         int N_all;
 public:
     model_IndependentMixtureCureRateModel(stan::io::var_context& context__,
@@ -480,28 +480,28 @@ public:
                 check_greater_or_equal(function__, "shape_sd[i_0__]", shape_sd[i_0__], stan::math::machine_precision());
             }
             current_statement_begin__ = 80;
-            validate_non_negative_index("scale_mean", "M_groups", M_groups);
-            context__.validate_dims("data initialization", "scale_mean", "double", context__.to_vec(M_groups));
-            scale_mean = std::vector<double>(M_groups, double(0));
-            vals_r__ = context__.vals_r("scale_mean");
+            validate_non_negative_index("median_time_to_response_mean", "M_groups", M_groups);
+            context__.validate_dims("data initialization", "median_time_to_response_mean", "double", context__.to_vec(M_groups));
+            median_time_to_response_mean = std::vector<double>(M_groups, double(0));
+            vals_r__ = context__.vals_r("median_time_to_response_mean");
             pos__ = 0;
-            size_t scale_mean_k_0_max__ = M_groups;
-            for (size_t k_0__ = 0; k_0__ < scale_mean_k_0_max__; ++k_0__) {
-                scale_mean[k_0__] = vals_r__[pos__++];
+            size_t median_time_to_response_mean_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < median_time_to_response_mean_k_0_max__; ++k_0__) {
+                median_time_to_response_mean[k_0__] = vals_r__[pos__++];
             }
             current_statement_begin__ = 81;
-            validate_non_negative_index("scale_sd", "M_groups", M_groups);
-            context__.validate_dims("data initialization", "scale_sd", "double", context__.to_vec(M_groups));
-            scale_sd = std::vector<double>(M_groups, double(0));
-            vals_r__ = context__.vals_r("scale_sd");
+            validate_non_negative_index("median_time_to_response_sd", "M_groups", M_groups);
+            context__.validate_dims("data initialization", "median_time_to_response_sd", "double", context__.to_vec(M_groups));
+            median_time_to_response_sd = std::vector<double>(M_groups, double(0));
+            vals_r__ = context__.vals_r("median_time_to_response_sd");
             pos__ = 0;
-            size_t scale_sd_k_0_max__ = M_groups;
-            for (size_t k_0__ = 0; k_0__ < scale_sd_k_0_max__; ++k_0__) {
-                scale_sd[k_0__] = vals_r__[pos__++];
+            size_t median_time_to_response_sd_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < median_time_to_response_sd_k_0_max__; ++k_0__) {
+                median_time_to_response_sd[k_0__] = vals_r__[pos__++];
             }
-            size_t scale_sd_i_0_max__ = M_groups;
-            for (size_t i_0__ = 0; i_0__ < scale_sd_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "scale_sd[i_0__]", scale_sd[i_0__], stan::math::machine_precision());
+            size_t median_time_to_response_sd_i_0_max__ = M_groups;
+            for (size_t i_0__ = 0; i_0__ < median_time_to_response_sd_i_0_max__; ++i_0__) {
+                check_greater_or_equal(function__, "median_time_to_response_sd[i_0__]", median_time_to_response_sd[i_0__], stan::math::machine_precision());
             }
             // initialize transformed data variables
             current_statement_begin__ = 88;
@@ -519,8 +519,8 @@ public:
             current_statement_begin__ = 97;
             validate_non_negative_index("shape", "M_groups", M_groups);
             num_params_r__ += (1 * M_groups);
-            current_statement_begin__ = 98;
-            validate_non_negative_index("scale", "M_groups", M_groups);
+            current_statement_begin__ = 99;
+            validate_non_negative_index("median_time_to_response", "M_groups", M_groups);
             num_params_r__ += (1 * M_groups);
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -579,24 +579,24 @@ public:
                 stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable shape: ") + e.what()), current_statement_begin__, prog_reader__());
             }
         }
-        current_statement_begin__ = 98;
-        if (!(context__.contains_r("scale")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable scale missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("scale");
+        current_statement_begin__ = 99;
+        if (!(context__.contains_r("median_time_to_response")))
+            stan::lang::rethrow_located(std::runtime_error(std::string("Variable median_time_to_response missing")), current_statement_begin__, prog_reader__());
+        vals_r__ = context__.vals_r("median_time_to_response");
         pos__ = 0U;
-        validate_non_negative_index("scale", "M_groups", M_groups);
-        context__.validate_dims("parameter initialization", "scale", "double", context__.to_vec(M_groups));
-        std::vector<double> scale(M_groups, double(0));
-        size_t scale_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
-            scale[k_0__] = vals_r__[pos__++];
+        validate_non_negative_index("median_time_to_response", "M_groups", M_groups);
+        context__.validate_dims("parameter initialization", "median_time_to_response", "double", context__.to_vec(M_groups));
+        std::vector<double> median_time_to_response(M_groups, double(0));
+        size_t median_time_to_response_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
+            median_time_to_response[k_0__] = vals_r__[pos__++];
         }
-        size_t scale_i_0_max__ = M_groups;
-        for (size_t i_0__ = 0; i_0__ < scale_i_0_max__; ++i_0__) {
+        size_t median_time_to_response_i_0_max__ = M_groups;
+        for (size_t i_0__ = 0; i_0__ < median_time_to_response_i_0_max__; ++i_0__) {
             try {
-                writer__.scalar_lub_unconstrain(stan::math::machine_precision(), 99, scale[i_0__]);
+                writer__.scalar_lub_unconstrain((1.0 / 30.0), 99, median_time_to_response[i_0__]);
             } catch (const std::exception& e) {
-                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable scale: ") + e.what()), current_statement_begin__, prog_reader__());
+                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable median_time_to_response: ") + e.what()), current_statement_begin__, prog_reader__());
             }
         }
         params_r__ = writer__.data_r();
@@ -644,35 +644,45 @@ public:
                 else
                     shape.push_back(in__.scalar_lub_constrain((1 - stan::math::machine_precision()), 99));
             }
-            current_statement_begin__ = 98;
-            std::vector<local_scalar_t__> scale;
-            size_t scale_d_0_max__ = M_groups;
-            scale.reserve(scale_d_0_max__);
-            for (size_t d_0__ = 0; d_0__ < scale_d_0_max__; ++d_0__) {
+            current_statement_begin__ = 99;
+            std::vector<local_scalar_t__> median_time_to_response;
+            size_t median_time_to_response_d_0_max__ = M_groups;
+            median_time_to_response.reserve(median_time_to_response_d_0_max__);
+            for (size_t d_0__ = 0; d_0__ < median_time_to_response_d_0_max__; ++d_0__) {
                 if (jacobian__)
-                    scale.push_back(in__.scalar_lub_constrain(stan::math::machine_precision(), 99, lp__));
+                    median_time_to_response.push_back(in__.scalar_lub_constrain((1.0 / 30.0), 99, lp__));
                 else
-                    scale.push_back(in__.scalar_lub_constrain(stan::math::machine_precision(), 99));
+                    median_time_to_response.push_back(in__.scalar_lub_constrain((1.0 / 30.0), 99));
             }
             // transformed parameters
-            current_statement_begin__ = 106;
+            current_statement_begin__ = 107;
             validate_non_negative_index("p", "M_groups", M_groups);
             std::vector<local_scalar_t__> p(M_groups, local_scalar_t__(0));
             stan::math::initialize(p, DUMMY_VAR__);
             stan::math::fill(p, DUMMY_VAR__);
+            current_statement_begin__ = 108;
+            validate_non_negative_index("scale", "M_groups", M_groups);
+            std::vector<local_scalar_t__> scale(M_groups, local_scalar_t__(0));
+            stan::math::initialize(scale, DUMMY_VAR__);
+            stan::math::fill(scale, DUMMY_VAR__);
             // transformed parameters block statements
-            current_statement_begin__ = 107;
+            current_statement_begin__ = 110;
             for (int g = 1; g <= M_groups; ++g) {
-                current_statement_begin__ = 108;
+                current_statement_begin__ = 111;
                 stan::model::assign(p, 
                             stan::model::cons_list(stan::model::index_uni(g), stan::model::nil_index_list()), 
                             (1 / (1 + stan::math::exp(-(get_base1(logodds, g, "logodds", 1))))), 
                             "assigning variable p");
+                current_statement_begin__ = 112;
+                stan::model::assign(scale, 
+                            stan::model::cons_list(stan::model::index_uni(g), stan::model::nil_index_list()), 
+                            (get_base1(median_time_to_response, g, "median_time_to_response", 1) / pow(stan::math::log(2), (1 / get_base1(shape, g, "shape", 1)))), 
+                            "assigning variable scale");
             }
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 106;
+            current_statement_begin__ = 107;
             size_t p_k_0_max__ = M_groups;
             for (size_t k_0__ = 0; k_0__ < p_k_0_max__; ++k_0__) {
                 if (stan::math::is_uninitialized(p[k_0__])) {
@@ -686,49 +696,62 @@ public:
                 check_greater_or_equal(function__, "p[i_0__]", p[i_0__], 0);
                 check_less_or_equal(function__, "p[i_0__]", p[i_0__], 1);
             }
+            current_statement_begin__ = 108;
+            size_t scale_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
+                if (stan::math::is_uninitialized(scale[k_0__])) {
+                    std::stringstream msg__;
+                    msg__ << "Undefined transformed parameter: scale" << "[" << k_0__ << "]";
+                    stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable scale: ") + msg__.str()), current_statement_begin__, prog_reader__());
+                }
+            }
+            size_t scale_i_0_max__ = M_groups;
+            for (size_t i_0__ = 0; i_0__ < scale_i_0_max__; ++i_0__) {
+                check_greater_or_equal(function__, "scale[i_0__]", scale[i_0__], stan::math::machine_precision());
+            }
             // model body
             {
-            current_statement_begin__ = 117;
+            current_statement_begin__ = 121;
             int group_id(0);
             (void) group_id;  // dummy to suppress unused var warning
             stan::math::fill(group_id, std::numeric_limits<int>::min());
-            current_statement_begin__ = 120;
+            current_statement_begin__ = 124;
             for (int g = 1; g <= M_groups; ++g) {
-                current_statement_begin__ = 121;
+                current_statement_begin__ = 125;
                 lp_accum__.add(normal_log<propto__>(get_base1(logodds, g, "logodds", 1), get_base1(logodds_mean, g, "logodds_mean", 1), get_base1(logodds_sd, g, "logodds_sd", 1)));
                 if (get_base1(logodds, g, "logodds", 1) < get_base1(logodds_min, g, "logodds_min", 1)) lp_accum__.add(-std::numeric_limits<double>::infinity());
                 else if (get_base1(logodds, g, "logodds", 1) > get_base1(logodds_max, g, "logodds_max", 1)) lp_accum__.add(-std::numeric_limits<double>::infinity());
                 else lp_accum__.add(-log_diff_exp(normal_cdf_log(get_base1(logodds_max, g, "logodds_max", 1), get_base1(logodds_mean, g, "logodds_mean", 1), get_base1(logodds_sd, g, "logodds_sd", 1)), normal_cdf_log(get_base1(logodds_min, g, "logodds_min", 1), get_base1(logodds_mean, g, "logodds_mean", 1), get_base1(logodds_sd, g, "logodds_sd", 1))));
-                current_statement_begin__ = 122;
+                current_statement_begin__ = 126;
                 lp_accum__.add(normal_log<propto__>(get_base1(shape, g, "shape", 1), get_base1(shape_mean, g, "shape_mean", 1), get_base1(shape_sd, g, "shape_sd", 1)));
                 if (get_base1(shape, g, "shape", 1) < (1 - stan::math::machine_precision())) lp_accum__.add(-std::numeric_limits<double>::infinity());
                 else if (get_base1(shape, g, "shape", 1) > 99) lp_accum__.add(-std::numeric_limits<double>::infinity());
                 else lp_accum__.add(-log_diff_exp(normal_cdf_log(99, get_base1(shape_mean, g, "shape_mean", 1), get_base1(shape_sd, g, "shape_sd", 1)), normal_cdf_log((1 - stan::math::machine_precision()), get_base1(shape_mean, g, "shape_mean", 1), get_base1(shape_sd, g, "shape_sd", 1))));
-                current_statement_begin__ = 123;
-                lp_accum__.add(normal_log<propto__>(get_base1(scale, g, "scale", 1), get_base1(scale_mean, g, "scale_mean", 1), get_base1(scale_sd, g, "scale_sd", 1)));
-                if (get_base1(scale, g, "scale", 1) < stan::math::machine_precision()) lp_accum__.add(-std::numeric_limits<double>::infinity());
-                else if (get_base1(scale, g, "scale", 1) > 99) lp_accum__.add(-std::numeric_limits<double>::infinity());
-                else lp_accum__.add(-log_diff_exp(normal_cdf_log(99, get_base1(scale_mean, g, "scale_mean", 1), get_base1(scale_sd, g, "scale_sd", 1)), normal_cdf_log(stan::math::machine_precision(), get_base1(scale_mean, g, "scale_mean", 1), get_base1(scale_sd, g, "scale_sd", 1))));
+                current_statement_begin__ = 127;
+                lp_accum__.add(normal_log<propto__>(get_base1(median_time_to_response, g, "median_time_to_response", 1), get_base1(median_time_to_response_mean, g, "median_time_to_response_mean", 1), get_base1(median_time_to_response_sd, g, "median_time_to_response_sd", 1)));
+                if (get_base1(median_time_to_response, g, "median_time_to_response", 1) < stan::math::machine_precision()) lp_accum__.add(-std::numeric_limits<double>::infinity());
+                else if (get_base1(median_time_to_response, g, "median_time_to_response", 1) > 99) lp_accum__.add(-std::numeric_limits<double>::infinity());
+                else lp_accum__.add(-log_diff_exp(normal_cdf_log(99, get_base1(median_time_to_response_mean, g, "median_time_to_response_mean", 1), get_base1(median_time_to_response_sd, g, "median_time_to_response_sd", 1)), normal_cdf_log(stan::math::machine_precision(), get_base1(median_time_to_response_mean, g, "median_time_to_response_mean", 1), get_base1(median_time_to_response_sd, g, "median_time_to_response_sd", 1))));
             }
-            current_statement_begin__ = 127;
+            current_statement_begin__ = 131;
             for (int i = 1; i <= N_C; ++i) {
-                current_statement_begin__ = 128;
+                current_statement_begin__ = 132;
                 stan::math::assign(group_id, get_base1(group_id_C, i, "group_id_C", 1));
-                current_statement_begin__ = 129;
+                current_statement_begin__ = 133;
                 lp_accum__.add(stan::math::log((1 - get_base1(p, group_id, "p", 1))));
             }
-            current_statement_begin__ = 133;
+            current_statement_begin__ = 137;
             for (int i = 1; i <= N_A; ++i) {
-                current_statement_begin__ = 134;
+                current_statement_begin__ = 138;
                 stan::math::assign(group_id, get_base1(group_id_A, i, "group_id_A", 1));
-                current_statement_begin__ = 135;
+                current_statement_begin__ = 139;
                 lp_accum__.add(stan::math::log((get_base1(p, group_id, "p", 1) * (weibull_cdf(get_base1(dt2_A, i, "dt2_A", 1), get_base1(shape, group_id, "shape", 1), get_base1(scale, group_id, "scale", 1)) - weibull_cdf(get_base1(dt1_A, i, "dt1_A", 1), get_base1(shape, group_id, "shape", 1), get_base1(scale, group_id, "scale", 1))))));
             }
-            current_statement_begin__ = 143;
+            current_statement_begin__ = 147;
             for (int i = 1; i <= N_B; ++i) {
-                current_statement_begin__ = 144;
+                current_statement_begin__ = 148;
                 stan::math::assign(group_id, get_base1(group_id_B, i, "group_id_B", 1));
-                current_statement_begin__ = 145;
+                current_statement_begin__ = 149;
                 lp_accum__.add(stan::math::log(((1 - get_base1(p, group_id, "p", 1)) + (get_base1(p, group_id, "p", 1) * (1 - weibull_cdf(get_base1(dt1_B, i, "dt1_B", 1), get_base1(shape, group_id, "shape", 1), get_base1(scale, group_id, "scale", 1)))))));
             }
             }
@@ -754,8 +777,9 @@ public:
         names__.resize(0);
         names__.push_back("logodds");
         names__.push_back("shape");
-        names__.push_back("scale");
+        names__.push_back("median_time_to_response");
         names__.push_back("p");
+        names__.push_back("scale");
         names__.push_back("group_id");
         names__.push_back("subject_id");
         names__.push_back("gg");
@@ -770,6 +794,9 @@ public:
     void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
         dimss__.resize(0);
         std::vector<size_t> dims__;
+        dims__.resize(0);
+        dims__.push_back(M_groups);
+        dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(M_groups);
         dimss__.push_back(dims__);
@@ -842,15 +869,15 @@ public:
         for (size_t k_0__ = 0; k_0__ < shape_k_0_max__; ++k_0__) {
             vars__.push_back(shape[k_0__]);
         }
-        std::vector<double> scale;
-        size_t scale_d_0_max__ = M_groups;
-        scale.reserve(scale_d_0_max__);
-        for (size_t d_0__ = 0; d_0__ < scale_d_0_max__; ++d_0__) {
-            scale.push_back(in__.scalar_lub_constrain(stan::math::machine_precision(), 99));
+        std::vector<double> median_time_to_response;
+        size_t median_time_to_response_d_0_max__ = M_groups;
+        median_time_to_response.reserve(median_time_to_response_d_0_max__);
+        for (size_t d_0__ = 0; d_0__ < median_time_to_response_d_0_max__; ++d_0__) {
+            median_time_to_response.push_back(in__.scalar_lub_constrain((1.0 / 30.0), 99));
         }
-        size_t scale_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
-            vars__.push_back(scale[k_0__]);
+        size_t median_time_to_response_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
+            vars__.push_back(median_time_to_response[k_0__]);
         }
         double lp__ = 0.0;
         (void) lp__;  // dummy to suppress unused var warning
@@ -860,29 +887,44 @@ public:
         if (!include_tparams__ && !include_gqs__) return;
         try {
             // declare and define transformed parameters
-            current_statement_begin__ = 106;
+            current_statement_begin__ = 107;
             validate_non_negative_index("p", "M_groups", M_groups);
             std::vector<double> p(M_groups, double(0));
             stan::math::initialize(p, DUMMY_VAR__);
             stan::math::fill(p, DUMMY_VAR__);
+            current_statement_begin__ = 108;
+            validate_non_negative_index("scale", "M_groups", M_groups);
+            std::vector<double> scale(M_groups, double(0));
+            stan::math::initialize(scale, DUMMY_VAR__);
+            stan::math::fill(scale, DUMMY_VAR__);
             // do transformed parameters statements
-            current_statement_begin__ = 107;
+            current_statement_begin__ = 110;
             for (int g = 1; g <= M_groups; ++g) {
-                current_statement_begin__ = 108;
+                current_statement_begin__ = 111;
                 stan::model::assign(p, 
                             stan::model::cons_list(stan::model::index_uni(g), stan::model::nil_index_list()), 
                             (1 / (1 + stan::math::exp(-(get_base1(logodds, g, "logodds", 1))))), 
                             "assigning variable p");
+                current_statement_begin__ = 112;
+                stan::model::assign(scale, 
+                            stan::model::cons_list(stan::model::index_uni(g), stan::model::nil_index_list()), 
+                            (get_base1(median_time_to_response, g, "median_time_to_response", 1) / pow(stan::math::log(2), (1 / get_base1(shape, g, "shape", 1)))), 
+                            "assigning variable scale");
             }
             if (!include_gqs__ && !include_tparams__) return;
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 106;
+            current_statement_begin__ = 107;
             size_t p_i_0_max__ = M_groups;
             for (size_t i_0__ = 0; i_0__ < p_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "p[i_0__]", p[i_0__], 0);
                 check_less_or_equal(function__, "p[i_0__]", p[i_0__], 1);
+            }
+            current_statement_begin__ = 108;
+            size_t scale_i_0_max__ = M_groups;
+            for (size_t i_0__ = 0; i_0__ < scale_i_0_max__; ++i_0__) {
+                check_greater_or_equal(function__, "scale[i_0__]", scale[i_0__], stan::math::machine_precision());
             }
             // write transformed parameters
             if (include_tparams__) {
@@ -890,240 +932,244 @@ public:
                 for (size_t k_0__ = 0; k_0__ < p_k_0_max__; ++k_0__) {
                     vars__.push_back(p[k_0__]);
                 }
+                size_t scale_k_0_max__ = M_groups;
+                for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
+                    vars__.push_back(scale[k_0__]);
+                }
             }
             if (!include_gqs__) return;
             // declare and define generated quantities
-            current_statement_begin__ = 156;
+            current_statement_begin__ = 160;
             validate_non_negative_index("group_id", "N_all", N_all);
             std::vector<int> group_id(N_all, int(0));
             stan::math::fill(group_id, std::numeric_limits<int>::min());
-            current_statement_begin__ = 157;
+            current_statement_begin__ = 161;
             validate_non_negative_index("subject_id", "N_all", N_all);
             std::vector<int> subject_id(N_all, int(0));
             stan::math::fill(subject_id, std::numeric_limits<int>::min());
-            current_statement_begin__ = 158;
+            current_statement_begin__ = 162;
             int gg;
             (void) gg;  // dummy to suppress unused var warning
             stan::math::fill(gg, std::numeric_limits<int>::min());
-            current_statement_begin__ = 159;
+            current_statement_begin__ = 163;
             validate_non_negative_index("dt", "N_all", N_all);
             std::vector<double> dt(N_all, double(0));
             stan::math::initialize(dt, DUMMY_VAR__);
             stan::math::fill(dt, DUMMY_VAR__);
-            current_statement_begin__ = 160;
+            current_statement_begin__ = 164;
             validate_non_negative_index("dt1", "N_all", N_all);
             std::vector<double> dt1(N_all, double(0));
             stan::math::initialize(dt1, DUMMY_VAR__);
             stan::math::fill(dt1, DUMMY_VAR__);
-            current_statement_begin__ = 161;
+            current_statement_begin__ = 165;
             validate_non_negative_index("dt2", "N_all", N_all);
             std::vector<double> dt2(N_all, double(0));
             stan::math::initialize(dt2, DUMMY_VAR__);
             stan::math::fill(dt2, DUMMY_VAR__);
-            current_statement_begin__ = 163;
+            current_statement_begin__ = 167;
             double p_cond;
             (void) p_cond;  // dummy to suppress unused var warning
             stan::math::initialize(p_cond, DUMMY_VAR__);
             stan::math::fill(p_cond, DUMMY_VAR__);
             stan::math::assign(p_cond,0.0);
-            current_statement_begin__ = 164;
+            current_statement_begin__ = 168;
             double S_t;
             (void) S_t;  // dummy to suppress unused var warning
             stan::math::initialize(S_t, DUMMY_VAR__);
             stan::math::fill(S_t, DUMMY_VAR__);
             stan::math::assign(S_t,0.0);
-            current_statement_begin__ = 165;
+            current_statement_begin__ = 169;
             int offset;
             (void) offset;  // dummy to suppress unused var warning
             stan::math::fill(offset, std::numeric_limits<int>::min());
             stan::math::assign(offset,0);
-            current_statement_begin__ = 166;
+            current_statement_begin__ = 170;
             int idx;
             (void) idx;  // dummy to suppress unused var warning
             stan::math::fill(idx, std::numeric_limits<int>::min());
             // generated quantities statements
-            current_statement_begin__ = 169;
+            current_statement_begin__ = 173;
             for (int i = 1; i <= N_A; ++i) {
-                current_statement_begin__ = 170;
+                current_statement_begin__ = 174;
                 stan::math::assign(gg, get_base1(group_id_A, i, "group_id_A", 1));
-                current_statement_begin__ = 171;
+                current_statement_begin__ = 175;
                 stan::model::assign(group_id, 
                             stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
                             get_base1(group_id_A, i, "group_id_A", 1), 
                             "assigning variable group_id");
-                current_statement_begin__ = 172;
+                current_statement_begin__ = 176;
                 stan::model::assign(subject_id, 
                             stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
                             get_base1(subject_id_A, i, "subject_id_A", 1), 
                             "assigning variable subject_id");
-                current_statement_begin__ = 173;
+                current_statement_begin__ = 177;
                 stan::model::assign(dt, 
                             stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
                             ttweibull_rng(get_base1(shape, gg, "shape", 1), get_base1(scale, gg, "scale", 1), get_base1(dt1_A, i, "dt1_A", 1), get_base1(dt2_A, i, "dt2_A", 1), base_rng__, pstream__), 
                             "assigning variable dt");
-                current_statement_begin__ = 174;
+                current_statement_begin__ = 178;
                 stan::model::assign(dt1, 
                             stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
                             get_base1(dt1_A, i, "dt1_A", 1), 
                             "assigning variable dt1");
-                current_statement_begin__ = 175;
+                current_statement_begin__ = 179;
                 stan::model::assign(dt2, 
                             stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
                             get_base1(dt2_A, i, "dt2_A", 1), 
                             "assigning variable dt2");
             }
-            current_statement_begin__ = 177;
+            current_statement_begin__ = 181;
             stan::math::assign(offset, N_A);
-            current_statement_begin__ = 180;
+            current_statement_begin__ = 184;
             for (int i = 1; i <= N_B; ++i) {
-                current_statement_begin__ = 181;
+                current_statement_begin__ = 185;
                 stan::math::assign(gg, get_base1(group_id_B, i, "group_id_B", 1));
-                current_statement_begin__ = 182;
+                current_statement_begin__ = 186;
                 stan::math::assign(idx, (i + offset));
-                current_statement_begin__ = 183;
+                current_statement_begin__ = 187;
                 stan::model::assign(group_id, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             get_base1(group_id_B, i, "group_id_B", 1), 
                             "assigning variable group_id");
-                current_statement_begin__ = 184;
+                current_statement_begin__ = 188;
                 stan::model::assign(subject_id, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             get_base1(subject_id_B, i, "subject_id_B", 1), 
                             "assigning variable subject_id");
-                current_statement_begin__ = 186;
+                current_statement_begin__ = 190;
                 stan::math::assign(S_t, (1 - weibull_cdf(get_base1(dt1_B, i, "dt1_B", 1), get_base1(shape, gg, "shape", 1), get_base1(scale, gg, "scale", 1))));
-                current_statement_begin__ = 187;
+                current_statement_begin__ = 191;
                 stan::math::assign(p_cond, ((S_t * get_base1(p, gg, "p", 1)) / ((1 - get_base1(p, gg, "p", 1)) + (get_base1(p, gg, "p", 1) * S_t))));
-                current_statement_begin__ = 188;
+                current_statement_begin__ = 192;
                 if (as_bool(logical_eq(bernoulli_rng(p_cond, base_rng__), 1))) {
-                    current_statement_begin__ = 189;
+                    current_statement_begin__ = 193;
                     stan::model::assign(dt, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 tweibull_rng(get_base1(shape, gg, "shape", 1), get_base1(scale, gg, "scale", 1), get_base1(dt1_B, i, "dt1_B", 1), base_rng__, pstream__), 
                                 "assigning variable dt");
-                    current_statement_begin__ = 191;
+                    current_statement_begin__ = 195;
                     stan::model::assign(dt1, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 0, 
                                 "assigning variable dt1");
-                    current_statement_begin__ = 192;
+                    current_statement_begin__ = 196;
                     while (as_bool(logical_lt((get_base1(dt1, idx, "dt1", 1) + get_base1(visit_spacing, gg, "visit_spacing", 1)), get_base1(dt, idx, "dt", 1)))) {
-                        current_statement_begin__ = 193;
+                        current_statement_begin__ = 197;
                         stan::model::assign(dt1, 
                                     stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                     (stan::model::rvalue(dt1, stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), "dt1") + get_base1(visit_spacing, gg, "visit_spacing", 1)), 
                                     "assigning variable dt1");
                     }
-                    current_statement_begin__ = 195;
+                    current_statement_begin__ = 199;
                     stan::model::assign(dt2, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 (get_base1(dt1, idx, "dt1", 1) + get_base1(visit_spacing, gg, "visit_spacing", 1)), 
                                 "assigning variable dt2");
                 } else {
-                    current_statement_begin__ = 197;
+                    current_statement_begin__ = 201;
                     stan::model::assign(dt, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 stan::math::positive_infinity(), 
                                 "assigning variable dt");
-                    current_statement_begin__ = 198;
+                    current_statement_begin__ = 202;
                     stan::model::assign(dt1, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 stan::math::positive_infinity(), 
                                 "assigning variable dt1");
-                    current_statement_begin__ = 199;
+                    current_statement_begin__ = 203;
                     stan::model::assign(dt2, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 stan::math::positive_infinity(), 
                                 "assigning variable dt2");
                 }
             }
-            current_statement_begin__ = 202;
+            current_statement_begin__ = 206;
             stan::math::assign(offset, (offset + N_B));
-            current_statement_begin__ = 205;
+            current_statement_begin__ = 209;
             for (int i = 1; i <= N_C; ++i) {
-                current_statement_begin__ = 206;
+                current_statement_begin__ = 210;
                 stan::math::assign(idx, (i + offset));
-                current_statement_begin__ = 207;
+                current_statement_begin__ = 211;
                 stan::model::assign(group_id, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             get_base1(group_id_C, i, "group_id_C", 1), 
                             "assigning variable group_id");
-                current_statement_begin__ = 208;
+                current_statement_begin__ = 212;
                 stan::model::assign(subject_id, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             get_base1(subject_id_C, i, "subject_id_C", 1), 
                             "assigning variable subject_id");
-                current_statement_begin__ = 209;
+                current_statement_begin__ = 213;
                 stan::model::assign(dt, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             stan::math::positive_infinity(), 
                             "assigning variable dt");
-                current_statement_begin__ = 210;
+                current_statement_begin__ = 214;
                 stan::model::assign(dt1, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             stan::math::positive_infinity(), 
                             "assigning variable dt1");
-                current_statement_begin__ = 211;
+                current_statement_begin__ = 215;
                 stan::model::assign(dt2, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             stan::math::positive_infinity(), 
                             "assigning variable dt2");
             }
-            current_statement_begin__ = 213;
-            stan::math::assign(offset, (offset + N_C));
             current_statement_begin__ = 217;
+            stan::math::assign(offset, (offset + N_C));
+            current_statement_begin__ = 221;
             for (int i = 1; i <= N_D; ++i) {
-                current_statement_begin__ = 218;
+                current_statement_begin__ = 222;
                 stan::math::assign(gg, get_base1(group_id_D, i, "group_id_D", 1));
-                current_statement_begin__ = 219;
+                current_statement_begin__ = 223;
                 stan::math::assign(idx, (i + offset));
-                current_statement_begin__ = 220;
+                current_statement_begin__ = 224;
                 stan::model::assign(group_id, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             get_base1(group_id_D, i, "group_id_D", 1), 
                             "assigning variable group_id");
-                current_statement_begin__ = 221;
+                current_statement_begin__ = 225;
                 stan::model::assign(subject_id, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             get_base1(subject_id_D, i, "subject_id_D", 1), 
                             "assigning variable subject_id");
-                current_statement_begin__ = 222;
+                current_statement_begin__ = 226;
                 if (as_bool(logical_eq(bernoulli_rng(get_base1(p, gg, "p", 1), base_rng__), 1))) {
-                    current_statement_begin__ = 223;
+                    current_statement_begin__ = 227;
                     stan::model::assign(dt, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 weibull_rng(get_base1(shape, gg, "shape", 1), get_base1(scale, gg, "scale", 1), base_rng__), 
                                 "assigning variable dt");
-                    current_statement_begin__ = 225;
+                    current_statement_begin__ = 229;
                     stan::model::assign(dt1, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 0, 
                                 "assigning variable dt1");
-                    current_statement_begin__ = 226;
+                    current_statement_begin__ = 230;
                     while (as_bool(logical_lt((get_base1(dt1, idx, "dt1", 1) + get_base1(visit_spacing, gg, "visit_spacing", 1)), get_base1(dt, idx, "dt", 1)))) {
-                        current_statement_begin__ = 227;
+                        current_statement_begin__ = 231;
                         stan::model::assign(dt1, 
                                     stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                     (stan::model::rvalue(dt1, stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), "dt1") + get_base1(visit_spacing, gg, "visit_spacing", 1)), 
                                     "assigning variable dt1");
                     }
-                    current_statement_begin__ = 229;
+                    current_statement_begin__ = 233;
                     stan::model::assign(dt2, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 (get_base1(dt1, idx, "dt1", 1) + get_base1(visit_spacing, gg, "visit_spacing", 1)), 
                                 "assigning variable dt2");
                 } else {
-                    current_statement_begin__ = 231;
+                    current_statement_begin__ = 235;
                     stan::model::assign(dt, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 stan::math::positive_infinity(), 
                                 "assigning variable dt");
-                    current_statement_begin__ = 232;
+                    current_statement_begin__ = 236;
                     stan::model::assign(dt1, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 stan::math::positive_infinity(), 
                                 "assigning variable dt1");
-                    current_statement_begin__ = 233;
+                    current_statement_begin__ = 237;
                     stan::model::assign(dt2, 
                                 stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                                 stan::math::positive_infinity(), 
@@ -1131,7 +1177,7 @@ public:
                 }
             }
             // validate, write generated quantities
-            current_statement_begin__ = 156;
+            current_statement_begin__ = 160;
             size_t group_id_i_0_max__ = N_all;
             for (size_t i_0__ = 0; i_0__ < group_id_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "group_id[i_0__]", group_id[i_0__], 1);
@@ -1140,7 +1186,7 @@ public:
             for (size_t k_0__ = 0; k_0__ < group_id_k_0_max__; ++k_0__) {
                 vars__.push_back(group_id[k_0__]);
             }
-            current_statement_begin__ = 157;
+            current_statement_begin__ = 161;
             size_t subject_id_i_0_max__ = N_all;
             for (size_t i_0__ = 0; i_0__ < subject_id_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "subject_id[i_0__]", subject_id[i_0__], 1);
@@ -1149,10 +1195,10 @@ public:
             for (size_t k_0__ = 0; k_0__ < subject_id_k_0_max__; ++k_0__) {
                 vars__.push_back(subject_id[k_0__]);
             }
-            current_statement_begin__ = 158;
+            current_statement_begin__ = 162;
             check_greater_or_equal(function__, "gg", gg, 1);
             vars__.push_back(gg);
-            current_statement_begin__ = 159;
+            current_statement_begin__ = 163;
             size_t dt_i_0_max__ = N_all;
             for (size_t i_0__ = 0; i_0__ < dt_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "dt[i_0__]", dt[i_0__], 0);
@@ -1161,7 +1207,7 @@ public:
             for (size_t k_0__ = 0; k_0__ < dt_k_0_max__; ++k_0__) {
                 vars__.push_back(dt[k_0__]);
             }
-            current_statement_begin__ = 160;
+            current_statement_begin__ = 164;
             size_t dt1_i_0_max__ = N_all;
             for (size_t i_0__ = 0; i_0__ < dt1_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "dt1[i_0__]", dt1[i_0__], 0);
@@ -1170,7 +1216,7 @@ public:
             for (size_t k_0__ = 0; k_0__ < dt1_k_0_max__; ++k_0__) {
                 vars__.push_back(dt1[k_0__]);
             }
-            current_statement_begin__ = 161;
+            current_statement_begin__ = 165;
             size_t dt2_i_0_max__ = N_all;
             for (size_t i_0__ = 0; i_0__ < dt2_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "dt2[i_0__]", dt2[i_0__], 0);
@@ -1179,13 +1225,13 @@ public:
             for (size_t k_0__ = 0; k_0__ < dt2_k_0_max__; ++k_0__) {
                 vars__.push_back(dt2[k_0__]);
             }
-            current_statement_begin__ = 163;
+            current_statement_begin__ = 167;
             vars__.push_back(p_cond);
-            current_statement_begin__ = 164;
+            current_statement_begin__ = 168;
             vars__.push_back(S_t);
-            current_statement_begin__ = 165;
+            current_statement_begin__ = 169;
             vars__.push_back(offset);
-            current_statement_begin__ = 166;
+            current_statement_begin__ = 170;
             vars__.push_back(idx);
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -1229,10 +1275,10 @@ public:
             param_name_stream__ << "shape" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t scale_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
+        size_t median_time_to_response_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "scale" << '.' << k_0__ + 1;
+            param_name_stream__ << "median_time_to_response" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         if (!include_gqs__ && !include_tparams__) return;
@@ -1241,6 +1287,12 @@ public:
             for (size_t k_0__ = 0; k_0__ < p_k_0_max__; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "p" << '.' << k_0__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
+            size_t scale_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "scale" << '.' << k_0__ + 1;
                 param_names__.push_back(param_name_stream__.str());
             }
         }
@@ -1307,10 +1359,10 @@ public:
             param_name_stream__ << "shape" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t scale_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
+        size_t median_time_to_response_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "scale" << '.' << k_0__ + 1;
+            param_name_stream__ << "median_time_to_response" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         if (!include_gqs__ && !include_tparams__) return;
@@ -1319,6 +1371,12 @@ public:
             for (size_t k_0__ = 0; k_0__ < p_k_0_max__; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "p" << '.' << k_0__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
+            size_t scale_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < scale_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "scale" << '.' << k_0__ + 1;
                 param_names__.push_back(param_name_stream__.str());
             }
         }

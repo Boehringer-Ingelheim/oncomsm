@@ -114,8 +114,11 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
 
 
 .tbl_to_stan_data.IndependentPoissonRecruitmentModel <- function(model, tbl_data) {
+  assertthat::assert_that(
+    all(tbl_data$group_id <= length(attr(model, "group_id"))) # already converted to factor
+  )
   lst_stan_data <- list(
-    M_groups = length(unique(tbl_data$group_id))
+    M_groups = length(attr(model, "group_id"))
   )
   # observed data
   tmp <- dplyr::filter(tbl_data, !is.na(.data$t_recruitment))

@@ -14,8 +14,8 @@ independent_mixture_cure_rate_model(
   logodds_max = rep(Inf, length(group_id)),
   shape_mean,
   shape_sd,
-  scale_mean,
-  scale_sd,
+  median_time_to_response_mean,
+  median_time_to_response_sd,
   visit_spacing
 )
 
@@ -35,7 +35,7 @@ independent_mixture_cure_rate_model(
 
 \method{plot}{IndependentMixtureCureRateModel}(
   x,
-  n = rep(1L, length(attr(model, "group_id"))),
+  n = rep(1L, length(attr(x, "group_id"))),
   nsim = 10000,
   seed = NULL,
   ...
@@ -56,9 +56,9 @@ independent_mixture_cure_rate_model(
 
 \item{shape_sd}{numeric vector with the standard deviations of the normal prior on the shape parameter of the Weibull distribution for time to response}
 
-\item{scale_mean}{numeric vector with the means of the normal prior on the scale parameter of the Weibull distribution for time to response}
+\item{median_time_to_response_mean}{numeric vector with the means of the normal prior on the median time to response}
 
-\item{scale_sd}{numeric vector with the standard deviations of the normal prior on the scale parameter of the Weibull distribution for time to response}
+\item{median_time_to_response_sd}{numeric vector with the standard deviations of the normal prior on the median for time to response}
 
 \item{visit_spacing}{vector of deterministic spacing between future visits (in months)}
 }

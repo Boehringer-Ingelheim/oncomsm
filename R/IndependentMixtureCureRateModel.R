@@ -9,8 +9,8 @@
 #' @param logodds_max numeric vector with the maximal logodds per group
 #' @param shape_mean numeric vector with the means of the normal prior on the shape parameter of the Weibull distribution for time to response
 #' @param shape_sd numeric vector with the standard deviations of the normal prior on the shape parameter of the Weibull distribution for time to response
-#' @param scale_mean numeric vector with the means of the normal prior on the scale parameter of the Weibull distribution for time to response
-#' @param scale_sd numeric vector with the standard deviations of the normal prior on the scale parameter of the Weibull distribution for time to response
+#' @param median_time_to_response_mean numeric vector with the means of the normal prior on the median time to response
+#' @param median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the median for time to response
 #' @param visit_spacing vector of deterministic spacing between future visits (in months)
 #'
 #' @return An object of class "IndependentMixtureCureRateModel" holding all relevant
@@ -23,7 +23,7 @@ independent_mixture_cure_rate_model <- function(
   group_id,
   logodds_mean, logodds_sd, logodds_min = rep(-Inf, length(group_id)), logodds_max = rep(Inf, length(group_id)), # (truncated) normal prior on log(odds)
   shape_mean, shape_sd, # normal prior for Weibull alpha parameter (shape)
-  scale_mean, scale_sd, # normal prior for Weibull scale parameter
+  median_time_to_response_mean, median_time_to_response_sd, # normal prior for Weibull scale parameter
   visit_spacing # (deterministic) spacing between (future) visits
 ) {
   res <- as.list(environment()) # store all input parameters
@@ -102,8 +102,8 @@ draw_samples.IndependentMixtureCureRateModel <- function(
       init = function() {
         list( # initialize to parameter means
           shape = model$shape_mean,
-          scale = model$scale_mean,
-          theta = model$logodds_mean
+          median_time_to_response = model$median_time_to_response_mean,
+          logodds = model$logodds_mean
         )
       },
       verbose = verbose, show_messages = show_messages, refresh = refresh, ...
@@ -139,8 +139,11 @@ draw_samples.IndependentMixtureCureRateModel <- function(
 
 
 .tbl_to_stan_data.IndependentMixtureCureRateModel <- function(model, tbl_data) {
+  assertthat::assert_that(
+    all(tbl_data$group_id <= length(attr(model, "group_id"))) # already converted to factor
+  )
   lst_stan_data <- list(
-    M_groups = length(unique(tbl_data$group_id))
+    M_groups = length(attr(model, "group_id"))
   )
   # interval censored data
   tmp <- dplyr::filter(tbl_data, is.finite(.data$dt1) & is.finite(.data$dt2))

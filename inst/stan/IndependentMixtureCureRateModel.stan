@@ -76,9 +76,9 @@ data {
   // alpha (weibull shape)
   real shape_mean[M_groups];
   real<lower=machine_precision()> shape_sd[M_groups];
-  // sigma (weibull scale)
-  real scale_mean[M_groups];
-  real<lower=machine_precision()> scale_sd[M_groups];
+  // weibull median
+  real median_time_to_response_mean[M_groups];
+  real<lower=machine_precision()> median_time_to_response_sd[M_groups];
 
 }
 
@@ -95,7 +95,8 @@ parameters {
 
   real logodds[M_groups];
   real<lower=1-machine_precision(),upper=99> shape[M_groups]; // shape aka k, important to bound from 0
-  real<lower=machine_precision(),upper=99> scale[M_groups]; // scale aka lambda
+  //real<lower=machine_precision(),upper=99> scale[M_groups]; // scale aka lambda
+  real<lower=1.0/30.0,upper=99> median_time_to_response[M_groups];
 
 }
 
@@ -104,8 +105,11 @@ parameters {
 transformed parameters {
 
   real<lower=0,upper=1> p[M_groups];
+  real<lower=machine_precision()> scale[M_groups];
+
   for (g in 1:M_groups) {
     p[g] = 1/(1 + exp(-logodds[g]));
+    scale[g] = median_time_to_response[g]/(log(2)^(1/shape[g]));
   }
 
 }
@@ -120,7 +124,7 @@ model {
   for (g in 1:M_groups) {
     logodds[g] ~ normal(logodds_mean[g], logodds_sd[g]) T[logodds_min[g],logodds_max[g]];
     shape[g] ~ normal(shape_mean[g], shape_sd[g]) T[1 - machine_precision(),99];
-    scale[g] ~ normal(scale_mean[g], scale_sd[g]) T[machine_precision(),99];
+    median_time_to_response[g] ~ normal(median_time_to_response_mean[g], median_time_to_response_sd[g]) T[machine_precision(),99];
   }
 
   // likelihood for the definite non-responders
