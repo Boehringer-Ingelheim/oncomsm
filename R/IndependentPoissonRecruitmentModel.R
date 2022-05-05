@@ -22,6 +22,7 @@ independent_poisson_recruitment_model <- function(
 #' @include draw_samples.R util.R
 #'
 #' @describeIn IndependentPoissonRecruitmentModel draw samples
+#' @export
 draw_samples.IndependentPoissonRecruitmentModel <- function(
   model,
   data = NULL,

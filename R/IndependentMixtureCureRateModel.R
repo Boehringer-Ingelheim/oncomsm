@@ -40,6 +40,7 @@ independent_mixture_cure_rate_model <- function(
 #' @include draw_samples.R util.R
 #'
 #' @describeIn IndependentMixtureCureRateModel draw samples
+#' @export
 draw_samples.IndependentMixtureCureRateModel <- function(
   model,
   data = NULL,

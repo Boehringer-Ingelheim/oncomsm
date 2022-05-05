@@ -15,7 +15,9 @@ model <- function(tte_model, recruitement_model) {
 #' @include draw_samples.R
 #'
 #' @export
-draw_samples.OverallModel <- function(model, data = NULL, n = NULL, nsim = 1000L, now = NULL, seed = NULL, ...) {
+draw_samples.OverallModel <- function(
+  model, data = NULL, n = NULL, nsim = 1000L, now = NULL, seed = NULL, ...
+) {
   if (is.null(now) & is.null(data))
     now <- 0
   if (is.null(now) & !is.null(data))
