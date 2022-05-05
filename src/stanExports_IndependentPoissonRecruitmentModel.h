@@ -454,7 +454,7 @@ public:
         names__.push_back("rate");
         names__.push_back("group_id");
         names__.push_back("subject_id");
-        names__.push_back("t");
+        names__.push_back("t_recruitment");
         names__.push_back("offset");
         names__.push_back("idx");
         names__.push_back("max_wait");
@@ -548,10 +548,10 @@ public:
             std::vector<int> subject_id(N_total, int(0));
             stan::math::fill(subject_id, std::numeric_limits<int>::min());
             current_statement_begin__ = 107;
-            validate_non_negative_index("t", "N_total", N_total);
-            std::vector<double> t(N_total, double(0));
-            stan::math::initialize(t, DUMMY_VAR__);
-            stan::math::fill(t, DUMMY_VAR__);
+            validate_non_negative_index("t_recruitment", "N_total", N_total);
+            std::vector<double> t_recruitment(N_total, double(0));
+            stan::math::initialize(t_recruitment, DUMMY_VAR__);
+            stan::math::fill(t_recruitment, DUMMY_VAR__);
             current_statement_begin__ = 108;
             int offset;
             (void) offset;  // dummy to suppress unused var warning
@@ -593,14 +593,14 @@ public:
                             get_base1(subject_id_old, i, "subject_id_old", 1), 
                             "assigning variable subject_id");
                 current_statement_begin__ = 121;
-                stan::model::assign(t, 
+                stan::model::assign(t_recruitment, 
                             stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
                             get_base1(t_old, i, "t_old", 1), 
-                            "assigning variable t");
+                            "assigning variable t_recruitment");
                 current_statement_begin__ = 122;
                 stan::model::assign(t_last, 
                             stan::model::cons_list(stan::model::index_uni(get_base1(group_id, i, "group_id", 1)), stan::model::nil_index_list()), 
-                            stan::math::fmax(get_base1(t_last, get_base1(group_id, i, "group_id", 1), "t_last", 1), get_base1(t, i, "t", 1)), 
+                            stan::math::fmax(get_base1(t_last, get_base1(group_id, i, "group_id", 1), "t_last", 1), get_base1(t_recruitment, i, "t_recruitment", 1)), 
                             "assigning variable t_last");
             }
             current_statement_begin__ = 124;
@@ -622,14 +622,14 @@ public:
                 current_statement_begin__ = 131;
                 stan::math::assign(max_wait, get_base1(maximal_recruitment_interval, get_base1(group_id, idx, "group_id", 1), "maximal_recruitment_interval", 1));
                 current_statement_begin__ = 132;
-                stan::model::assign(t, 
+                stan::model::assign(t_recruitment, 
                             stan::model::cons_list(stan::model::index_uni(idx), stan::model::nil_index_list()), 
                             (get_base1(t_last, get_base1(group_id, idx, "group_id", 1), "t_last", 1) + ttexponential_rng(get_base1(rate, get_base1(group_id, idx, "group_id", 1), "rate", 1), stan::math::fmax(0, (now - get_base1(t_last, get_base1(group_id, idx, "group_id", 1), "t_last", 1))), max_wait, base_rng__, pstream__)), 
-                            "assigning variable t");
+                            "assigning variable t_recruitment");
                 current_statement_begin__ = 133;
                 stan::model::assign(t_last, 
                             stan::model::cons_list(stan::model::index_uni(get_base1(group_id, idx, "group_id", 1)), stan::model::nil_index_list()), 
-                            stan::math::fmax(get_base1(t_last, get_base1(group_id, idx, "group_id", 1), "t_last", 1), get_base1(t, idx, "t", 1)), 
+                            stan::math::fmax(get_base1(t_last, get_base1(group_id, idx, "group_id", 1), "t_last", 1), get_base1(t_recruitment, idx, "t_recruitment", 1)), 
                             "assigning variable t_last");
             }
             // validate, write generated quantities
@@ -652,13 +652,13 @@ public:
                 vars__.push_back(subject_id[k_0__]);
             }
             current_statement_begin__ = 107;
-            size_t t_i_0_max__ = N_total;
-            for (size_t i_0__ = 0; i_0__ < t_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "t[i_0__]", t[i_0__], 0);
+            size_t t_recruitment_i_0_max__ = N_total;
+            for (size_t i_0__ = 0; i_0__ < t_recruitment_i_0_max__; ++i_0__) {
+                check_greater_or_equal(function__, "t_recruitment[i_0__]", t_recruitment[i_0__], 0);
             }
-            size_t t_k_0_max__ = N_total;
-            for (size_t k_0__ = 0; k_0__ < t_k_0_max__; ++k_0__) {
-                vars__.push_back(t[k_0__]);
+            size_t t_recruitment_k_0_max__ = N_total;
+            for (size_t k_0__ = 0; k_0__ < t_recruitment_k_0_max__; ++k_0__) {
+                vars__.push_back(t_recruitment[k_0__]);
             }
             current_statement_begin__ = 108;
             vars__.push_back(offset);
@@ -729,10 +729,10 @@ public:
             param_name_stream__ << "subject_id" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t t_k_0_max__ = N_total;
-        for (size_t k_0__ = 0; k_0__ < t_k_0_max__; ++k_0__) {
+        size_t t_recruitment_k_0_max__ = N_total;
+        for (size_t k_0__ = 0; k_0__ < t_recruitment_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "t" << '.' << k_0__ + 1;
+            param_name_stream__ << "t_recruitment" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         param_name_stream__.str(std::string());
@@ -783,10 +783,10 @@ public:
             param_name_stream__ << "subject_id" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t t_k_0_max__ = N_total;
-        for (size_t k_0__ = 0; k_0__ < t_k_0_max__; ++k_0__) {
+        size_t t_recruitment_k_0_max__ = N_total;
+        for (size_t k_0__ = 0; k_0__ < t_recruitment_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "t" << '.' << k_0__ + 1;
+            param_name_stream__ << "t_recruitment" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         param_name_stream__.str(std::string());

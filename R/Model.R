@@ -18,9 +18,10 @@ model <- function(tte_model, recruitement_model) {
 draw_samples.OverallModel <- function(
   model, data = NULL, n = NULL, nsim = 1000L, now = NULL, seed = NULL, ...
 ) {
-  if (is.null(now) & is.null(data))
+  nodata <- is.null(data) | all(is.na(data$t_recruitment))
+  if (is.null(now) & nodata)
     now <- 0
-  if (is.null(now) & !is.null(data) & any(!is.na(data$t_recruitment)))
+  if (is.null(now) & !nodata)
     now <- max(data$t_recruitment)
   tbl_responses <- draw_samples(
     model$tte_model,

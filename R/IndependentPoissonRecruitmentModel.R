@@ -95,7 +95,7 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
   tbl_res <- dplyr::bind_cols(
     extract_col_from_stan(res, "group_id"),
     extract_col_from_stan(res, "subject_id") %>% dplyr::select(-.data$iter),
-    extract_col_from_stan(res, "t") %>% dplyr::select(-.data$iter)
+    extract_col_from_stan(res, "t_recruitment") %>% dplyr::select(-.data$iter)
   ) %>%
     dplyr::filter(
       .data$iter <= nsim # prune to intended number of samples
