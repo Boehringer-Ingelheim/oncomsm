@@ -167,7 +167,7 @@ plot.IndependentPoissonRecruitmentModel <- function(
 
   p2 <- draw_samples(x, n = n, nsim = nsim, seed = seed, ...) %>%
     group_by(group_id, .data$iter) %>%
-    summarize(`end time [months]` = max(t)) %>%
+    summarize(`end time [months]` = max(t_recruitment)) %>%
     ggplot() +
     aes(`end time [months]`) +
     geom_histogram(bins = 25) +

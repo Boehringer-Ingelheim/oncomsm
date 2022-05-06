@@ -35,6 +35,8 @@ test_that("can create IndependentMixtureCureRateModel for single arm", {
     nonresponder_weibull_shape = 5
   )
 
+  plot(mdl, n = 30)
+
   tmp <- draw_samples(mdl, visits_to_tte(tbl_data))
 
   tmp2 <- draw_samples(
