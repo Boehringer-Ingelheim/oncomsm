@@ -93,8 +93,8 @@ draw_samples.IndependentMixtureCureRateModel <- function(
     as.list(model),
     .tbl_to_stan_data(model, data)
   )
-  wrn <- list() # container for sampler warnings
-  suppressWarnings(withCallingHandlers({
+  #wrn <- list() # container for sampler warnings
+  #suppressWarnings(withCallingHandlers({
     res <- rstan::sampling(
       attr(model, "stanmodel"),
       data = stan_data,
@@ -110,20 +110,20 @@ draw_samples.IndependentMixtureCureRateModel <- function(
       },
       verbose = verbose, show_messages = show_messages, refresh = refresh, ...
     )
-  },
-  warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
-  ))
+  #},
+  #warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
+  #))
   if (return_raw_stan_output) { # return stan samples directly
-    attr(res, "stan_warnings") <- wrn
+    #attr(res, "stan_warnings") <- wrn
     return(res)
   }
   tbl_res <- dplyr::bind_cols(
-    extract_col_from_stan(res, "group_id"),
-    extract_col_from_stan(res, "subject_id") %>% dplyr::select(-.data$iter),
-    extract_col_from_stan(res, "dt1") %>% dplyr::select(-.data$iter),
-    extract_col_from_stan(res, "dt2") %>% dplyr::select(-.data$iter),
-    extract_col_from_stan(res, "dt") %>% dplyr::select(-.data$iter)
-  ) %>%
+      extract_col_from_stan(res, "group_id"),
+      extract_col_from_stan(res, "subject_id") %>% dplyr::select(-.data$iter),
+      extract_col_from_stan(res, "dt1") %>% dplyr::select(-.data$iter),
+      extract_col_from_stan(res, "dt2") %>% dplyr::select(-.data$iter),
+      extract_col_from_stan(res, "dt") %>% dplyr::select(-.data$iter)
+    ) %>%
     dplyr::filter(
       .data$iter <= nsim # prune to intended number of samples
     )
@@ -134,7 +134,7 @@ draw_samples.IndependentMixtureCureRateModel <- function(
   tbl_res$subject_id <- tbl_res$subject_id %>%
     factor(levels = 1:length(subject_id_lvls), labels = subject_id_lvls) %>%
     as.character()
-  attr(tbl_res, "stan_warnings") <- wrn
+  #attr(tbl_res, "stan_warnings") <- wrn
   return(tbl_res)
 }
 

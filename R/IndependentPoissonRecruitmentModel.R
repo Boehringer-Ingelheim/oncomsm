@@ -52,7 +52,6 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
   # generate seed if none was specified
   if (is.null(seed))
     seed <- sample.int(.Machine$integer.max, 1)
-  wrn <- list() # container for sampler warnings
   # convert factors to integers and save levels for mapping back
   data$group_id <- factor(data$group_id, levels = attr(model, "group_id"))
   group_id_lvls <- levels(data$group_id)
@@ -71,7 +70,8 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
       now = now
     )
   )
-  suppressWarnings(withCallingHandlers({
+  #wrn <- list() # container for sampler warnings
+  #suppressWarnings(withCallingHandlers({
     res <- rstan::sampling(
       attr(model, "stanmodel"),
       data = stan_data,
@@ -85,18 +85,18 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
       },
       verbose = verbose, show_messages = show_messages, refresh = refresh, ...
     )
-  },
-  warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
-  ))
+  #},
+  #warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
+  #))
   if (return_raw_stan_output) { # return stan samples directly
-    attr(res, "stan_warnings") <- wrn
+    #attr(res, "stan_warnings") <- wrn
     return(res)
   }
   tbl_res <- dplyr::bind_cols(
-    extract_col_from_stan(res, "group_id"),
-    extract_col_from_stan(res, "subject_id") %>% dplyr::select(-.data$iter),
-    extract_col_from_stan(res, "t_recruitment") %>% dplyr::select(-.data$iter)
-  ) %>%
+      extract_col_from_stan(res, "group_id"),
+      extract_col_from_stan(res, "subject_id") %>% dplyr::select(-.data$iter),
+      extract_col_from_stan(res, "t_recruitment") %>% dplyr::select(-.data$iter)
+    ) %>%
     dplyr::filter(
       .data$iter <= nsim # prune to intended number of samples
     )
@@ -107,7 +107,7 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
   tbl_res$subject_id <- tbl_res$subject_id %>%
     factor(levels = 1:length(subject_id_lvls), labels = subject_id_lvls) %>%
     as.character()
-  attr(tbl_res, "stan_warnings") <- wrn
+  # attr(tbl_res, "stan_warnings") <- wrn
   return(tbl_res)
 }
 
