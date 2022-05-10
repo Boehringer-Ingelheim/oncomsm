@@ -40,11 +40,13 @@ draw_samples.OverallModel <- function(
     seed = seed,
     ...
   )
-  dplyr::full_join(
+  res <- dplyr::full_join(
     tbl_responses,
     tbl_recruitment,
     by = c("group_id", "subject_id", "iter")
   )
+  assertthat::assert_that(all(complete.cases(res)), msg = "predictive sample contains missing value")
+  res
 }
 
 
