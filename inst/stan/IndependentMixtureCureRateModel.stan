@@ -6,20 +6,13 @@ functions {
     real u;
     real x;
     p1 = weibull_cdf(t1, alpha, sigma);
-    if (1 - p1 < 1e-3) {
-      // unstable, simply use lower boundary
-      return t1;
-    }
     p2 = weibull_cdf(t2, alpha, sigma);
-    if (1 - p2 < 1e-3) {
-      // unstable, simply use upper boundary
-      return t2;
+    u = uniform_rng(p1, p2);
+    if (u < 1e-4) {
+      u = 1e-4;
     }
-    if (p2 - p1 < 1e-3) {
-      // unstable, simply use midpoint
-      u = (p1 + p2)/2;
-    } else {
-      u = uniform_rng(p1, p2);
+    if (u > 1 - 1e-4) {
+      u = 1 - 1e-4;
     }
     x = sigma * (-log1m(u))^(1/alpha);
     return x;

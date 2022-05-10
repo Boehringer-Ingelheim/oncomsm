@@ -78,7 +78,7 @@ draw_samples.IndependentMixtureCureRateModel <- function(
   if (is.null(seed))
     seed <- sample.int(.Machine$integer.max, 1)
   # convert factors to integers and save levels for mapping back
-  data$group_id <- factor(data$group_id, levels = unique(data$group_id))
+  data$group_id <- factor(data$group_id, levels = attr(model, "group_id"))
   group_id_lvls <- levels(data$group_id)
   # make sure group ids in data are compatible with model
   assertthat::assert_that(all(

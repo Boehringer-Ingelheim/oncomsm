@@ -16,6 +16,7 @@ independent_mixture_cure_rate_model(
   shape_sd,
   median_time_to_response_mean,
   median_time_to_response_sd,
+  max_time_to_response,
   visit_spacing
 )
 
@@ -59,6 +60,8 @@ independent_mixture_cure_rate_model(
 \item{median_time_to_response_mean}{numeric vector with the means of the normal prior on the median time to response}
 
 \item{median_time_to_response_sd}{numeric vector with the standard deviations of the normal prior on the median for time to response}
+
+\item{max_time_to_response}{numeric vector with the maximal time to response per group}
 
 \item{visit_spacing}{vector of deterministic spacing between future visits (in months)}
 }
