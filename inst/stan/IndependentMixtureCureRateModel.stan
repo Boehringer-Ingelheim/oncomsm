@@ -7,13 +7,13 @@ functions {
     real x;
     p1 = weibull_cdf(t1, alpha, sigma);
     p2 = weibull_cdf(t2, alpha, sigma);
-    u = uniform_rng(p1, p2);
-    if (u < 1e-4) {
-      u = 1e-4;
+    if (p2 - p1 < 1e-4){
+      u = p1;
+    } else {
+      u = uniform_rng(p1, p2);
     }
-    if (u > 1 - 1e-4) {
-      u = 1 - 1e-4;
-    }
+    u = fmax(u, 1e-4);
+    u = fmin(u, 1 - 1e-4);
     x = sigma * (-log1m(u))^(1/alpha);
     return x;
   }

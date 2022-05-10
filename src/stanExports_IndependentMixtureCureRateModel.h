@@ -62,17 +62,17 @@ ttweibull_rng(const T0__& alpha,
         current_statement_begin__ = 9;
         stan::math::assign(p2, weibull_cdf(t2, alpha, sigma));
         current_statement_begin__ = 10;
-        stan::math::assign(u, uniform_rng(p1, p2, base_rng__));
-        current_statement_begin__ = 11;
-        if (as_bool(logical_lt(u, 1e-4))) {
-            current_statement_begin__ = 12;
-            stan::math::assign(u, 1e-4);
+        if (as_bool(logical_lt((p2 - p1), 1e-4))) {
+            current_statement_begin__ = 11;
+            stan::math::assign(u, p1);
+        } else {
+            current_statement_begin__ = 13;
+            stan::math::assign(u, uniform_rng(p1, p2, base_rng__));
         }
-        current_statement_begin__ = 14;
-        if (as_bool(logical_gt(u, (1 - 1e-4)))) {
-            current_statement_begin__ = 15;
-            stan::math::assign(u, (1 - 1e-4));
-        }
+        current_statement_begin__ = 15;
+        stan::math::assign(u, stan::math::fmax(u, 1e-4));
+        current_statement_begin__ = 16;
+        stan::math::assign(u, stan::math::fmin(u, (1 - 1e-4)));
         current_statement_begin__ = 17;
         stan::math::assign(x, (sigma * pow(-(log1m(u)), (1 / alpha))));
         current_statement_begin__ = 18;

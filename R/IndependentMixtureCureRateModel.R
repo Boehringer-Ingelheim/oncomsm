@@ -127,6 +127,9 @@ draw_samples.IndependentMixtureCureRateModel <- function(
     dplyr::filter(
       .data$iter <= nsim # prune to intended number of samples
     )
+  if (any(is.na(tbl_res$subject_id))) {
+    browser()
+  }
   # map discrete variables back to character
   tbl_res$group_id <- tbl_res$group_id %>%
     factor(levels = 1:length(group_id_lvls), labels = group_id_lvls) %>%
