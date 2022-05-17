@@ -22,7 +22,7 @@
 #' @export
 independent_mixture_cure_rate_model <- function(
   group_id,
-  logodds_mean, logodds_sd, logodds_min = rep(-Inf, length(group_id)), logodds_max = rep(Inf, length(group_id)), # (truncated) normal prior on log(odds)
+  logodds_mean, logodds_sd, logodds_min = rep(logodds(.001), length(group_id)), logodds_max = rep(logodds(.999), length(group_id)), # (truncated) normal prior on log(odds)
   shape_mean, shape_sd, # normal prior for Weibull alpha parameter (shape)
   median_time_to_response_mean, median_time_to_response_sd, # normal prior for Weibull scale parameter
   max_time_to_response,
@@ -49,6 +49,7 @@ draw_samples.IndependentMixtureCureRateModel <- function(
   data = NULL,
   n = NULL,
   nsim,
+  nsim_min = 1000L,
   seed = NULL, warmup = 1000L, verbose = FALSE, show_messages = FALSE, refresh = 0,
   return_raw_stan_output = FALSE,
   ...
@@ -73,7 +74,7 @@ draw_samples.IndependentMixtureCureRateModel <- function(
     dt2 = pmax(.data$dt1 + 1e-3, .data$dt2)
   )
   # sampling with stan requires at least 2 samples to be drawn oO
-  nsim_ <- max(2, nsim)
+  nsim_ <- max(nsim_min, nsim)
   # generate seed if none was specified
   if (is.null(seed))
     seed <- sample.int(.Machine$integer.max, 1)

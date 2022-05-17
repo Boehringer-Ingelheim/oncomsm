@@ -30,6 +30,7 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
   n = NULL,
   now,
   nsim,
+  nsim_min = 1000L,
   seed = NULL, warmup = 1000L, verbose = FALSE, show_messages = FALSE, refresh = 0,
   return_raw_stan_output = FALSE,
   ...
@@ -48,7 +49,7 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
     )
   }
   # sampling with stan requires at least 2 samples to be drawn
-  nsim_ <- max(2, nsim)
+  nsim_ <- max(nsim_min, nsim)
   # generate seed if none was specified
   if (is.null(seed))
     seed <- sample.int(.Machine$integer.max, 1)

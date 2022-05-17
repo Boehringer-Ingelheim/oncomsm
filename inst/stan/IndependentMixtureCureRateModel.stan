@@ -54,8 +54,8 @@ data {
   // response probability (via logit)
   real logodds_mean[M_groups];
   real<lower=machine_precision()> logodds_sd[M_groups];
-  real logodds_min[M_groups];
-  real logodds_max[M_groups];
+  vector[M_groups] logodds_min;
+  vector[M_groups] logodds_max;
   // alpha (weibull shape)
   real shape_mean[M_groups];
   real<lower=machine_precision()> shape_sd[M_groups];
@@ -78,7 +78,7 @@ transformed data {
 
 parameters {
 
-  real logodds[M_groups];
+  vector<lower=0,upper=1>[M_groups] logodds_raw;
   real<lower=1-machine_precision(),upper=99> shape[M_groups]; // shape aka k, important to bound from 0
   real<lower=1.0/30.0,upper=99> median_time_to_response[M_groups];
 
@@ -90,6 +90,7 @@ transformed parameters {
 
   real<lower=0,upper=1> p[M_groups];
   real<lower=machine_precision()> scale[M_groups];
+  vector[M_groups] logodds = logodds_min + (logodds_max - logodds_min) .* logodds_raw; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
 
   for (g in 1:M_groups) {
     p[g] = 1/(1 + exp(-logodds[g]));
