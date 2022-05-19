@@ -106,8 +106,8 @@ generated quantities {
   int<lower=1> subject_id[N_total];
   real<lower=0> t_recruitment[N_total];
   int offset = 0;
-  int idx;
-  real max_wait;
+  int idx = 0;
+  real max_wait = 0.0;
   real t_last[M_groups];
 
   for (g in 1:M_groups) {

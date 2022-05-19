@@ -19,6 +19,7 @@ independent_poisson_recruitment_model(
   n = NULL,
   now,
   nsim,
+  nsim_min = 1000L,
   seed = NULL,
   warmup = 1000L,
   verbose = FALSE,
