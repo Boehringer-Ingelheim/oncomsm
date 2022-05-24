@@ -67,30 +67,23 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
   stan_data <- c(
     as.list(model),
     .tbl_to_stan_data(model, data),
-    list(
-      now = now
-    )
+    list(now = now)
   )
-  #wrn <- list() # container for sampler warnings
-  #suppressWarnings(withCallingHandlers({
-    res <- rstan::sampling(
-      attr(model, "stanmodel"),
-      data = stan_data,
-      chains = 1L, cores = 1L,
-      iter = warmup + nsim_, warmup = warmup,
-      seed = seed,
-      init = function() { # set params to mean values
-        list(
-          theta = model$monthly_rate_mean
-        )
-      },
-      verbose = verbose, show_messages = show_messages, refresh = refresh, ...
-    )
-  #},
-  #warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
-  #))
+  # sample
+  res <- rstan::sampling(
+    attr(model, "stanmodel"),
+    data = stan_data,
+    chains = 1L, cores = 1L,
+    iter = warmup + nsim_, warmup = warmup,
+    seed = seed,
+    init = function() { # set params to mean values
+      list(
+        theta = model$monthly_rate_mean
+      )
+    },
+    verbose = verbose, show_messages = show_messages, refresh = refresh, ...
+  )
   if (return_raw_stan_output) { # return stan samples directly
-    #attr(res, "stan_warnings") <- wrn
     return(res)
   }
   tbl_res <- dplyr::bind_cols(
@@ -108,7 +101,6 @@ draw_samples.IndependentPoissonRecruitmentModel <- function(
   tbl_res$subject_id <- tbl_res$subject_id %>%
     factor(levels = 1:length(subject_id_lvls), labels = subject_id_lvls) %>%
     as.character()
-  # attr(tbl_res, "stan_warnings") <- wrn
   return(tbl_res)
 }
 

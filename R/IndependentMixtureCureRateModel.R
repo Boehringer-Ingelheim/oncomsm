@@ -111,7 +111,6 @@ draw_samples.IndependentMixtureCureRateModel <- function(
     verbose = verbose, show_messages = show_messages, refresh = refresh, ...
   )
   if (return_raw_stan_output) { # return stan samples directly
-    #attr(res, "stan_warnings") <- wrn
     return(res)
   }
   tbl_res <- dplyr::bind_cols(
@@ -131,7 +130,6 @@ draw_samples.IndependentMixtureCureRateModel <- function(
   tbl_res$subject_id <- tbl_res$subject_id %>%
     factor(levels = 1:length(subject_id_lvls), labels = subject_id_lvls) %>%
     as.character()
-  #attr(tbl_res, "stan_warnings") <- wrn
   return(tbl_res)
 }
 

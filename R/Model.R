@@ -16,7 +16,8 @@ model <- function(tte_model, recruitement_model) {
 #'
 #' @export
 draw_samples.OverallModel <- function(
-  model, data = NULL, n = NULL, nsim = 1000L, now = NULL, seed = NULL, ...
+  model, data = NULL, n = NULL, nsim = 1000L, now = NULL, seed = NULL,
+  return_raw_stan_output = FALSE, ...
 ) {
   nodata <- is.null(data) | all(is.na(data$t_recruitment))
   if (is.null(now) & nodata)
@@ -29,6 +30,7 @@ draw_samples.OverallModel <- function(
     n = n,
     nsim = nsim,
     seed = seed,
+    return_raw_stan_output = return_raw_stan_output,
     ...
   )
   tbl_recruitment <- draw_samples(
@@ -38,8 +40,15 @@ draw_samples.OverallModel <- function(
     now = now,
     nsim = nsim,
     seed = seed,
+    return_raw_stan_output = return_raw_stan_output,
     ...
   )
+  if (return_raw_stan_output) {
+    return(list(
+      tte = tbl_responses,
+      recruitment = tbl_recruitment
+    ))
+  }
   res <- dplyr::full_join(
     tbl_responses,
     tbl_recruitment,
