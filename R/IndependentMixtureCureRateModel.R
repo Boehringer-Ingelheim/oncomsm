@@ -94,26 +94,22 @@ draw_samples.IndependentMixtureCureRateModel <- function(
     as.list(model),
     .tbl_to_stan_data(model, data)
   )
-  #wrn <- list() # container for sampler warnings
-  #suppressWarnings(withCallingHandlers({
-    res <- rstan::sampling(
-      attr(model, "stanmodel"),
-      data = stan_data,
-      chains = 1L, cores = 1L,
-      iter = warmup + nsim_, warmup = warmup,
-      seed = seed,
-      init = function() {
-        list( # initialize to parameter means
-          shape = model$shape_mean,
-          median_time_to_response = model$median_time_to_response_mean,
-          logodds = model$logodds_mean
-        )
-      },
-      verbose = verbose, show_messages = show_messages, refresh = refresh, ...
-    )
-  #},
-  #warning = function(w) wrn <<- c(wrn, list(w)) # log warnings
-  #))
+  # sample
+  res <- rstan::sampling(
+    attr(model, "stanmodel"),
+    data = stan_data,
+    chains = 1L, cores = 1L,
+    iter = warmup + nsim_, warmup = warmup,
+    seed = seed,
+    init = function() {
+      list( # initialize to parameter means
+        shape = model$shape_mean,
+        median_time_to_response = model$median_time_to_response_mean,
+        logodds = model$logodds_mean
+      )
+    },
+    verbose = verbose, show_messages = show_messages, refresh = refresh, ...
+  )
   if (return_raw_stan_output) { # return stan samples directly
     #attr(res, "stan_warnings") <- wrn
     return(res)
