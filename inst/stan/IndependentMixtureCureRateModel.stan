@@ -57,11 +57,11 @@ data {
   vector[M_groups] logodds_min;
   vector[M_groups] logodds_max;
   // alpha (weibull shape)
-  real shape_mean[M_groups];
-  real<lower=machine_precision()> shape_sd[M_groups];
+  real log_shape_mean[M_groups];
+  real<lower=machine_precision()> log_shape_sd[M_groups];
   // weibull median
-  real median_time_to_response_mean[M_groups];
-  real<lower=machine_precision()> median_time_to_response_sd[M_groups];
+  real log_median_time_to_response_mean[M_groups];
+  real<lower=machine_precision()> log_median_time_to_response_sd[M_groups];
   // response time truncation
   real max_time_to_response[M_groups];
 
@@ -79,8 +79,8 @@ transformed data {
 parameters {
 
   vector<lower=0,upper=1>[M_groups] logodds_raw;
-  real<lower=1-machine_precision(),upper=99> shape[M_groups]; // shape aka k, important to bound from 0
-  real<lower=1.0/30.0,upper=99> median_time_to_response[M_groups];
+  real log_shape[M_groups]; // shape aka k, important to bound from 0
+  real log_median_time_to_response[M_groups];
 
 }
 
@@ -88,8 +88,10 @@ parameters {
 
 transformed parameters {
 
-  real<lower=0,upper=1> p[M_groups];
-  real<lower=machine_precision()> scale[M_groups];
+  real p[M_groups];
+  real shape[M_groups] = exp(log_shape);
+  real scale[M_groups];
+  real median_time_to_response[M_groups] = exp(log_median_time_to_response);
   vector[M_groups] logodds = logodds_min + (logodds_max - logodds_min) .* logodds_raw; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
 
   for (g in 1:M_groups) {
@@ -108,8 +110,8 @@ model {
   // prior
   for (g in 1:M_groups) {
     logodds[g] ~ normal(logodds_mean[g], logodds_sd[g]) T[logodds_min[g],logodds_max[g]];
-    shape[g] ~ normal(shape_mean[g], shape_sd[g]) T[1 - machine_precision(),99];
-    median_time_to_response[g] ~ normal(median_time_to_response_mean[g], median_time_to_response_sd[g]) T[machine_precision(),99];
+    log_shape[g] ~ normal(log_shape_mean[g], log_shape_sd[g]);
+    log_median_time_to_response[g] ~ normal(log_median_time_to_response_mean[g], log_median_time_to_response_sd[g]);
   }
 
   // likelihood for the definite non-responders
@@ -142,12 +144,12 @@ model {
 
 generated quantities {
 
-  int<lower=1> group_id[N_all];
-  int<lower=1> subject_id[N_all];
-  int<lower=1> gg;
-  real<lower=0> dt[N_all];
-  real<lower=0> dt1[N_all];
-  real<lower=0> dt2[N_all];
+  int group_id[N_all];
+  int subject_id[N_all];
+  int gg;
+  real dt[N_all];
+  real dt1[N_all];
+  real dt2[N_all];
 
   real p_cond = 0.0; // buffer variable to make code more legible
   real S_t = 0.0; // buffer variable to make code more legible

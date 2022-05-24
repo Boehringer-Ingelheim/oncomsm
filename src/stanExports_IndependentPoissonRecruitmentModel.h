@@ -561,11 +561,13 @@ public:
             int idx;
             (void) idx;  // dummy to suppress unused var warning
             stan::math::fill(idx, std::numeric_limits<int>::min());
+            stan::math::assign(idx,0);
             current_statement_begin__ = 110;
             double max_wait;
             (void) max_wait;  // dummy to suppress unused var warning
             stan::math::initialize(max_wait, DUMMY_VAR__);
             stan::math::fill(max_wait, DUMMY_VAR__);
+            stan::math::assign(max_wait,0.0);
             current_statement_begin__ = 111;
             validate_non_negative_index("t_last", "M_groups", M_groups);
             std::vector<double> t_last(M_groups, double(0));

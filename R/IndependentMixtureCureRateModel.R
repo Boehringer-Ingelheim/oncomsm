@@ -7,10 +7,10 @@
 #' @param logodds_sd numeric vector with the standard deviations of the normal prior on the logodds of a response per group
 #' @param logodds_min numeric vector with the minimal logodds per group
 #' @param logodds_max numeric vector with the maximal logodds per group
-#' @param shape_mean numeric vector with the means of the normal prior on the shape parameter of the Weibull distribution for time to response
-#' @param shape_sd numeric vector with the standard deviations of the normal prior on the shape parameter of the Weibull distribution for time to response
-#' @param median_time_to_response_mean numeric vector with the means of the normal prior on the median time to response
-#' @param median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the median for time to response
+#' @param log_shape_mean numeric vector with the means of the normal prior on the log-shape parameter of the Weibull distribution for time to response
+#' @param log_shape_sd numeric vector with the standard deviations of the normal prior on the log-shape parameter of the Weibull distribution for time to response
+#' @param log_median_time_to_response_mean numeric vector with the means of the normal prior on the log median time to response
+#' @param log_median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the log median for time to response
 #' @param max_time_to_response numeric vector with the maximal time to response per group
 #' @param visit_spacing vector of deterministic spacing between future visits (in months)
 #'
@@ -23,10 +23,10 @@
 independent_mixture_cure_rate_model <- function(
   group_id,
   logodds_mean, logodds_sd, logodds_min = rep(logodds(.001), length(group_id)), logodds_max = rep(logodds(.999), length(group_id)), # (truncated) normal prior on log(odds)
-  shape_mean, shape_sd, # normal prior for Weibull alpha parameter (shape)
-  median_time_to_response_mean, median_time_to_response_sd, # normal prior for Weibull scale parameter
+  log_shape_mean, log_shape_sd,
+  log_median_time_to_response_mean, log_median_time_to_response_sd,
   max_time_to_response,
-  visit_spacing # (deterministic) spacing between (future) visits
+  visit_spacing
 ) {
   res <- as.list(environment()) # store all input parameters
   res$group_id <- NULL

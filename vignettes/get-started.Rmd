@@ -205,8 +205,8 @@ used for all (transformed) parameters.
     that the prior is a truncated normal prior on the log-odds.
 
 -   To make the prior on the Weibull parameters more accessible, instead
-    of putting a prior on the scale parameter, a prior on the median
-    time to event is used.
+    of putting a prior on the scale parameter, a prior on the log median
+    time to event and a lognormal prior on shape are used.
 
 -   The prior for the recruitment rate is specified on the log scale and
     a maximal waiting time between recruitment of individuals can be
@@ -215,17 +215,20 @@ used for all (transformed) parameters.
 The sub-models for recruitment and time-to-response are specified
 separately.
 
+**important:** The shape parameter of the time-to-response is near
+unidentifiable in small data sets.
+
 ```{r prior-specification}
 mdl_tte <- independent_mixture_cure_rate_model(
   group_id = c("A", "B", "C"),
   logodds_mean = logodds(c(.4, .2, .2)),
-  logodds_sd = c(1, 1, 1),
+  logodds_sd = c(.5, .5, .5),
   logodds_max = logodds(c(.6, .6, .6)),
-  shape_mean = c(2, 2, 2),
-  shape_sd = c(.5, .5, .5),
-  median_time_to_response_mean = c(4, 4, 4),
-  median_time_to_response_sd = c(1, 1, 1),
-  max_time_to_response = c(12, 12, 12),
+  log_shape_mean = log(c(2, 2, 2)),
+  log_shape_sd = c(.1, .1, .1),
+  log_median_time_to_response_mean = log(c(4, 4, 4)),
+  log_median_time_to_response_sd = c(.25, .25, .25),
+  max_time_to_response = c(18, 18, 18),
   visit_spacing = c(1.2, 1.2, 1.2)
 )
 
@@ -464,7 +467,8 @@ recruited.
 min_follow_up <- 3 # months, follow up of last individual
 
 tbl_posterior_predictive_summary <- draw_samples(
-    mdl, data = tbl_tte_interim, seed = 42L, nsim = n_sim
+    mdl, data = tbl_tte_interim, seed = 42L, nsim = n_sim,
+    control = list(stepsize = 1e-4, adapt_delta = .9)
   ) %>% 
   group_by(iter, group_id) %>%
   tidyr::nest() %>%
