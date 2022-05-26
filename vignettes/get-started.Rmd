@@ -258,10 +258,12 @@ plot(mdl)
 tmp <- sample_prior(mdl, rstan_output = TRUE, pars = c("p", "shape", "scale", "monthly_rate"))
 
 bhmbasket.predict:::.impute.IndependentMixtureCureRateModel(
-  mdl, 
-  10, 
-  data = tbl_visits %>% visits_to_tte(cutoff = 10)
-)
+    mdl, 
+    100, 
+    data = tbl_visits %>% visits_to_tte(cutoff = 10), 
+    refresh = 0, seed = 42L
+  ) %>% 
+  print(n = 50)
 
 bhmbasket.predict:::.impute.IndependentMixtureCureRateModel(
   mdl, 
@@ -269,10 +271,6 @@ bhmbasket.predict:::.impute.IndependentMixtureCureRateModel(
   data = tbl_visits %>% visits_to_tte()
 )
 
-rstan::extract(tmp, "p")[[1]]
-rstan::extract(tmp, "shape")[[1]]
-rstan::extract(tmp, "scale")[[1]]
-rstan::extract(tmp, "monthly_rate")[[1]]
 ```
 
 # Computing Probability of Success at planning stage

@@ -45,6 +45,9 @@ new_IndependentMixtureCureRateModel <- function(
 }
 
 .impute.IndependentMixtureCureRateModel <- function(model, data, nsim, now = NULL, parameter_sample = NULL, warmup_parameters = 250L, nsim_parameters = 1000L, seed = NULL, ...) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   # sample from prior/posterior if not given
   if (is.null(parameter_sample)) {
     parameter_sample <- .sample(
@@ -83,39 +86,59 @@ new_IndependentMixtureCureRateModel <- function(
     pull(t_last)
   # convert groups to integers
   data$group_id <- as.integer(factor(data$group_id, levels = attr(model, "group_id")))
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
-  idx <- sample.int(nrow(p), size = 1)
-  for (i in 1:nrow(data)) {
-    if (is.na(data$t_recruitment[i])) {
-      group <- data$group_id[i]
-      data$t_recruitment[i] <- t_last[group] + rtruncexp(1, monthly_rate[idx, group], max(0, now - t_last[group]), Inf)
-      t_last[group] <- data$t_recruitment[i]
-    }
-    if (!is.infinite(data$dt1[i]) & !is.finite(data$dt2[i])) {
-      group <- data$group_id[i]
-      if (rbinom(1, n = 1, prob = p[idx, group]) == 1) {
-        # event
-        dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
-        dt <- rtruncweibull(1, shape[idx, group], scale[idx, group], dtmin, Inf)
-        dt2 <- 0
-        while (dt2 < dt) {
-          dt2 <- dt2 + model$visit_spacing[group]
+
+  ff <- function(data, p, shape, scale, monthly_rate, t_last, now) {
+
+    for (i in 1:nrow(data)) {
+      if (is.na(data$t_recruitment[i])) {
+        group <- data$group_id[i]
+        data$t_recruitment[i] <- t_last[group] + rtruncexp(1, monthly_rate[group], max(0, now - t_last[group]), Inf)
+        t_last[group] <- data$t_recruitment[i]
+      }
+      if (!is.infinite(data$dt1[i]) & !is.finite(data$dt2[i])) {
+        group <- data$group_id[i]
+        if (rbinom(1, n = 1, prob = p[group]) == 1) {
+          # event
+          dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
+          dt <- rtruncweibull(1, shape[group], scale[group], dtmin, 999)
+          dt2 <- 0
+          while (dt2 < dt) {
+            dt2 <- dt2 + model$visit_spacing[group]
+          }
+          data$dt2[i] <- dt2
+          if (is.na(data$dt1[i]))
+            data$dt1[i] <- dt2 - model$visit_spacing[group]
+        } else {
+          # no event
+          data$dt1[i] <- Inf
+          data$dt2[i] <- Inf
         }
-        data$dt2[i] <- dt2
-        if (is.na(data$dt1[i]))
-          data$dt1[i] <- dt2 - model$visit_spacing[group]
-      } else {
-        # no event
-        data$dt1[i] <- Inf
-        data$dt2[i] <- Inf
       }
     }
+    return(data)
   }
+
+  res <- tibble(
+      iter = 1:nsim,
+      idx = sample.int(nrow(p), size = nsim),
+      p = purrr::map(idx, ~p[., ]),
+      shape = purrr::map(idx, ~shape[., ]),
+      scale = purrr::map(idx, ~scale[., ]),
+      monthly_rate = purrr::map(idx, ~monthly_rate[., ]),
+    ) %>%
+    mutate(
+      data = purrr::pmap(
+        list(p, shape, scale, monthly_rate),
+        ~ff(data, ..1, ..2, ..3, ..4, t_last, now)
+      )
+    ) %>%
+    select(iter, data) %>%
+    tidyr::unnest(data)
+
   # convert groups back
-  data$group_id <- as.character(factor(data$group_id, levels = 1:length(attr(model, "group_id")), labels = attr(model, "group_id")))
-  return(data)
+  res$group_id <- as.character(factor(res$group_id, levels = 1:length(attr(model, "group_id")), labels = attr(model, "group_id")))
+
+  return(res)
 }
 
 
