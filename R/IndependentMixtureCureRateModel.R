@@ -9,10 +9,12 @@
 #' @param logodds_max numeric vector with the maximal logodds per group
 #' @param log_shape_mean numeric vector with the means of the normal prior on the log-shape parameter of the Weibull distribution for time to response
 #' @param log_shape_sd numeric vector with the standard deviations of the normal prior on the log-shape parameter of the Weibull distribution for time to response
-#' @param log_median_time_to_response_mean numeric vector with the means of the normal prior on the log median time to response
-#' @param log_median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the log median for time to response
+#' @param median_time_to_response_mean numeric vector with the means of the normal prior on the median time to response (truncated at 0)
+#' @param median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the median for time to response
 #' @param max_time_to_response numeric vector with the maximal time to response per group
 #' @param visit_spacing vector of deterministic spacing between future visits (in months)
+#' @param monthly_rate_mean expected monthly recruitment rate (prior mean)
+#' @param monthly_rate_sd standard deviation of the expected recruitment rate prior
 #'
 #' @return An object of class "IndependentMixtureCureRateModel" holding all relevant
 #' prior information.
@@ -20,197 +22,105 @@
 #' @rdname IndependentMixtureCureRateModel
 #'
 #' @export
-independent_mixture_cure_rate_model <- function(
+new_IndependentMixtureCureRateModel <- function(
   group_id,
-  logodds_mean, logodds_sd, logodds_min = rep(logodds(.001), length(group_id)), logodds_max = rep(logodds(.999), length(group_id)), # (truncated) normal prior on log(odds)
+  logodds_mean, logodds_sd,
+  logodds_min = rep(logodds(.001), length(group_id)),
+  logodds_max = rep(logodds(.999), length(group_id)),
   log_shape_mean, log_shape_sd,
-  log_median_time_to_response_mean, log_median_time_to_response_sd,
+  median_time_to_response_mean, median_time_to_response_sd,
   max_time_to_response,
-  visit_spacing
+  visit_spacing,
+  monthly_rate_mean,
+  monthly_rate_sd
 ) {
-  res <- as.list(environment()) # store all input parameters
-  res$group_id <- NULL
-  res <- lapply(res, base::as.array)
-  attr(res, "group_id") <- group_id
-  attr(res, "stanmodel") <- stanmodels$IndependentMixtureCureRateModel
-  # assign class information and return
-  class(res) <- c("IndependentMixtureCureRateModel", "TTEModel",class(res))
-  res
+  mdl <- as.list(environment()) # store all input parameters
+  mdl$group_id <- NULL
+  mdl <- lapply(mdl, base::as.array)
+  attr(mdl, "group_id") <- group_id
+  attr(mdl, "stanmodel") <- stanmodels[["simplified_model"]]
+  attr(mdl, "parameter_names") <- c("p", "shape", "median_time_to_response", "monthly_rate")
+  class(mdl) <- c("IndependentMixtureCureRateModel", "Model", class(mdl))
+  return(mdl)
 }
 
 
 
-#' @include draw_samples.R util.R
+#' @import patchwork
 #'
-#' @describeIn IndependentMixtureCureRateModel draw samples
 #' @export
-draw_samples.IndependentMixtureCureRateModel <- function(
-  model,
-  data = NULL,
-  n = NULL,
-  nsim,
-  nsim_min = 1000L,
-  seed = NULL, warmup = 1000L, verbose = FALSE, show_messages = FALSE, refresh = 0,
-  return_raw_stan_output = FALSE,
-  ...
-) {
-  if (is.null(data)) {
-    if (is.null(n))
-      stop("either data or n must be specified")
-    group_id <- attr(model, "group_id")
-    if (length(n) != length(group_id))
-      stop("number of group sizes (n) not consistent with length of group_id of model")
-    # if only n is specified, create empty data set of appropriate sample size
-    data <- tibble::tibble(
-      group_id = rep(attr(model, "group_id"), times = n), # pull group ids directly from model
-      subject_id = as.integer(1:sum(n)),
-      dt1 = NA_real_,
-      dt2 = NA_real_
+plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, warmup = 250L, nsim = 1e4, seed = NULL, ...) {
+  if (is.null(sample)) {
+    if (is.null(data)) {
+      sample <- sample_prior(x, warmup = warmup, nsim = nsim, seed = seed, ...)
+    } else {
+      sample <- sample_posterior(x, data = data, warmup = warmup, nsim = nsim, seed = seed, ...)
+    }
+  }
+
+  p1 <- sample %>%
+    filter(parameter == "p") %>%
+    ggplot() +
+    aes(value) +
+    geom_histogram(
+      bins = 25,
+      alpha = 0.5,
+      aes(fill = group_id), position = position_identity()
+    ) +
+    scale_x_continuous("event probability") +
+    coord_cartesian(xlim = c(0, 1)) +
+    theme_bw() +
+    theme(
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      panel.grid = element_blank()
     )
-  }
-  # for numerical stability, avoid dt1 == 0 or dt2 = dt1
-  data <- data %>% dplyr::mutate(
-    dt1 = pmax(1e-3, .data$dt1),
-    dt2 = pmax(.data$dt1 + 1e-3, .data$dt2)
-  )
-  # sampling with stan requires at least 2 samples to be drawn oO
-  nsim_ <- max(nsim_min, nsim)
-  # generate seed if none was specified
-  if (is.null(seed))
-    seed <- sample.int(.Machine$integer.max, 1)
-  # convert factors to integers and save levels for mapping back
-  data$group_id <- factor(data$group_id, levels = attr(model, "group_id"))
-  group_id_lvls <- levels(data$group_id)
-  # make sure group ids in data are compatible with model
-  assertthat::assert_that(all(
-    group_id_lvls %in% attr(model, "group_id")
-  ))
-  data$group_id <- as.integer(data$group_id)
-  data$subject_id <- factor(data$subject_id, levels = unique(data$subject_id))
-  subject_id_lvls <- levels(data$subject_id)
-  data$subject_id <- as.integer(data$subject_id)
-  # combine prior information with data for stan
-  stan_data <- c(
-    as.list(model),
-    .tbl_to_stan_data(model, data)
-  )
-  # sample
-  res <- rstan::sampling(
-    attr(model, "stanmodel"),
-    data = stan_data,
-    chains = 1L, cores = 1L,
-    iter = warmup + nsim_, warmup = warmup,
-    seed = seed,
-    init = function() {
-      list( # initialize to parameter means
-        shape = model$shape_mean,
-        median_time_to_response = model$median_time_to_response_mean,
-        logodds = model$logodds_mean
-      )
-    },
-    verbose = verbose, show_messages = show_messages, refresh = refresh, ...
-  )
-  if (return_raw_stan_output) { # return stan samples directly
-    return(res)
-  }
-  tbl_res <- dplyr::bind_cols(
-      extract_col_from_stan(res, "group_id"),
-      extract_col_from_stan(res, "subject_id") %>% dplyr::select(-.data$iter),
-      extract_col_from_stan(res, "dt1") %>% dplyr::select(-.data$iter),
-      extract_col_from_stan(res, "dt2") %>% dplyr::select(-.data$iter),
-      extract_col_from_stan(res, "dt") %>% dplyr::select(-.data$iter)
+
+  p2 <- sample %>%
+    filter(parameter %in% c("shape", "median_time_to_response")) %>%
+    tidyr::pivot_wider(names_from = "parameter") %>%
+    mutate(
+      scale = median_time_to_response/(log(2)^(1/shape)),
+      t = rweibull(n(), shape, scale)
     ) %>%
-    dplyr::filter(
-      .data$iter <= nsim # prune to intended number of samples
-    )
-  # map discrete variables back to character
-  tbl_res$group_id <- tbl_res$group_id %>%
-    factor(levels = 1:length(group_id_lvls), labels = group_id_lvls) %>%
-    as.character()
-  tbl_res$subject_id <- tbl_res$subject_id %>%
-    factor(levels = 1:length(subject_id_lvls), labels = subject_id_lvls) %>%
-    as.character()
-  return(tbl_res)
-}
-
-
-
-.tbl_to_stan_data.IndependentMixtureCureRateModel <- function(model, tbl_data) {
-  assertthat::assert_that(
-    all(tbl_data$group_id <= length(attr(model, "group_id"))) # already converted to factor
-  )
-  lst_stan_data <- list(
-    M_groups = length(attr(model, "group_id"))
-  )
-  # interval censored data
-  tmp <- dplyr::filter(tbl_data, is.finite(.data$dt1) & is.finite(.data$dt2))
-  lst_stan_data$N_A <- nrow(tmp)
-  lst_stan_data$group_id_A <- base::as.array(tmp$group_id)
-  lst_stan_data$subject_id_A <- base::as.array(tmp$subject_id)
-  lst_stan_data$dt1_A <- base::as.array(tmp$dt1) # as.array makes sure we have a vector, even if it is just a single number
-  lst_stan_data$dt2_A <- base::as.array(tmp$dt2)
-  # right censored data
-  tmp <- dplyr::filter(tbl_data, is.finite(.data$dt1) & !is.finite(.data$dt2))
-  lst_stan_data$N_B <- nrow(tmp)
-  lst_stan_data$group_id_B <- base::as.array(tmp$group_id)
-  lst_stan_data$subject_id_B <- base::as.array(tmp$subject_id)
-  lst_stan_data$dt1_B <- base::as.array(tmp$dt1)
-  # definite non-responders
-  tmp <- dplyr::filter(tbl_data, is.infinite(.data$dt1))
-  lst_stan_data$N_C <- nrow(tmp)
-  lst_stan_data$group_id_C <- base::as.array(tmp$group_id)
-  lst_stan_data$subject_id_C <- base::as.array(tmp$subject_id)
-  # new individuals
-  tmp <- dplyr::filter(tbl_data, is.na(.data$dt1) & is.na(.data$dt2))
-  lst_stan_data$N_D <- nrow(tmp)
-  lst_stan_data$group_id_D <- base::as.array(tmp$group_id)
-  lst_stan_data$subject_id_D <- base::as.array(tmp$subject_id)
-  # return
-  return(lst_stan_data)
-}
-
-
-
-#' @describeIn IndependentMixtureCureRateModel plot prior assumptions
-#'
-#' @export
-plot.IndependentMixtureCureRateModel <- function(
-  x, n = rep(1L, length(attr(x, "group_id"))), nsim = 1e4, seed = NULL, ...
-) {
-
-  # prior sample from response probability
-  stan_res <- draw_samples(x, n = n, nsim = nsim, seed = seed, return_raw_stan_output = TRUE, ...) %>%
-    rstan::extract("p")
-
-  p1 <- stan_res$p %>%
-    as.matrix() %>%
-    {colnames(.) <- attr(x, "group_id"); .} %>%
-    as_tibble(rownames = "iter") %>%
-    tidyr::pivot_longer(-.data$iter, names_to = "group_id", values_to = "response probability") %>%
     ggplot() +
-    aes(`response probability`) +
-    geom_histogram(bins = 25) +
-    scale_x_continuous(breaks = seq(0, 1, by = .2), limits = c(0, 1), oob = scales::oob_keep) +
-    facet_wrap(~group_id) +
+    aes(t) +
+    geom_histogram(
+      bins = 25,
+      alpha = 0.5,
+      aes(fill = group_id), position = position_identity()
+    ) +
+    scale_x_continuous("months to event") +
+    coord_cartesian(xlim = c(0, NA_real_)) +
+    theme_bw() +
     theme(
-      panel.grid = element_blank(),
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank(),
-      axis.title.y = element_blank()
+      axis.title.y = element_blank(),
+      panel.grid = element_blank()
     )
-  p2 <- draw_samples(x, n = n, nsim = nsim, seed = seed, ...) %>%
-    filter(is.finite(dt)) %>%
+
+  p3 <- sample %>%
+    filter(parameter == "monthly_rate") %>%
     ggplot() +
-    aes(dt) +
-    geom_histogram(bins = 25) +
-    labs(x = "time to response (since first visit)") +
-    facet_wrap(~group_id, scales = "free_y") +
+    aes(value) +
+    geom_histogram(
+      bins = 25,
+      alpha = 0.5,
+      aes(fill = group_id), position = position_identity()
+    ) +
+    scale_x_continuous("monthly recruitment rate") +
+    coord_cartesian(xlim = c(0, NA_real_)) +
+    theme_bw() +
     theme(
-      panel.grid = element_blank(),
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank(),
-      axis.title.y = element_blank()
+      axis.title.y = element_blank(),
+      panel.grid = element_blank()
     )
-  p1 + p2
 
+  (p1 + p2 + p3) +
+    patchwork::plot_layout(guides = "collect") &
+    ggplot2::theme(legend.position = "top", legend.title = ggplot2::element_blank())
 }

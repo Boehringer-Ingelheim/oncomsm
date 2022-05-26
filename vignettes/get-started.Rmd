@@ -215,31 +215,27 @@ used for all (transformed) parameters.
 The sub-models for recruitment and time-to-response are specified
 separately.
 
-**important:** The shape parameter of the time-to-response is near
-unidentifiable in small data sets.
+**Important:** The shape parameter of the time-to-response is near
+unidentifiable in small data sets, hence the prior uncertainty should be
+small to ensure the model is identifiable and can be sampled in a stable
+way. This effectively means that the shape parameter has to be fixed *a
+priori*.
 
 ```{r prior-specification}
-mdl_tte <- independent_mixture_cure_rate_model(
+mdl <- new_IndependentMixtureCureRateModel(
   group_id = c("A", "B", "C"),
   logodds_mean = logodds(c(.4, .2, .2)),
   logodds_sd = c(.5, .5, .5),
   logodds_max = logodds(c(.6, .6, .6)),
   log_shape_mean = log(c(2, 2, 2)),
   log_shape_sd = c(.1, .1, .1),
-  log_median_time_to_response_mean = log(c(4, 4, 4)),
-  log_median_time_to_response_sd = c(.25, .25, .25),
+  median_time_to_response_mean = c(4, 4, 4),
+  median_time_to_response_sd = c(.25, .25, .25),
   max_time_to_response = c(18, 18, 18),
-  visit_spacing = c(1.2, 1.2, 1.2)
+  visit_spacing = c(1.2, 1.2, 1.2),
+  monthly_rate_mean = c(2, 1, 1),
+  monthly_rate_sd = c(.25, .25, .25)
 )
-
-mdl_recruitment <- independent_poisson_recruitment_model(
-  group_id = c("A", "B", "C"),
-  log_monthly_rate_mean = log(c(2, 1, 1)),
-  log_monthly_rate_sd = c(.25, .25, .25),
-  maximal_recruitment_interval = c(3, 3, 3)
-)
-
-mdl <- model(mdl_tte, mdl_recruitment)
 ```
 
 Here we use the following relevance thresholds for $p_{target}$
@@ -257,7 +253,7 @@ are shown directly. The time to response prior is visualized by the time
 to response distribution (prior predictive).
 
 ```{r prior-sample}
-plot(mdl, n = n_per_arm)
+plot(mdl)
 ```
 
 # Computing Probability of Success at planning stage

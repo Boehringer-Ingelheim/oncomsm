@@ -50,16 +50,4 @@ Suggests:
     knitr,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-Collate: 
-    'util.R'
-    'draw_samples.R'
-    'IndependentMixtureCureRateModel.R'
-    'IndependentPoissonRecruitmentModel.R'
-    'Model.R'
-    'RcppExports.R'
-    'bhmbasket.predict-package.R'
-    'generate_visit_data.R'
-    'plot_visits.R'
-    'stanmodels.R'
-    'visits_to_tte.R'
 Config/testthat/edition: 3

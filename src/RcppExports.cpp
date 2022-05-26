@@ -11,6 +11,21 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// rtruncweibull
+NumericVector rtruncweibull(int n, double shape, double scale, double a, double b);
+RcppExport SEXP _bhmbasket_predict_rtruncweibull(SEXP nSEXP, SEXP shapeSEXP, SEXP scaleSEXP, SEXP aSEXP, SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtruncweibull(n, shape, scale, a, b));
+    return rcpp_result_gen;
+END_RCPP
+}
 // visits_to_tte_
 DataFrame visits_to_tte_(DataFrame data);
 RcppExport SEXP _bhmbasket_predict_visits_to_tte_(SEXP dataSEXP) {
@@ -23,13 +38,12 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4IndependentMixtureCureRateModel_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4IndependentPoissonRecruitmentModel_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4simplified_model_mod();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_bhmbasket_predict_rtruncweibull", (DL_FUNC) &_bhmbasket_predict_rtruncweibull, 5},
     {"_bhmbasket_predict_visits_to_tte_", (DL_FUNC) &_bhmbasket_predict_visits_to_tte_, 1},
-    {"_rcpp_module_boot_stan_fit4IndependentMixtureCureRateModel_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4IndependentMixtureCureRateModel_mod, 0},
-    {"_rcpp_module_boot_stan_fit4IndependentPoissonRecruitmentModel_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4IndependentPoissonRecruitmentModel_mod, 0},
+    {"_rcpp_module_boot_stan_fit4simplified_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4simplified_model_mod, 0},
     {NULL, NULL, 0}
 };
 
