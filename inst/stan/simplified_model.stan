@@ -24,7 +24,7 @@ data {
   int<lower=0> n_recruited_per_group[M_groups];
   // wating times between recruitment as square matrix
   // dt_recruitment[i,j] is the waiting time from the i-1 th to the ith subject in group j
-  real<lower=machine_precision()> dt_recruitment[N_A+N_B+N_C, M_groups];
+  real<lower=0> dt_recruitment[N_A+N_B+N_C, M_groups];
 
   // prior hyperparamters
   real visit_spacing[M_groups];

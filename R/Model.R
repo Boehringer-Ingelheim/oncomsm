@@ -7,6 +7,10 @@
 }
 
 
+.impute <- function(model, data, nsim, parameter_sample = NULL, warmup_parameters = 250L, nsim_parameters = 1000L, seed = NULL, ...) {
+  UseMethod(".impute")
+}
+
 
 .parameter_sample_to_tibble <- function(model, sample, ...) {
   UseMethod(".parameter_sample_to_tibble")
@@ -103,10 +107,7 @@ print.Model <- function(x, ...) cat(format(x, ...), "\n")
   # combine prior information with data for stan
   stan_data <- c(
     as.list(model), # hyperparameters
-    data2standata( # data
-      model,
-      if (is.null(data)) { .nodata(model) } else { data2standata(model, data) }
-    )
+    data2standata(model, if (is.null(data)) { .nodata(model) } else { data }) # data
   )
   # sample
   res <- rstan::sampling(
@@ -144,7 +145,7 @@ sample_posterior.Model <- function(
   pars = attr(model, "parameter_names"), ...
 ) {
   .sample(
-    model, data = dataL,
+    model, data = data,
     warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
   )
 }
@@ -163,13 +164,13 @@ data2standata.Model <- function(model, data) {
   tmp <- dplyr::filter(data, is.finite(.data$dt1) & is.finite(.data$dt2))
   lst_stan_data$N_A <- nrow(tmp)
   lst_stan_data$group_id_A <- base::as.array(tmp$group_id)
-  lst_stan_data$dt1_A <- base::as.array(tmp$dt1) # as.array makes sure we have a vector, even if it is just a single number
-  lst_stan_data$dt2_A <- base::as.array(tmp$dt2)
+  lst_stan_data$dt1_A <- base::as.array(pmax(1/30, tmp$dt1)) # as.array makes sure we have a vector, even if it is just a single number
+  lst_stan_data$dt2_A <- base::as.array(pmax(tmp$dt1 + sqrt(.Machine$double.eps), tmp$dt2))
   # right censored data
   tmp <- dplyr::filter(data, is.finite(.data$dt1) & !is.finite(.data$dt2))
   lst_stan_data$N_B <- nrow(tmp)
   lst_stan_data$group_id_B <- base::as.array(tmp$group_id)
-  lst_stan_data$dt1_B <- base::as.array(tmp$dt1)
+  lst_stan_data$dt1_B <- base::as.array(pmax(1/30, tmp$dt1))
   # definite non-responders
   tmp <- dplyr::filter(data, is.infinite(.data$dt1))
   lst_stan_data$N_C <- nrow(tmp)
@@ -180,18 +181,18 @@ data2standata.Model <- function(model, data) {
   lst_stan_data$group_id_D <- base::as.array(tmp$group_id)
   # construct waiting times for recruitment
   dt_recruitment <- with(lst_stan_data,
-                         matrix(0, nrow = N_A + N_B + N_C, ncol = M_groups)
+    matrix(0, nrow = N_A + N_B + N_C, ncol = M_groups)
   )
   n_recruited_per_group <- integer(lst_stan_data$M_groups)
   for (i in 1:lst_stan_data$M_groups) {
-    t_recruitment <- lst_dt_recruitment <- data %>%
-      filter(group_id == i) %>%
+    t_recruitment <- data %>%
+      filter(group_id == i, !is.na(t_recruitment)) %>%
       pull(t_recruitment)
     # set first waiting time to small positive number (referencing to first patient in)
     # enforce minimal wait between individuals to avoid numerical issues
     n_recruited_per_group[i] <- length(t_recruitment)
-    if (length(t_recruitment) > 0) {
-      dt_recruitment[1:length(lst_dt_recruitment[[i]]), i] <- c(
+    if (n_recruited_per_group[i] > 0) {
+      dt_recruitment[1:(n_recruited_per_group[i]), i] <- c(
         sqrt(.Machine$double.eps),
         pmax(sqrt(.Machine$double.eps), diff(sort(t_recruitment)))
       )

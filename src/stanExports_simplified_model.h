@@ -247,7 +247,7 @@ public:
             size_t dt_recruitment_i_1_max__ = M_groups;
             for (size_t i_0__ = 0; i_0__ < dt_recruitment_i_0_max__; ++i_0__) {
                 for (size_t i_1__ = 0; i_1__ < dt_recruitment_i_1_max__; ++i_1__) {
-                    check_greater_or_equal(function__, "dt_recruitment[i_0__][i_1__]", dt_recruitment[i_0__][i_1__], stan::math::machine_precision());
+                    check_greater_or_equal(function__, "dt_recruitment[i_0__][i_1__]", dt_recruitment[i_0__][i_1__], 0);
                 }
             }
             current_statement_begin__ = 30;

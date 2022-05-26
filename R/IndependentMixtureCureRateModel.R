@@ -44,6 +44,81 @@ new_IndependentMixtureCureRateModel <- function(
   return(mdl)
 }
 
+.impute.IndependentMixtureCureRateModel <- function(model, data, nsim, now = NULL, parameter_sample = NULL, warmup_parameters = 250L, nsim_parameters = 1000L, seed = NULL, ...) {
+  # sample from prior/posterior if not given
+  if (is.null(parameter_sample)) {
+    parameter_sample <- .sample(
+      model, data = data, warmup = warmup_parameters, nsim = nsim_parameters,
+      seed = seed, rstan_output = TRUE, pars = c("p", "shape", "scale", "monthly_rate"), ...
+    )
+  }
+  stopifnot(isa(parameter_sample, "stanfit"))
+  # extract parameter matrices
+  p <- rstan::extract(parameter_sample, "p")[[1]]
+  shape <- rstan::extract(parameter_sample, "shape")[[1]]
+  scale <- rstan::extract(parameter_sample, "scale")[[1]]
+  monthly_rate <- rstan::extract(parameter_sample, "monthly_rate")[[1]]
+  # figure out latest time entry from data
+  if (all(is.na(data$t_recruitment))) {
+    t_max_data <- 0
+  } else {
+    t_max_data <- data %>%
+      mutate(t_max = t_recruitment + if_else(is.finite(dt2), dt2, ifelse(is.finite(dt1), dt1, 0))) %>%
+      filter(is.finite(t_max)) %>%
+      pull(t_max) %>%
+      max()
+  }
+  # if "now" is not specified, use heuristic from data
+  if (!is.null(now) ) {
+    stopifnot(now >= t_max_data)
+  } else {
+    now <- t_max_data
+  }
+  # figure out last recruitment time per group
+  t_last <- data %>%
+    group_by(group_id) %>%
+    summarize(
+      t_last = max(c(0, t_recruitment), na.rm = TRUE)
+    ) %>%
+    pull(t_last)
+  # convert groups to integers
+  data$group_id <- as.integer(factor(data$group_id, levels = attr(model, "group_id")))
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  idx <- sample.int(nrow(p), size = 1)
+  for (i in 1:nrow(data)) {
+    if (is.na(data$t_recruitment[i])) {
+      group <- data$group_id[i]
+      data$t_recruitment[i] <- t_last[group] + rtruncexp(1, monthly_rate[idx, group], max(0, now - t_last[group]), Inf)
+      t_last[group] <- data$t_recruitment[i]
+    }
+    if (!is.infinite(data$dt1[i]) & !is.finite(data$dt2[i])) {
+      group <- data$group_id[i]
+      if (rbinom(1, n = 1, prob = p[idx, group]) == 1) {
+        # event
+        dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
+        dt <- rtruncweibull(1, shape[idx, group], scale[idx, group], dtmin, Inf)
+        dt2 <- 0
+        while (dt2 < dt) {
+          dt2 <- dt2 + model$visit_spacing[group]
+        }
+        data$dt2[i] <- dt2
+        if (is.na(data$dt1[i]))
+          data$dt1[i] <- dt2 - model$visit_spacing[group]
+      } else {
+        # no event
+        data$dt1[i] <- Inf
+        data$dt2[i] <- Inf
+      }
+    }
+  }
+  # convert groups back
+  data$group_id <- as.character(factor(data$group_id, levels = 1:length(attr(model, "group_id")), labels = attr(model, "group_id")))
+  return(data)
+}
+
+
 
 
 #' @import patchwork
