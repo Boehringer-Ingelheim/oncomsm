@@ -255,21 +255,13 @@ to response distribution (prior predictive).
 ```{r prior-sample}
 plot(mdl)
 
-tmp <- sample_prior(mdl, rstan_output = TRUE, pars = c("p", "shape", "scale", "monthly_rate"))
-
-bhmbasket.predict:::.impute.IndependentMixtureCureRateModel(
+impute_posterior_predictive(
     mdl, 
-    100, 
     data = tbl_visits %>% visits_to_tte(cutoff = 10), 
-    refresh = 0, seed = 42L
+    nsim = 25L,
+    now = 10
   ) %>% 
   print(n = 50)
-
-bhmbasket.predict:::.impute.IndependentMixtureCureRateModel(
-  mdl, 
-  10, 
-  data = tbl_visits %>% visits_to_tte()
-)
 
 ```
 
@@ -277,17 +269,21 @@ bhmbasket.predict:::.impute.IndependentMixtureCureRateModel(
 
 At planning stage, no data is available yet to condition on. The model
 thus samples from the prior predictive distribution and applies the
-specified success threshold to each simulated trial.
+specified success threshold to each simulated trial. For instance, one
+could define success as the observed rate exceeding the target rate.
 
 ```{r compute-planning-pos}
 n_sim <- 250L # only for speed reasons - increase!
 
 # sample from the prior predictive distribution
-tbl_prior_predictive_samples <- draw_samples(mdl, n = n_per_arm, 
-                                             seed = 42L, nsim = n_sim)
+tbl_prior_predictive_sample <- sample_prior_predictive(
+  mdl, 
+  n_per_arm = c(40, 40, 40),
+  nsim = n_sim
+)
 
 # calculate number of responses per iteration 
-tbl_prior_predictive_samples %>% 
+tbl_prior_predictive_sample %>% 
   group_by(iter, group_id) %>% 
   summarize(
     n = n(),

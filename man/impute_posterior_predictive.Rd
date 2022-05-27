@@ -4,16 +4,12 @@
 \alias{impute_posterior_predictive}
 \title{Sample from posterior predictive distribution}
 \usage{
-impute_posterior_predictive(
-  model,
-  conditional_on,
-  parameters,
-  nsim = 1000L,
-  ...
-)
+impute_posterior_predictive(model, data, now, nsim, seed, ...)
 }
 \arguments{
 \item{model}{the model to sample from}
+
+\item{nsim}{number of samples to draw}
 
 \item{conditional_on}{data frame with columns "group_id", "subject_id",
 "t_recruitment" (recruitment time since start of trial),
@@ -21,8 +17,6 @@ impute_posterior_predictive(
 "dt2" (maximal time since recruitment to event, Inf if definite no event or censored)}
 
 \item{parameters}{list of model parameters}
-
-\item{nsim}{number of samples to draw}
 }
 \value{
 ...

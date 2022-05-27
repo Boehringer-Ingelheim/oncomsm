@@ -39,7 +39,7 @@ new_IndependentMixtureCureRateModel <- function(
   mdl <- lapply(mdl, base::as.array)
   attr(mdl, "group_id") <- group_id
   attr(mdl, "stanmodel") <- stanmodels[["simplified_model"]]
-  attr(mdl, "parameter_names") <- c("p", "shape", "median_time_to_response", "monthly_rate")
+  attr(mdl, "parameter_names") <- c("p", "shape", "scale", "median_time_to_response", "monthly_rate")
   class(mdl) <- c("IndependentMixtureCureRateModel", "Model", class(mdl))
   return(mdl)
 }

@@ -2,12 +2,12 @@
 
 
 
-.sample <- function(model, data = NULL, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE, ...) {
+.sample <- function(model, data, ...) {
   UseMethod(".sample")
 }
 
 
-.impute <- function(model, data, nsim, parameter_sample = NULL, warmup_parameters = 250L, nsim_parameters = 1000L, seed = NULL, ...) {
+.impute <- function(model, data, ...) {
   UseMethod(".impute")
 }
 
@@ -19,6 +19,10 @@
 
 .nodata <- function(model) {
   UseMethod(".nodata")
+}
+
+.emptydata <- function(model, n_per_arm) {
+  UseMethod(".emptydata")
 }
 
 
@@ -60,6 +64,23 @@ sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output, pars
 
 
 
+#' Sample model prior parameters
+#'
+#' Sample model parameters unconditionally (prior).
+#'
+#' @param model the model to sample from
+#' @param nsim number of samples to draw
+#' @param rstan_output return raw rstan output?
+#'
+#' @return ...
+#'
+#' @export
+sample_prior_predictive <- function(model, n_per_arm, ...) {
+  UseMethod("sample_prior_predictive")
+}
+
+
+
 #' Sample from posterior predictive distribution
 #'
 #' Sample outcomes from model parameters conditional on a data set (posterior).
@@ -75,8 +96,8 @@ sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output, pars
 #' @return ...
 #'
 #' @export
-impute_posterior_predictive <- function(model, conditional_on, parameters, nsim = 1000L, ...) {
-  UseMethod("sample_predictive")
+impute_posterior_predictive <- function(model, data, now, nsim, seed, ...) {
+  UseMethod("impute_posterior_predictive")
 }
 
 
@@ -148,6 +169,23 @@ sample_posterior.Model <- function(
     model, data = data,
     warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
   )
+}
+
+
+
+#' @export
+impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 1000L, seed = NULL, ...) {
+  .impute(model = model, data = data, now = now, nsim = nsim, seed = seed, ...)
+}
+
+
+#' @export
+sample_prior_predictive.Model <- function(model, n_per_arm, nsim = 1000L, nsim_parameters = 500, warmup_parameters = 250, seed = NULL, ...) {
+  prior_sample <- sample_prior(
+    model, rstan_output = TRUE, seed = seed,
+    warmup = warmup_parameters, nsim = nsim_parameters
+  )
+  .impute(model = model, data = .emptydata(model, n_per_arm), parameter_sample = prior_sample, now = 0, nsim = nsim, seed = seed, ...)
 }
 
 
@@ -228,5 +266,19 @@ data2standata.Model <- function(model, data) {
     t_recruitment = numeric(),
     dt1 = numeric(),
     dt2 = numeric()
+  )
+}
+
+
+
+# helper to create all-missing standata for model
+.emptydata.Model <- function(model, n_per_arm) {
+  n <- sum(n_per_arm)
+  tibble(
+    subject_id = 1:n,
+    group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
+    t_recruitment = rep(NA_real_, n),
+    dt1 = rep(NA_real_, n),
+    dt2 = rep(NA_real_, n)
   )
 }
