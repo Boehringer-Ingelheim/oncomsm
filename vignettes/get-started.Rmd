@@ -254,15 +254,6 @@ to response distribution (prior predictive).
 
 ```{r prior-sample}
 plot(mdl)
-
-impute_posterior_predictive(
-    mdl, 
-    data = tbl_visits %>% visits_to_tte(cutoff = 10), 
-    nsim = 25L,
-    now = 10
-  ) %>% 
-  print(n = 50)
-
 ```
 
 # Computing Probability of Success at planning stage
@@ -277,10 +268,10 @@ n_sim <- 250L # only for speed reasons - increase!
 
 # sample from the prior predictive distribution
 tbl_prior_predictive_sample <- sample_prior_predictive(
-  mdl, 
-  n_per_arm = c(40, 40, 40),
-  nsim = n_sim
-)
+    mdl, 
+    n_per_arm = c(40, 40, 40),
+    nsim = n_sim
+  )
 
 # calculate number of responses per iteration 
 tbl_prior_predictive_sample %>% 
@@ -323,16 +314,20 @@ rate prior from below to the above-target region.
 
 ```{r condition-on-effect-size}
 # change hyperparameters
-mdl$tte_model$logodds_min <- logodds(as.numeric(p_target))
+mdl$logodds_min <- logodds(as.numeric(p_target))
 
 # sample and plot again
-plot(mdl, n = n_per_arm)
+plot(mdl)
 ```
 
 The corresponding success probability is the expected power.
 
 ```{r compute-planning-expected-power}
-tbl_prior_predictive_samples <- draw_samples(mdl, n = n_per_arm, seed = 42L, nsim = n_sim)
+tbl_prior_predictive_samples <- sample_prior_predictive(
+    mdl, 
+    n_per_arm = c(40, 40, 40),
+    nsim = n_sim
+  )
 
 tbl_prior_predictive_summary <- tbl_prior_predictive_samples %>% 
   group_by(iter, group_id) %>% 
@@ -386,7 +381,7 @@ nsim_bhmbasket <- 1000L # gibbs sampler - use more
 
 # remove conditioning of response rate (see expected power) 
 # by adjusting lower truncation back to close to 0 (cannot be zero exactly)
-mdl$tte_model$logodds_min <- logodds(c(.001, .001, .001))
+mdl$logodds_min <- logodds(c(.001, .001, .001))
 
 # specify priors for bhmbasket analysis (should be consistent)
 params <- bhmbasket::setPriorParametersExNex(
@@ -463,7 +458,7 @@ We first convert the visit data to time-to-first-event,
 
 ```{r}
 # convert data to time-to-response
-tbl_tte_interim <- visits_to_tte(tbl_visits_interim)
+tbl_tte_interim <- visits_to_tte(tbl_visits, cutoff = 10)
 
 tbl_tte_interim
 ```
@@ -475,9 +470,8 @@ recruited.
 ```{r sample-from-posterior-predictive}
 min_follow_up <- 3 # months, follow up of last individual
 
-tbl_posterior_predictive_summary <- draw_samples(
+tbl_posterior_predictive_summary <- impute_posterior_predictive(
     mdl, data = tbl_tte_interim, seed = 42L, nsim = n_sim,
-    control = list(stepsize = 1e-4, adapt_delta = .9)
   ) %>% 
   group_by(iter, group_id) %>%
   tidyr::nest() %>%
@@ -505,7 +499,7 @@ tbl_bhmbasket_interim_posterior_medians <- tbl_posterior_predictive_summary %>%
     trial = list(bhmbasket::createTrial(n, r))
   ) %>% 
   mutate(
-    # map a function over all "trial"realizations which computes the
+    # map a function over all realizations computing the
     # posterior medians
     tmp = purrr::map(trial, function(trial) {
         posterior_medians <- suppressMessages(bhmbasket::performAnalyses(

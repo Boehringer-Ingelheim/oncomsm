@@ -92,7 +92,7 @@ new_IndependentMixtureCureRateModel <- function(
     for (i in 1:nrow(data)) {
       if (is.na(data$t_recruitment[i])) {
         group <- data$group_id[i]
-        data$t_recruitment[i] <- t_last[group] + rtruncexp(1, monthly_rate[group], max(0, now - t_last[group]), Inf)
+        data$t_recruitment[i] <- t_last[group] + rtruncexp(monthly_rate[group], max(0, now - t_last[group]), Inf)
         t_last[group] <- data$t_recruitment[i]
       }
       if (!is.infinite(data$dt1[i]) & !is.finite(data$dt2[i])) {
@@ -100,7 +100,7 @@ new_IndependentMixtureCureRateModel <- function(
         if (rbinom(1, n = 1, prob = p[group]) == 1) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
-          dt <- rtruncweibull(1, shape[group], scale[group], dtmin, 999)
+          dt <- rtruncweibull(shape[group], scale[group], dtmin, 999)
           dt2 <- 0
           while (dt2 < dt) {
             dt2 <- dt2 + model$visit_spacing[group]
