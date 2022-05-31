@@ -2,25 +2,58 @@
 % Please edit documentation in R/Model.R
 \name{impute_posterior_predictive}
 \alias{impute_posterior_predictive}
-\title{Sample from posterior predictive distribution}
+\alias{impute_posterior_predictive.Model}
+\title{Sample data from posterior-predictive distribution}
 \usage{
-impute_posterior_predictive(model, data, now, nsim, seed, ...)
+impute_posterior_predictive(
+  model,
+  data,
+  now,
+  nsim,
+  nsim_parameters,
+  warmup_parameters,
+  seed,
+  ...
+)
+
+\method{impute_posterior_predictive}{Model}(
+  model,
+  data,
+  now = NULL,
+  nsim = 1000L,
+  nsim_parameters = 1000L,
+  warmup_parameters = 250L,
+  seed = NULL,
+  ...
+)
 }
 \arguments{
-\item{model}{the model to sample from}
+\item{model}{a model of class "Model"}
+
+\item{data}{a data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+where dt1 is the minimal and dt2 the maximal time to the event in question.
+If both are Inf, the individual has not and will never experience the event.
+If dt1 < Inf but dt2 == Inf the individual is still at risk.
+"t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.}
+
+\item{now}{numeric, current time in months since start of trial (might be later than last recorded event);
+if NULL, last recorded event time is used instead}
 
 \item{nsim}{number of samples to draw}
 
-\item{conditional_on}{data frame with columns "group_id", "subject_id",
-"t_recruitment" (recruitment time since start of trial),
-"dt1" (minimal time since recruitment to event, Inf if definite no event),
-"dt2" (maximal time since recruitment to event, Inf if definite no event or censored)}
+\item{nsim_parameters}{integer, number of parameter samples}
 
-\item{parameters}{list of model parameters}
+\item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
+
+\item{seed}{integer, fixed random seed; NULL for no fixed seed}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
-...
+data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+where dt1 is the minimal and dt2 the maximal time to the event in question.
 }
 \description{
-Sample outcomes from model parameters conditional on a data set (posterior).
+Sample time-to-first event data from given model posterior-predictive
+distribution given data.
 }

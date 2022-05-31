@@ -18,21 +18,19 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Biarch: true
 Depends: 
-    R (>= 4.0.0),
-    bhmbasket
+    R (>= 3.6.0)
 Imports: 
     methods,
     Rcpp,
-    RcppParallel (>= 5.0.1),
     assertthat (>= 0.2.1),
     rstan (>= 2.18.1),
-    rstantools (>= 2.1.1),
     rlang (>= 0.4.12),
     tibble (>= 3.1.6),
     magrittr (>= 2.0.3), 
     dplyr (>= 1.0.7),
     tidyr (>= 1.1.4),
     purrr (>= 0.3.4),
+    stringr,
     ggplot2,
     patchwork,
     uuid,
@@ -41,13 +39,13 @@ LinkingTo:
     BH (>= 1.66.0),
     Rcpp,
     RcppEigen (>= 0.3.3.3.0),
-    RcppParallel (>= 5.0.1),
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
 SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    bhmbasket
 VignetteBuilder: knitr
 Config/testthat/edition: 3

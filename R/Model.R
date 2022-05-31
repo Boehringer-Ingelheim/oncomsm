@@ -1,121 +1,160 @@
-# generic functions to implement "Model" class
+# standard format/print methods
+format.Model <- function(x, ...) class(x)[1]
+print.Model <- function(x, ...) cat(format(x, ...), "\n")
 
 
 
-.sample <- function(model, data, ...) {
-  UseMethod(".sample")
-}
-
-
-.impute <- function(model, data, ...) {
-  UseMethod(".impute")
-}
-
-
-.parameter_sample_to_tibble <- function(model, sample, ...) {
-  UseMethod(".parameter_sample_to_tibble")
-}
-
-
-.nodata <- function(model) {
-  UseMethod(".nodata")
-}
-
-.emptydata <- function(model, n_per_arm) {
-  UseMethod(".emptydata")
-}
 
 
 #' Sample model prior parameters
 #'
-#' Sample model parameters unconditionally (prior).
+#' Sample model parameters from the model prior distribution.
 #'
-#' @param model the model to sample from
-#' @param nsim number of samples to draw
-#' @param rstan_output return raw rstan output?
+#' @template param-model
+#' @template param-warmup
+#' @template param-nsim
+#' @template param-seed
+#' @template param-rstan_output
+#' @template param-pars
+#' @template param-dotdotdot
 #'
-#' @return ...
+#' @return A tibble with columns iter (integer), parameter (character),
+#' group_id (character), and value (numeric) with the parameter samples in long
+#' format or (if rstan_output == TRUE) a rstanfit object.
 #'
 #' @export
 sample_prior <- function(model, warmup, nsim, seed, rstan_output, pars, ...) {
   UseMethod("sample_prior")
 }
 
+#' @rdname sample_prior
+#' @export
+sample_prior.Model <- function(
+  model, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
+  pars = attr(model, "parameter_names"), ...
+) {
+  .sample(
+    model, data = NULL,
+    warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
+  )
+}
+
+
+
 
 
 #' Sample model posterior parameters
 #'
-#' Sample model parameters conditional on a data set (posterior).
+#' Posterior sample model of the parameters conditional on a data set.
 #'
-#' @param model the model to sample from
-#' @param data data frame with columns "group_id", "subject_id",
-#'   "t_recruitment" (recruitment time since start of trial),
-#'   "dt1" (minimal time since recruitment to event, Inf if definite no event),
-#'   "dt2" (maximal time since recruitment to event, Inf if definite no event or censored)
-#' @param nsim number of samples to draw
-#' @param rstan_output return raw rstan output?
+#' @template param-model
+#' @template param-data-condition
+#' @template param-warmup
+#' @template param-nsim
+#' @template param-seed
+#' @template param-rstan_output
+#' @template param-pars
+#' @template param-dotdotdot
 #'
-#' @return ...
+#' @return A tibble with columns iter (integer), parameter (character),
+#' group_id (character), and value (numeric) with the parameter samples in long
+#' format or (if rstan_output == TRUE) a rstanfit object.
 #'
 #' @export
 sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output, pars, ...) {
   UseMethod("sample_posterior")
 }
 
-
-
-#' Sample model prior parameters
-#'
-#' Sample model parameters unconditionally (prior).
-#'
-#' @param model the model to sample from
-#' @param nsim number of samples to draw
-#' @param rstan_output return raw rstan output?
-#'
-#' @return ...
-#'
+#' @rdname sample_posterior
 #' @export
-sample_prior_predictive <- function(model, n_per_arm, ...) {
-  UseMethod("sample_prior_predictive")
+sample_posterior.Model <- function(
+  model, data, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
+  pars = attr(model, "parameter_names"), ...
+) {
+  .sample(
+    model, data = data,
+    warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
+  )
 }
 
 
 
-#' Sample from posterior predictive distribution
+
+
+#' Sample data from prior-predictive distribution
 #'
-#' Sample outcomes from model parameters conditional on a data set (posterior).
+#' Sample time-to-first event data from given model prior-predictive distribution.
 #'
-#' @param model the model to sample from
-#' @param conditional_on data frame with columns "group_id", "subject_id",
-#'   "t_recruitment" (recruitment time since start of trial),
-#'   "dt1" (minimal time since recruitment to event, Inf if definite no event),
-#'   "dt2" (maximal time since recruitment to event, Inf if definite no event or censored)
-#' @param parameters list of model parameters
-#' @param nsim number of samples to draw
+#' @template param-model
+#' @template param-n_per_arm
+#' @template param-nsim
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @template param-seed
+#' @template param-dotdotdot
 #'
-#' @return ...
+#' @return  data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+#' where dt1 is the minimal and dt2 the maximal time to the event in question.
 #'
 #' @export
-impute_posterior_predictive <- function(model, data, now, nsim, seed, ...) {
+sample_prior_predictive <- function(model, n_per_arm, nsim, nsim_parameters, warmup_parameters, seed, ...) {
+  UseMethod("sample_prior_predictive")
+}
+
+#' @rdname sample_prior_predictive
+#' @export
+sample_prior_predictive.Model <- function(model, n_per_arm, nsim = 1000L, nsim_parameters = 1000L, warmup_parameters = 250, seed = NULL, ...) {
+  prior_sample <- sample_prior(
+    model, rstan_output = TRUE, seed = seed,
+    warmup = warmup_parameters, nsim = nsim_parameters
+  )
+  .impute(model = model, data = .emptydata(model, n_per_arm), parameter_sample = prior_sample, now = 0, nsim = nsim, seed = seed, ...)
+}
+
+
+
+
+
+#' Sample data from posterior-predictive distribution
+#'
+#' Sample time-to-first event data from given model posterior-predictive
+#' distribution given data.
+#'
+#' @template param-model
+#' @template param-data-condition
+#' @template param-now
+#' @template param-nsim
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @template param-seed
+#' @template param-dotdotdot
+#'
+#' @return  data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+#' where dt1 is the minimal and dt2 the maximal time to the event in question.
+#'
+#' @export
+impute_posterior_predictive <- function(model, data, now, nsim, nsim_parameters, warmup_parameters, seed, ...) {
   UseMethod("impute_posterior_predictive")
 }
 
 
-
-# generic for digesting data into rstan-ready list
-data2standata <- function(model, data, ...) {
-  UseMethod("data2standata")
+#' @rdname impute_posterior_predictive
+#' @export
+impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 1000L, nsim_parameters = 1000L, warmup_parameters = 250L, seed = NULL, ...) {
+  posterior_sample <- sample_posterior(
+    model, data = data, rstan_output = TRUE, seed = seed,
+    warmup = warmup_parameters, nsim = nsim_parameters
+  )
+  .impute(model = model, data = data, now = now, nsim = nsim, seed = seed, ...)
 }
 
 
 
-# default implementation for "Model" class methods
-
-# standard format/print methods
-format.Model <- function(x, ...) class(x)[1]
-print.Model <- function(x, ...) cat(format(x, ...), "\n")
 
 
+.sample <- function(model, data, ...) {
+  UseMethod(".sample")
+}
 
 # sample from stan model (hidden)
 .sample.Model <- function(
@@ -147,46 +186,89 @@ print.Model <- function(x, ...) cat(format(x, ...), "\n")
 
 
 
-#' @export
-sample_prior.Model <- function(
-  model, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
-  pars = attr(model, "parameter_names"), ...
-) {
-  .sample(
-    model, data = NULL,
-    warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
+
+
+# must be implemented by "Model" subclass
+.impute <- function(model, data, ...) {
+  UseMethod(".impute")
+}
+
+
+
+
+
+# convert stanfit result to tibble
+.parameter_sample_to_tibble <- function(model, sample, ...) {
+  UseMethod(".parameter_sample_to_tibble")
+}
+
+#' @importFrom stringr str_extract
+.parameter_sample_to_tibble.Model <- function(model, sample) {
+  stopifnot(isa(sample, "stanfit"))
+  as.matrix(sample) %>%
+    as_tibble() %>%
+    mutate(
+      iter = row_number()
+    ) %>%
+    tidyr::pivot_longer(-.data$iter) %>%
+    filter(.data$name != "lp__") %>%
+    tidyr::separate(.data$name, into = c("parameter", "group_id"), sep = "\\[", fill = "right") %>%
+    mutate(
+      group_id = attr(model, "group_id")[as.integer(stringr::str_extract(.data$group_id, "[0-9]+"))]
+    )
+}
+
+
+
+
+
+# create a data set with no observations
+.nodata <- function(model) {
+  UseMethod(".nodata")
+}
+
+# helper to create empty standata for model
+.nodata.Model <- function(model) {
+  tibble(
+    subject_id = integer(),
+    group_id = integer(),
+    t_recruitment = numeric(),
+    dt1 = numeric(),
+    dt2 = numeric()
   )
 }
 
 
 
-#' @export
-sample_posterior.Model <- function(
-  model, data, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
-  pars = attr(model, "parameter_names"), ...
-) {
-  .sample(
-    model, data = data,
-    warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
+
+
+# create a data set with no observed data
+.emptydata <- function(model, n_per_arm) {
+  UseMethod(".emptydata")
+}
+
+# helper to create all-missing standata for model
+.emptydata.Model <- function(model, n_per_arm) {
+  n <- sum(n_per_arm)
+  tibble(
+    subject_id = 1:n,
+    group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
+    t_recruitment = rep(NA_real_, n),
+    dt1 = rep(NA_real_, n),
+    dt2 = rep(NA_real_, n)
   )
 }
 
 
 
-#' @export
-impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 1000L, seed = NULL, ...) {
-  .impute(model = model, data = data, now = now, nsim = nsim, seed = seed, ...)
+
+
+# generic for digesting data into rstan-ready list
+data2standata <- function(model, data, ...) {
+  UseMethod("data2standata")
 }
 
 
-#' @export
-sample_prior_predictive.Model <- function(model, n_per_arm, nsim = 1000L, nsim_parameters = 500, warmup_parameters = 250, seed = NULL, ...) {
-  prior_sample <- sample_prior(
-    model, rstan_output = TRUE, seed = seed,
-    warmup = warmup_parameters, nsim = nsim_parameters
-  )
-  .impute(model = model, data = .emptydata(model, n_per_arm), parameter_sample = prior_sample, now = 0, nsim = nsim, seed = seed, ...)
-}
 
 
 
@@ -240,45 +322,4 @@ data2standata.Model <- function(model, data) {
   lst_stan_data$n_recruited_per_group <- n_recruited_per_group
   # return
   return(lst_stan_data)
-}
-
-
-.parameter_sample_to_tibble.Model <- function(model, sample) {
-  stopifnot(isa(sample, "stanfit"))
-  as.matrix(sample) %>%
-    as_tibble() %>%
-    mutate(
-      iter = row_number()
-    ) %>%
-    tidyr::pivot_longer(-iter) %>%
-    filter(name != "lp__") %>%
-    tidyr::separate(name, into = c("parameter", "group_id"), sep = "\\[", fill = "right") %>%
-    mutate(
-      group_id = attr(mdl, "group_id")[as.integer(stringr::str_extract(group_id, "[0-9]+"))]
-    )
-}
-
-# helper to create empty standata for model
-.nodata.Model <- function(model) {
-  tibble(
-    subject_id = integer(),
-    group_id = integer(),
-    t_recruitment = numeric(),
-    dt1 = numeric(),
-    dt2 = numeric()
-  )
-}
-
-
-
-# helper to create all-missing standata for model
-.emptydata.Model <- function(model, n_per_arm) {
-  n <- sum(n_per_arm)
-  tibble(
-    subject_id = 1:n,
-    group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
-    t_recruitment = rep(NA_real_, n),
-    dt1 = rep(NA_real_, n),
-    dt2 = rep(NA_real_, n)
-  )
 }

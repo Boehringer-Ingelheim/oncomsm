@@ -1,38 +1,40 @@
 #' Generate visit data
 #'
 #' Generate example data from mixture cure rate model with Weibull distributed
-#' time-to-response and time-to-progression.
+#' time-to-first-event.
+#' It is assumed that there is a competing event that blocks the event of interest
+#' (i.e., an individual can no longer experience the event of interest).
 #'
 #' @param group_id ids of arms
 #' @param n sample size of arms
-#' @param response_rate response rates of arms
+#' @param event_rate event rates per arm
 #' @param delay delay (in months) of recruitment per arm
 #' @param recruitment_rate recruitment rates (per month) of arms
 #' @param visit_spacing distance between visits (in months)
 #' @param max_duration maximal overall duration of all arms
-#' @param responder_weibull_scale parameter of Weibull distribution for TTE responders
-#' @param responder_weibull_shape parameter of Weibull distribution for TTE responders
-#' @param nonresponder_weibull_scale parameter of Weibull distribution for TTE non-responders (progression)
-#' @param nonresponder_weibull_shape parameter of Weibull distribution for TTE non-responders (progression)
+#' @param event_weibull_scale parameter of Weibull distribution for TTE
+#' @param event_weibull_shape parameter of Weibull distribution for TTE
+#' @param nonevent_weibull_scale parameter of Weibull distribution for TTE non-event
+#' @param nonevent_weibull_shape parameter of Weibull distribution for TTE non-event
 #' @param seed random seed to use, NULL uses no seed
 #'
 #' @return A data frame with sampled data in columns "group_id", "subject_id",
-#' "t" (visit time point in months since start of trial), "status" (S(table), R(esponse), P(rogression)),
+#' "t" (visit time point in months since start of trial), "status" (S(table), E(vent), N(on-event)),
 #' "eof" (end of follow-up, is the visit the last visit of the individual?)
 #'
 #' @export
 generate_visit_data <- function(
   group_id,
   n,
-  response_rate,
+  event_rate,
   delay = numeric(length(group_id)),
   recruitment_rate,
   visit_spacing,
   max_duration,
-  responder_weibull_scale,
-  responder_weibull_shape,
-  nonresponder_weibull_scale,
-  nonresponder_weibull_shape,
+  event_weibull_scale,
+  event_weibull_shape,
+  nonevent_weibull_scale,
+  nonevent_weibull_shape,
   seed = NULL
 ) {
 
@@ -40,24 +42,24 @@ generate_visit_data <- function(
     set.seed(seed)
 
   # function for individual arm
-  f <- function(group_id, n, response_rate, delay, recruitment_rate,
-                visit_spacing, max_duration, responder_weibull_scale, responder_weibull_shape,
-                nonresponder_weibull_scale, nonresponder_weibull_shape
+  f <- function(group_id, n, event_rate, delay, recruitment_rate,
+                visit_spacing, max_duration, event_weibull_scale, event_weibull_shape,
+                nonevent_weibull_scale, nonevent_weibull_shape
   ) {
     tibble::tibble(
       subject_id = uuid::UUIDgenerate(n = n), # generate unique patient identifiers
-      responder = stats::rbinom(n, 1, response_rate)
+      event = stats::rbinom(n, 1, event_rate)
     ) %>%
     mutate(
       t = delay + cumsum(stats::rexp(n(), recruitment_rate)), # sample recruitment times
-      dt = purrr::map_dbl(.data$responder, function(responder) {
-        stats::rweibull(
-          1,
-          scale = if (responder) responder_weibull_scale else nonresponder_weibull_scale,
-          shape = if (responder) responder_weibull_shape else nonresponder_weibull_shape
-        ) %>%
+      dt = purrr::map_dbl(.data$event, function(event) {
+          stats::rweibull(
+            1,
+            scale = if (event) event_weibull_scale else nonevent_weibull_scale,
+            shape = if (event) event_weibull_shape else nonevent_weibull_shape
+          ) %>%
           pmax(visit_spacing + 1e-4) # no events before first visit (first visit needs to be SD)
-      }
+        }
       )
     ) %>%
     tidyr::expand_grid(
@@ -66,8 +68,8 @@ generate_visit_data <- function(
     mutate(
       status = dplyr::case_when(
         .data$dt_visit < .data$dt ~ "S", # no event yet
-        .data$dt_visit >= .data$dt & .data$responder ~ "R",
-        .data$dt_visit >= .data$dt & !.data$responder ~ "P"
+        .data$dt_visit >= .data$dt & .data$event ~ "E",
+        .data$dt_visit >= .data$dt & !.data$event ~ "N"
       )
     ) %>%
     group_by(
@@ -90,10 +92,10 @@ generate_visit_data <- function(
   for (i in seq_along(group_id)) {
     res <- dplyr::bind_rows(
       res,
-      f(group_id[i], n[i], response_rate[i], delay[i], recruitment_rate[i],
+      f(group_id[i], n[i], event_rate[i], delay[i], recruitment_rate[i],
         visit_spacing[i], max_duration,
-        responder_weibull_scale[i], responder_weibull_shape[i],
-        nonresponder_weibull_scale[i], nonresponder_weibull_shape[i]
+        event_weibull_scale[i], event_weibull_shape[i],
+        nonevent_weibull_scale[i], nonevent_weibull_shape[i]
       )
     )
   }

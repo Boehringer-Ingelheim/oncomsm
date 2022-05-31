@@ -28,7 +28,7 @@ data {
 
   // prior hyperparamters
   real visit_spacing[M_groups];
-  // response probability (via logit)
+  // event probability (via logit)
   real logodds_mean[M_groups];
   real<lower=machine_precision()> logodds_sd[M_groups];
   vector[M_groups] logodds_min;
@@ -37,8 +37,8 @@ data {
   real log_shape_mean[M_groups];
   real<lower=machine_precision()> log_shape_sd[M_groups];
   // weibull median
-  real median_time_to_response_mean[M_groups];
-  real<lower=machine_precision()> median_time_to_response_sd[M_groups];
+  real median_time_to_event_mean[M_groups];
+  real<lower=machine_precision()> median_time_to_event_sd[M_groups];
   // poisson recruitment
   real monthly_rate_mean[M_groups];
   real<lower=machine_precision()> monthly_rate_sd[M_groups];
@@ -58,7 +58,7 @@ parameters {
 
   vector<lower=0,upper=1>[M_groups] logodds_raw;
   real log_shape[M_groups]; // shape aka k, important to bound from 0
-  real<lower=sqrt(machine_precision())> median_time_to_response[M_groups];
+  real<lower=sqrt(machine_precision())> median_time_to_event[M_groups];
   real<lower=sqrt(machine_precision())> monthly_rate[M_groups];
 
 }
@@ -74,7 +74,7 @@ transformed parameters {
 
   for (g in 1:M_groups) {
     p[g] = 1/(1 + exp(-logodds[g]));
-    scale[g] = median_time_to_response[g]/(log(2)^(1/shape[g]));
+    scale[g] = median_time_to_event[g]/(log(2)^(1/shape[g]));
   }
 
 }
@@ -89,7 +89,7 @@ model {
   for (g in 1:M_groups) {
     logodds[g] ~ normal(logodds_mean[g], logodds_sd[g]) T[logodds_min[g],logodds_max[g]];
     log_shape[g] ~ normal(log_shape_mean[g], log_shape_sd[g]);
-    median_time_to_response[g] ~ normal(median_time_to_response_mean[g], median_time_to_response_sd[g]) T[sqrt(machine_precision()),];
+    median_time_to_event[g] ~ normal(median_time_to_event_mean[g], median_time_to_event_sd[g]) T[sqrt(machine_precision()),];
     monthly_rate[g] ~ normal(monthly_rate_mean[g], monthly_rate_sd[g]) T[sqrt(machine_precision()),];
   }
 

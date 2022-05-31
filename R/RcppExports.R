@@ -9,7 +9,7 @@ rtruncweibull <- function(shape, scale, a, b) {
     .Call(`_bhmbasket_predict_rtruncweibull`, shape, scale, a, b)
 }
 
-visits_to_tte_ <- function(data) {
-    .Call(`_bhmbasket_predict_visits_to_tte_`, data)
+visits_to_tte_ <- function(data, event, nonevent) {
+    .Call(`_bhmbasket_predict_visits_to_tte_`, data, event, nonevent)
 }
 

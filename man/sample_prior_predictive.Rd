@@ -2,20 +2,48 @@
 % Please edit documentation in R/Model.R
 \name{sample_prior_predictive}
 \alias{sample_prior_predictive}
-\title{Sample model prior parameters}
+\alias{sample_prior_predictive.Model}
+\title{Sample data from prior-predictive distribution}
 \usage{
-sample_prior_predictive(model, n_per_arm, ...)
+sample_prior_predictive(
+  model,
+  n_per_arm,
+  nsim,
+  nsim_parameters,
+  warmup_parameters,
+  seed,
+  ...
+)
+
+\method{sample_prior_predictive}{Model}(
+  model,
+  n_per_arm,
+  nsim = 1000L,
+  nsim_parameters = 1000L,
+  warmup_parameters = 250,
+  seed = NULL,
+  ...
+)
 }
 \arguments{
-\item{model}{the model to sample from}
+\item{model}{a model of class "Model"}
+
+\item{n_per_arm}{integer vector with number of individuals to be recruited per arm.}
 
 \item{nsim}{number of samples to draw}
 
-\item{rstan_output}{return raw rstan output?}
+\item{nsim_parameters}{integer, number of parameter samples}
+
+\item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
+
+\item{seed}{integer, fixed random seed; NULL for no fixed seed}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
-...
+data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+where dt1 is the minimal and dt2 the maximal time to the event in question.
 }
 \description{
-Sample model parameters unconditionally (prior).
+Sample time-to-first event data from given model prior-predictive distribution.
 }

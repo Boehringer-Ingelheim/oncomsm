@@ -42,7 +42,7 @@ double rtruncweibull(double shape, double scale, double a, double b) {
 
 
 // [[Rcpp::export]]
-DataFrame visits_to_tte_(DataFrame data) {
+DataFrame visits_to_tte_(DataFrame data, String event, String nonevent) {
 
   // unpack old data for faster access
   const int n_visits = data.nrow();
@@ -103,15 +103,15 @@ DataFrame visits_to_tte_(DataFrame data) {
     if (had_non_response | had_response) {
       continue; // can skip until next individual starts
     }
-    if ( (status_ == "P") | (eof_ & !had_response) ) {
-      // definite non-responder, eof without response is non-response
+    if ( (status_ == nonevent) | (eof_ & !had_response) ) {
+      // definite non-event, eof without response is non-response
       had_non_response = true;
       group_id_out(subject_idx) = group_;
       subject_id_out(subject_idx) = subject_;
       dt_lower(subject_idx) = R_PosInf;
       dt_upper(subject_idx) = R_PosInf;
     }
-    if (status_ == "R") { // a responder
+    if (status_ == event) { // an event
       had_response = true;
       group_id_out(subject_idx) = group_;
       subject_id_out(subject_idx) = subject_;

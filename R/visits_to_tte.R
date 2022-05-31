@@ -5,6 +5,8 @@
 #' "status" (character, S/P/R), and "eof"
 #' (logical, end of follow-up, is the visit the last visit of the individual?)
 #' @param cutoff maximal visit times to consider - allows retrospective analyses.
+#' @param event character, string encoding an event of interest
+#' @param nonevent character, string encoding a competing event
 #'
 #' @return A data frame with one row per subject in tbl_visits. columns:
 #' "group_id", "subject_id", "t_recruitment" (recruitment time since start of trial),
@@ -15,7 +17,7 @@
 #' @importFrom rlang .data
 #'
 #' @export
-visits_to_tte <- function(tbl_visits, cutoff = Inf) {
+visits_to_tte <- function(tbl_visits, cutoff = Inf, event = "E", nonevent = "N") {
 
   # save all individuals for later
   res <- dplyr::select(tbl_visits, .data$group_id, .data$subject_id) %>%
@@ -34,7 +36,7 @@ visits_to_tte <- function(tbl_visits, cutoff = Inf) {
     tbl_interval_censored_event_times_since_sot <- tbl_visits %>%
       dplyr::group_by(.data$group_id, .data$subject_id) %>%
       dplyr::mutate(dt = .data$t - min(.data$t)) %>%
-      visits_to_tte_() %>% # fast c implementation
+      visits_to_tte_(event, nonevent) %>% # fast c implementation
       tibble::as_tibble()
 
     # combine

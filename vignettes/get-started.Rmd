@@ -164,14 +164,14 @@ n_per_arm <- c(40, 30, 30)
 tbl_visits <- generate_visit_data(
     group_id = c("A", "B", "C"),
     n = n_per_arm, # sample size per arm
-    response_rate = c(0.33, .4, .2), 
+    event_rate = c(0.33, .4, .2), 
     recruitment_rate = c(2, 1.5, 1.5), # per month
     visit_spacing = c(1.2, 1.2, 1.2), # how many months between visits?
     max_duration = 48, # in months
-    responder_weibull_scale = rep(4, 3),
-    responder_weibull_shape = rep(5, 3),
-    nonresponder_weibull_scale = rep(4, 3),
-    nonresponder_weibull_shape = rep(2, 3)
+    event_weibull_scale = rep(4, 3),
+    event_weibull_shape = rep(5, 3),
+    nonevent_weibull_scale = rep(4, 3),
+    nonevent_weibull_shape = rep(2, 3)
   )
 
 tbl_visits
@@ -222,16 +222,16 @@ way. This effectively means that the shape parameter has to be fixed *a
 priori*.
 
 ```{r prior-specification}
-mdl <- new_IndependentMixtureCureRateModel(
+mdl <- IndependentMixtureCureRateModel(
   group_id = c("A", "B", "C"),
   logodds_mean = logodds(c(.4, .2, .2)),
   logodds_sd = c(.5, .5, .5),
   logodds_max = logodds(c(.6, .6, .6)),
   log_shape_mean = log(c(2, 2, 2)),
   log_shape_sd = c(.1, .1, .1),
-  median_time_to_response_mean = c(4, 4, 4),
-  median_time_to_response_sd = c(.25, .25, .25),
-  max_time_to_response = c(18, 18, 18),
+  median_time_to_event_mean = c(4, 4, 4),
+  median_time_to_event_sd = c(.25, .25, .25),
+  max_time_to_event = c(18, 18, 18),
   visit_spacing = c(1.2, 1.2, 1.2),
   monthly_rate_mean = c(2, 1, 1),
   monthly_rate_sd = c(.25, .25, .25)
@@ -385,10 +385,10 @@ mdl$logodds_min <- logodds(c(.001, .001, .001))
 
 # specify priors for bhmbasket analysis (should be consistent)
 params <- bhmbasket::setPriorParametersExNex(
-  mu_mean   = logit(0.3), # exchangeable component mean normal prior mean
+  mu_mean   = bhmbasket::logit(0.3), # exchangeable component mean normal prior mean
   mu_sd     = 1, # exchangeable component mean normal prior standard deviation
   tau_scale = 1, # standard deviation of half-normal prior on tau
-  mu_j      = logit(c(.4, .2, .2)), # individual components means
+  mu_j      = bhmbasket::logit(c(.4, .2, .2)), # individual components means
   tau_j     = rep(1, 3), # individual components standard deviations
   w_j       = 0.5 # probability of being exchangeable
 )

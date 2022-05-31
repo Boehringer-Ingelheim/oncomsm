@@ -2,25 +2,49 @@
 % Please edit documentation in R/Model.R
 \name{sample_posterior}
 \alias{sample_posterior}
+\alias{sample_posterior.Model}
 \title{Sample model posterior parameters}
 \usage{
 sample_posterior(model, data, warmup, nsim, seed, rstan_output, pars, ...)
+
+\method{sample_posterior}{Model}(
+  model,
+  data,
+  warmup = 250L,
+  nsim = 1000L,
+  seed = NULL,
+  rstan_output = FALSE,
+  pars = attr(model, "parameter_names"),
+  ...
+)
 }
 \arguments{
-\item{model}{the model to sample from}
+\item{model}{a model of class "Model"}
 
-\item{data}{data frame with columns "group_id", "subject_id",
-"t_recruitment" (recruitment time since start of trial),
-"dt1" (minimal time since recruitment to event, Inf if definite no event),
-"dt2" (maximal time since recruitment to event, Inf if definite no event or censored)}
+\item{data}{a data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+where dt1 is the minimal and dt2 the maximal time to the event in question.
+If both are Inf, the individual has not and will never experience the event.
+If dt1 < Inf but dt2 == Inf the individual is still at risk.
+"t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.}
+
+\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.}
 
 \item{nsim}{number of samples to draw}
 
-\item{rstan_output}{return raw rstan output?}
+\item{seed}{integer, fixed random seed; NULL for no fixed seed}
+
+\item{rstan_output}{logical, function returns raw rstan sample object if set to TRUE}
+
+\item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
-...
+A tibble with columns iter (integer), parameter (character),
+group_id (character), and value (numeric) with the parameter samples in long
+format or (if rstan_output == TRUE) a rstanfit object.
 }
 \description{
-Sample model parameters conditional on a data set (posterior).
+Posterior sample model of the parameters conditional on a data set.
 }

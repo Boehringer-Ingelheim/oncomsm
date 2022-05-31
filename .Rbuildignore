@@ -1,2 +1,4 @@
 ^settings\.Rproj$
 ^\.Rproj\.user$
+^README.md$
+^man-roxygen$

@@ -4,7 +4,7 @@
 \alias{visits_to_tte}
 \title{Convert longitudinal visit data to time-to-event data}
 \usage{
-visits_to_tte(tbl_visits, cutoff = Inf)
+visits_to_tte(tbl_visits, cutoff = Inf, event = "E", nonevent = "N")
 }
 \arguments{
 \item{tbl_visits}{visit data in long format; columns "group_id" (character),
@@ -13,6 +13,10 @@ visits_to_tte(tbl_visits, cutoff = Inf)
 (logical, end of follow-up, is the visit the last visit of the individual?)}
 
 \item{cutoff}{maximal visit times to consider - allows retrospective analyses.}
+
+\item{event}{character, string encoding an event of interest}
+
+\item{nonevent}{character, string encoding a competing event}
 }
 \value{
 A data frame with one row per subject in tbl_visits. columns:

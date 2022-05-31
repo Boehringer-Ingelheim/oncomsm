@@ -1,0 +1,1 @@
+"rstantools::rstan_config()"

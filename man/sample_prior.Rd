@@ -2,20 +2,42 @@
 % Please edit documentation in R/Model.R
 \name{sample_prior}
 \alias{sample_prior}
+\alias{sample_prior.Model}
 \title{Sample model prior parameters}
 \usage{
 sample_prior(model, warmup, nsim, seed, rstan_output, pars, ...)
+
+\method{sample_prior}{Model}(
+  model,
+  warmup = 250L,
+  nsim = 1000L,
+  seed = NULL,
+  rstan_output = FALSE,
+  pars = attr(model, "parameter_names"),
+  ...
+)
 }
 \arguments{
-\item{model}{the model to sample from}
+\item{model}{a model of class "Model"}
+
+\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.}
 
 \item{nsim}{number of samples to draw}
 
-\item{rstan_output}{return raw rstan output?}
+\item{seed}{integer, fixed random seed; NULL for no fixed seed}
+
+\item{rstan_output}{logical, function returns raw rstan sample object if set to TRUE}
+
+\item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
-...
+A tibble with columns iter (integer), parameter (character),
+group_id (character), and value (numeric) with the parameter samples in long
+format or (if rstan_output == TRUE) a rstanfit object.
 }
 \description{
-Sample model parameters unconditionally (prior).
+Sample model parameters from the model prior distribution.
 }

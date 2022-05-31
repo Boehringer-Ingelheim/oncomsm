@@ -30,7 +30,7 @@ test_that("convert visit data to time-to-event", {
   tbl_tte_3 <- tibble::tribble(
       ~group_id, ~subject_id, ~t, ~status, ~eof,
       "A",         "1",  0,    "S", FALSE,
-      "A",         "1",  1,    "P", TRUE
+      "A",         "1",  1,    "N", TRUE
     ) %>%
     visits_to_tte()
   expect_true(all(
@@ -44,7 +44,7 @@ test_that("convert visit data to time-to-event", {
   tbl_tte_4 <- tibble::tribble(
       ~group_id, ~subject_id, ~t, ~status, ~eof,
       "A",         "1",  0,    "S", FALSE,
-      "A",         "1",  1,    "R", FALSE
+      "A",         "1",  1,    "E", FALSE
     ) %>%
     visits_to_tte()
   expect_true(all(

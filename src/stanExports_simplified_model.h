@@ -47,8 +47,8 @@ private:
         vector_d logodds_max;
         std::vector<double> log_shape_mean;
         std::vector<double> log_shape_sd;
-        std::vector<double> median_time_to_response_mean;
-        std::vector<double> median_time_to_response_sd;
+        std::vector<double> median_time_to_event_mean;
+        std::vector<double> median_time_to_event_sd;
         std::vector<double> monthly_rate_mean;
         std::vector<double> monthly_rate_sd;
         int N_all;
@@ -329,28 +329,28 @@ public:
                 check_greater_or_equal(function__, "log_shape_sd[i_0__]", log_shape_sd[i_0__], stan::math::machine_precision());
             }
             current_statement_begin__ = 40;
-            validate_non_negative_index("median_time_to_response_mean", "M_groups", M_groups);
-            context__.validate_dims("data initialization", "median_time_to_response_mean", "double", context__.to_vec(M_groups));
-            median_time_to_response_mean = std::vector<double>(M_groups, double(0));
-            vals_r__ = context__.vals_r("median_time_to_response_mean");
+            validate_non_negative_index("median_time_to_event_mean", "M_groups", M_groups);
+            context__.validate_dims("data initialization", "median_time_to_event_mean", "double", context__.to_vec(M_groups));
+            median_time_to_event_mean = std::vector<double>(M_groups, double(0));
+            vals_r__ = context__.vals_r("median_time_to_event_mean");
             pos__ = 0;
-            size_t median_time_to_response_mean_k_0_max__ = M_groups;
-            for (size_t k_0__ = 0; k_0__ < median_time_to_response_mean_k_0_max__; ++k_0__) {
-                median_time_to_response_mean[k_0__] = vals_r__[pos__++];
+            size_t median_time_to_event_mean_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < median_time_to_event_mean_k_0_max__; ++k_0__) {
+                median_time_to_event_mean[k_0__] = vals_r__[pos__++];
             }
             current_statement_begin__ = 41;
-            validate_non_negative_index("median_time_to_response_sd", "M_groups", M_groups);
-            context__.validate_dims("data initialization", "median_time_to_response_sd", "double", context__.to_vec(M_groups));
-            median_time_to_response_sd = std::vector<double>(M_groups, double(0));
-            vals_r__ = context__.vals_r("median_time_to_response_sd");
+            validate_non_negative_index("median_time_to_event_sd", "M_groups", M_groups);
+            context__.validate_dims("data initialization", "median_time_to_event_sd", "double", context__.to_vec(M_groups));
+            median_time_to_event_sd = std::vector<double>(M_groups, double(0));
+            vals_r__ = context__.vals_r("median_time_to_event_sd");
             pos__ = 0;
-            size_t median_time_to_response_sd_k_0_max__ = M_groups;
-            for (size_t k_0__ = 0; k_0__ < median_time_to_response_sd_k_0_max__; ++k_0__) {
-                median_time_to_response_sd[k_0__] = vals_r__[pos__++];
+            size_t median_time_to_event_sd_k_0_max__ = M_groups;
+            for (size_t k_0__ = 0; k_0__ < median_time_to_event_sd_k_0_max__; ++k_0__) {
+                median_time_to_event_sd[k_0__] = vals_r__[pos__++];
             }
-            size_t median_time_to_response_sd_i_0_max__ = M_groups;
-            for (size_t i_0__ = 0; i_0__ < median_time_to_response_sd_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "median_time_to_response_sd[i_0__]", median_time_to_response_sd[i_0__], stan::math::machine_precision());
+            size_t median_time_to_event_sd_i_0_max__ = M_groups;
+            for (size_t i_0__ = 0; i_0__ < median_time_to_event_sd_i_0_max__; ++i_0__) {
+                check_greater_or_equal(function__, "median_time_to_event_sd[i_0__]", median_time_to_event_sd[i_0__], stan::math::machine_precision());
             }
             current_statement_begin__ = 43;
             validate_non_negative_index("monthly_rate_mean", "M_groups", M_groups);
@@ -393,7 +393,7 @@ public:
             validate_non_negative_index("log_shape", "M_groups", M_groups);
             num_params_r__ += (1 * M_groups);
             current_statement_begin__ = 61;
-            validate_non_negative_index("median_time_to_response", "M_groups", M_groups);
+            validate_non_negative_index("median_time_to_event", "M_groups", M_groups);
             num_params_r__ += (1 * M_groups);
             current_statement_begin__ = 62;
             validate_non_negative_index("monthly_rate", "M_groups", M_groups);
@@ -453,23 +453,23 @@ public:
             }
         }
         current_statement_begin__ = 61;
-        if (!(context__.contains_r("median_time_to_response")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable median_time_to_response missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("median_time_to_response");
+        if (!(context__.contains_r("median_time_to_event")))
+            stan::lang::rethrow_located(std::runtime_error(std::string("Variable median_time_to_event missing")), current_statement_begin__, prog_reader__());
+        vals_r__ = context__.vals_r("median_time_to_event");
         pos__ = 0U;
-        validate_non_negative_index("median_time_to_response", "M_groups", M_groups);
-        context__.validate_dims("parameter initialization", "median_time_to_response", "double", context__.to_vec(M_groups));
-        std::vector<double> median_time_to_response(M_groups, double(0));
-        size_t median_time_to_response_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
-            median_time_to_response[k_0__] = vals_r__[pos__++];
+        validate_non_negative_index("median_time_to_event", "M_groups", M_groups);
+        context__.validate_dims("parameter initialization", "median_time_to_event", "double", context__.to_vec(M_groups));
+        std::vector<double> median_time_to_event(M_groups, double(0));
+        size_t median_time_to_event_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_event_k_0_max__; ++k_0__) {
+            median_time_to_event[k_0__] = vals_r__[pos__++];
         }
-        size_t median_time_to_response_i_0_max__ = M_groups;
-        for (size_t i_0__ = 0; i_0__ < median_time_to_response_i_0_max__; ++i_0__) {
+        size_t median_time_to_event_i_0_max__ = M_groups;
+        for (size_t i_0__ = 0; i_0__ < median_time_to_event_i_0_max__; ++i_0__) {
             try {
-                writer__.scalar_lb_unconstrain(stan::math::sqrt(stan::math::machine_precision()), median_time_to_response[i_0__]);
+                writer__.scalar_lb_unconstrain(stan::math::sqrt(stan::math::machine_precision()), median_time_to_event[i_0__]);
             } catch (const std::exception& e) {
-                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable median_time_to_response: ") + e.what()), current_statement_begin__, prog_reader__());
+                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable median_time_to_event: ") + e.what()), current_statement_begin__, prog_reader__());
             }
         }
         current_statement_begin__ = 62;
@@ -535,14 +535,14 @@ public:
                     log_shape.push_back(in__.scalar_constrain());
             }
             current_statement_begin__ = 61;
-            std::vector<local_scalar_t__> median_time_to_response;
-            size_t median_time_to_response_d_0_max__ = M_groups;
-            median_time_to_response.reserve(median_time_to_response_d_0_max__);
-            for (size_t d_0__ = 0; d_0__ < median_time_to_response_d_0_max__; ++d_0__) {
+            std::vector<local_scalar_t__> median_time_to_event;
+            size_t median_time_to_event_d_0_max__ = M_groups;
+            median_time_to_event.reserve(median_time_to_event_d_0_max__);
+            for (size_t d_0__ = 0; d_0__ < median_time_to_event_d_0_max__; ++d_0__) {
                 if (jacobian__)
-                    median_time_to_response.push_back(in__.scalar_lb_constrain(stan::math::sqrt(stan::math::machine_precision()), lp__));
+                    median_time_to_event.push_back(in__.scalar_lb_constrain(stan::math::sqrt(stan::math::machine_precision()), lp__));
                 else
-                    median_time_to_response.push_back(in__.scalar_lb_constrain(stan::math::sqrt(stan::math::machine_precision())));
+                    median_time_to_event.push_back(in__.scalar_lb_constrain(stan::math::sqrt(stan::math::machine_precision())));
             }
             current_statement_begin__ = 62;
             std::vector<local_scalar_t__> monthly_rate;
@@ -588,7 +588,7 @@ public:
                 current_statement_begin__ = 77;
                 stan::model::assign(scale, 
                             stan::model::cons_list(stan::model::index_uni(g), stan::model::nil_index_list()), 
-                            (get_base1(median_time_to_response, g, "median_time_to_response", 1) / pow(stan::math::log(2), (1 / get_base1(shape, g, "shape", 1)))), 
+                            (get_base1(median_time_to_event, g, "median_time_to_event", 1) / pow(stan::math::log(2), (1 / get_base1(shape, g, "shape", 1)))), 
                             "assigning variable scale");
             }
             // validate transformed parameters
@@ -646,9 +646,9 @@ public:
                 current_statement_begin__ = 91;
                 lp_accum__.add(normal_log<propto__>(get_base1(log_shape, g, "log_shape", 1), get_base1(log_shape_mean, g, "log_shape_mean", 1), get_base1(log_shape_sd, g, "log_shape_sd", 1)));
                 current_statement_begin__ = 92;
-                lp_accum__.add(normal_log<propto__>(get_base1(median_time_to_response, g, "median_time_to_response", 1), get_base1(median_time_to_response_mean, g, "median_time_to_response_mean", 1), get_base1(median_time_to_response_sd, g, "median_time_to_response_sd", 1)));
-                if (get_base1(median_time_to_response, g, "median_time_to_response", 1) < stan::math::sqrt(stan::math::machine_precision())) lp_accum__.add(-std::numeric_limits<double>::infinity());
-                else lp_accum__.add(-normal_ccdf_log(stan::math::sqrt(stan::math::machine_precision()), get_base1(median_time_to_response_mean, g, "median_time_to_response_mean", 1), get_base1(median_time_to_response_sd, g, "median_time_to_response_sd", 1)));
+                lp_accum__.add(normal_log<propto__>(get_base1(median_time_to_event, g, "median_time_to_event", 1), get_base1(median_time_to_event_mean, g, "median_time_to_event_mean", 1), get_base1(median_time_to_event_sd, g, "median_time_to_event_sd", 1)));
+                if (get_base1(median_time_to_event, g, "median_time_to_event", 1) < stan::math::sqrt(stan::math::machine_precision())) lp_accum__.add(-std::numeric_limits<double>::infinity());
+                else lp_accum__.add(-normal_ccdf_log(stan::math::sqrt(stan::math::machine_precision()), get_base1(median_time_to_event_mean, g, "median_time_to_event_mean", 1), get_base1(median_time_to_event_sd, g, "median_time_to_event_sd", 1)));
                 current_statement_begin__ = 93;
                 lp_accum__.add(normal_log<propto__>(get_base1(monthly_rate, g, "monthly_rate", 1), get_base1(monthly_rate_mean, g, "monthly_rate_mean", 1), get_base1(monthly_rate_sd, g, "monthly_rate_sd", 1)));
                 if (get_base1(monthly_rate, g, "monthly_rate", 1) < stan::math::sqrt(stan::math::machine_precision())) lp_accum__.add(-std::numeric_limits<double>::infinity());
@@ -703,7 +703,7 @@ public:
         names__.resize(0);
         names__.push_back("logodds_raw");
         names__.push_back("log_shape");
-        names__.push_back("median_time_to_response");
+        names__.push_back("median_time_to_event");
         names__.push_back("monthly_rate");
         names__.push_back("p");
         names__.push_back("shape");
@@ -767,15 +767,15 @@ public:
         for (size_t k_0__ = 0; k_0__ < log_shape_k_0_max__; ++k_0__) {
             vars__.push_back(log_shape[k_0__]);
         }
-        std::vector<double> median_time_to_response;
-        size_t median_time_to_response_d_0_max__ = M_groups;
-        median_time_to_response.reserve(median_time_to_response_d_0_max__);
-        for (size_t d_0__ = 0; d_0__ < median_time_to_response_d_0_max__; ++d_0__) {
-            median_time_to_response.push_back(in__.scalar_lb_constrain(stan::math::sqrt(stan::math::machine_precision())));
+        std::vector<double> median_time_to_event;
+        size_t median_time_to_event_d_0_max__ = M_groups;
+        median_time_to_event.reserve(median_time_to_event_d_0_max__);
+        for (size_t d_0__ = 0; d_0__ < median_time_to_event_d_0_max__; ++d_0__) {
+            median_time_to_event.push_back(in__.scalar_lb_constrain(stan::math::sqrt(stan::math::machine_precision())));
         }
-        size_t median_time_to_response_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
-            vars__.push_back(median_time_to_response[k_0__]);
+        size_t median_time_to_event_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_event_k_0_max__; ++k_0__) {
+            vars__.push_back(median_time_to_event[k_0__]);
         }
         std::vector<double> monthly_rate;
         size_t monthly_rate_d_0_max__ = M_groups;
@@ -828,7 +828,7 @@ public:
                 current_statement_begin__ = 77;
                 stan::model::assign(scale, 
                             stan::model::cons_list(stan::model::index_uni(g), stan::model::nil_index_list()), 
-                            (get_base1(median_time_to_response, g, "median_time_to_response", 1) / pow(stan::math::log(2), (1 / get_base1(shape, g, "shape", 1)))), 
+                            (get_base1(median_time_to_event, g, "median_time_to_event", 1) / pow(stan::math::log(2), (1 / get_base1(shape, g, "shape", 1)))), 
                             "assigning variable scale");
             }
             if (!include_gqs__ && !include_tparams__) return;
@@ -897,10 +897,10 @@ public:
             param_name_stream__ << "log_shape" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t median_time_to_response_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
+        size_t median_time_to_event_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_event_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "median_time_to_response" << '.' << k_0__ + 1;
+            param_name_stream__ << "median_time_to_event" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         size_t monthly_rate_k_0_max__ = M_groups;
@@ -954,10 +954,10 @@ public:
             param_name_stream__ << "log_shape" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
-        size_t median_time_to_response_k_0_max__ = M_groups;
-        for (size_t k_0__ = 0; k_0__ < median_time_to_response_k_0_max__; ++k_0__) {
+        size_t median_time_to_event_k_0_max__ = M_groups;
+        for (size_t k_0__ = 0; k_0__ < median_time_to_event_k_0_max__; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "median_time_to_response" << '.' << k_0__ + 1;
+            param_name_stream__ << "median_time_to_event" << '.' << k_0__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
         size_t monthly_rate_k_0_max__ = M_groups;

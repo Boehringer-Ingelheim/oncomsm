@@ -1,4 +1,4 @@
-#' Create an instance of the mixture cure-rate model for binary tumor response
+#' Create an instance of the mixture cure-rate model for binary event endpoint
 #'
 #' This model assumes that the response rates across groups are independent.
 #'
@@ -9,9 +9,9 @@
 #' @param logodds_max numeric vector with the maximal logodds per group
 #' @param log_shape_mean numeric vector with the means of the normal prior on the log-shape parameter of the Weibull distribution for time to response
 #' @param log_shape_sd numeric vector with the standard deviations of the normal prior on the log-shape parameter of the Weibull distribution for time to response
-#' @param median_time_to_response_mean numeric vector with the means of the normal prior on the median time to response (truncated at 0)
-#' @param median_time_to_response_sd numeric vector with the standard deviations of the normal prior on the median for time to response
-#' @param max_time_to_response numeric vector with the maximal time to response per group
+#' @param median_time_to_event_mean numeric vector with the means of the normal prior on the median time to event (truncated at 0)
+#' @param median_time_to_event_sd numeric vector with the standard deviations of the normal prior on the median for time to event
+#' @param max_time_to_event numeric vector with the maximal time to event per group
 #' @param visit_spacing vector of deterministic spacing between future visits (in months)
 #' @param monthly_rate_mean expected monthly recruitment rate (prior mean)
 #' @param monthly_rate_sd standard deviation of the expected recruitment rate prior
@@ -19,17 +19,15 @@
 #' @return An object of class "IndependentMixtureCureRateModel" holding all relevant
 #' prior information.
 #'
-#' @rdname IndependentMixtureCureRateModel
-#'
 #' @export
-new_IndependentMixtureCureRateModel <- function(
+IndependentMixtureCureRateModel <- function(
   group_id,
   logodds_mean, logodds_sd,
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
   log_shape_mean, log_shape_sd,
-  median_time_to_response_mean, median_time_to_response_sd,
-  max_time_to_response,
+  median_time_to_event_mean, median_time_to_event_sd,
+  max_time_to_event,
   visit_spacing,
   monthly_rate_mean,
   monthly_rate_sd
@@ -39,11 +37,15 @@ new_IndependentMixtureCureRateModel <- function(
   mdl <- lapply(mdl, base::as.array)
   attr(mdl, "group_id") <- group_id
   attr(mdl, "stanmodel") <- stanmodels[["simplified_model"]]
-  attr(mdl, "parameter_names") <- c("p", "shape", "scale", "median_time_to_response", "monthly_rate")
+  attr(mdl, "parameter_names") <- c("p", "shape", "scale", "median_time_to_event", "monthly_rate")
   class(mdl) <- c("IndependentMixtureCureRateModel", "Model", class(mdl))
   return(mdl)
 }
 
+
+
+
+# see Model.R
 .impute.IndependentMixtureCureRateModel <- function(model, data, nsim, now = NULL, parameter_sample = NULL, warmup_parameters = 250L, nsim_parameters = 1000L, seed = NULL, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
@@ -66,9 +68,9 @@ new_IndependentMixtureCureRateModel <- function(
     t_max_data <- 0
   } else {
     t_max_data <- data %>%
-      mutate(t_max = t_recruitment + if_else(is.finite(dt2), dt2, ifelse(is.finite(dt1), dt1, 0))) %>%
-      filter(is.finite(t_max)) %>%
-      pull(t_max) %>%
+      mutate(t_max = .data$t_recruitment + if_else(is.finite(.data$dt2), .data$dt2, ifelse(is.finite(.data$dt1), .data$dt1, 0))) %>%
+      filter(is.finite(.data$t_max)) %>%
+      pull(.data$t_max) %>%
       max()
   }
   # if "now" is not specified, use heuristic from data
@@ -79,11 +81,11 @@ new_IndependentMixtureCureRateModel <- function(
   }
   # figure out last recruitment time per group
   t_last <- data %>%
-    group_by(group_id) %>%
+    group_by(.data$group_id) %>%
     summarize(
-      t_last = max(c(0, t_recruitment), na.rm = TRUE)
+      t_last = max(c(0, .data$t_recruitment), na.rm = TRUE)
     ) %>%
-    pull(t_last)
+    pull(.data$t_last)
   # convert groups to integers
   data$group_id <- as.integer(factor(data$group_id, levels = attr(model, "group_id")))
 
@@ -97,7 +99,7 @@ new_IndependentMixtureCureRateModel <- function(
       }
       if (!is.infinite(data$dt1[i]) & !is.finite(data$dt2[i])) {
         group <- data$group_id[i]
-        if (rbinom(1, n = 1, prob = p[group]) == 1) {
+        if (stats::rbinom(1, n = 1, prob = p[group]) == 1) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
           dt <- rtruncweibull(shape[group], scale[group], dtmin, 999)
@@ -121,19 +123,19 @@ new_IndependentMixtureCureRateModel <- function(
   res <- tibble(
       iter = 1:nsim,
       idx = sample.int(nrow(p), size = nsim),
-      p = purrr::map(idx, ~p[., ]),
-      shape = purrr::map(idx, ~shape[., ]),
-      scale = purrr::map(idx, ~scale[., ]),
-      monthly_rate = purrr::map(idx, ~monthly_rate[., ]),
+      p = purrr::map(.data$idx, ~p[., ]),
+      shape = purrr::map(.data$idx, ~shape[., ]),
+      scale = purrr::map(.data$idx, ~scale[., ]),
+      monthly_rate = purrr::map(.data$idx, ~monthly_rate[., ]),
     ) %>%
     mutate(
       data = purrr::pmap(
-        list(p, shape, scale, monthly_rate),
+        list(.data$p, .data$shape, .data$scale, .data$monthly_rate),
         ~ff(data, ..1, ..2, ..3, ..4, t_last, now)
       )
     ) %>%
-    select(iter, data) %>%
-    tidyr::unnest(data)
+    select(.data$iter, .data$data) %>%
+    tidyr::unnest(.data$data)
 
   # convert groups back
   res$group_id <- as.character(factor(res$group_id, levels = 1:length(attr(model, "group_id")), labels = attr(model, "group_id")))
@@ -144,8 +146,22 @@ new_IndependentMixtureCureRateModel <- function(
 
 
 
-#' @import patchwork
+#' @description visualize a model by sampling from its prior(predictive) distribution.
+#' Alternatively, a parameter sample (e.g. a posterior) can be plotted directly.
 #'
+#' @param x model to plot
+#' @param sample existing parameter sample to plot
+#' @template param-data-condition
+#' @template param-warmup
+#' @template param-nsim
+#' @template param-seed
+#' @template param-dotdotdot
+#'
+#' @return (invisibly) a ggplot2 plot object (composed via patchwork)
+#'
+#' @rdname IndependentMixtureCureRateModel
+#' @importFrom ggplot2 theme ggplot aes geom_histogram theme element_blank
+#' @import patchwork
 #' @export
 plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, warmup = 250L, nsim = 1e4, seed = NULL, ...) {
   if (is.null(sample)) {
@@ -157,17 +173,17 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
   }
 
   p1 <- sample %>%
-    filter(parameter == "p") %>%
+    filter(.data$parameter == "p") %>%
     ggplot() +
-    aes(value) +
+    aes(.data$value) +
     geom_histogram(
       bins = 25,
       alpha = 0.5,
-      aes(fill = group_id), position = position_identity()
+      aes(fill = .data$group_id), position = ggplot2::position_identity()
     ) +
-    scale_x_continuous("event probability") +
-    coord_cartesian(xlim = c(0, 1)) +
-    theme_bw() +
+    ggplot2::scale_x_continuous("event probability") +
+    ggplot2::coord_cartesian(xlim = c(0, 1)) +
+    ggplot2::theme_bw() +
     theme(
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank(),
@@ -176,22 +192,22 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
     )
 
   p2 <- sample %>%
-    filter(parameter %in% c("shape", "median_time_to_response")) %>%
+    filter(.data$parameter %in% c("shape", "median_time_to_event")) %>%
     tidyr::pivot_wider(names_from = "parameter") %>%
     mutate(
-      scale = median_time_to_response/(log(2)^(1/shape)),
-      t = rweibull(n(), shape, scale)
+      scale = .data$median_time_to_event/(log(2)^(1/.data$shape)),
+      t = stats::rweibull(n(), .data$shape, .data$scale)
     ) %>%
     ggplot() +
-    aes(t) +
+    aes(.data$t) +
     geom_histogram(
       bins = 25,
       alpha = 0.5,
-      aes(fill = group_id), position = position_identity()
+      aes(fill = .data$group_id), position = ggplot2::position_identity()
     ) +
-    scale_x_continuous("months to event") +
-    coord_cartesian(xlim = c(0, NA_real_)) +
-    theme_bw() +
+    ggplot2::scale_x_continuous("months to event") +
+    ggplot2::coord_cartesian(xlim = c(0, NA_real_)) +
+    ggplot2::theme_bw() +
     theme(
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank(),
@@ -200,17 +216,17 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
     )
 
   p3 <- sample %>%
-    filter(parameter == "monthly_rate") %>%
+    filter(.data$parameter == "monthly_rate") %>%
     ggplot() +
-    aes(value) +
+    aes(.data$value) +
     geom_histogram(
       bins = 25,
       alpha = 0.5,
-      aes(fill = group_id), position = position_identity()
+      aes(fill = .data$group_id), position = ggplot2::position_identity()
     ) +
-    scale_x_continuous("monthly recruitment rate") +
-    coord_cartesian(xlim = c(0, NA_real_)) +
-    theme_bw() +
+    ggplot2::scale_x_continuous("monthly recruitment rate") +
+    ggplot2::coord_cartesian(xlim = c(0, NA_real_)) +
+    ggplot2::theme_bw() +
     theme(
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank(),
@@ -220,5 +236,5 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
 
   (p1 + p2 + p3) +
     patchwork::plot_layout(guides = "collect") &
-    ggplot2::theme(legend.position = "top", legend.title = ggplot2::element_blank())
+    theme(legend.position = "top", legend.title = element_blank())
 }

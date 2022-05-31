@@ -7,15 +7,15 @@
 generate_visit_data(
   group_id,
   n,
-  response_rate,
+  event_rate,
   delay = numeric(length(group_id)),
   recruitment_rate,
   visit_spacing,
   max_duration,
-  responder_weibull_scale,
-  responder_weibull_shape,
-  nonresponder_weibull_scale,
-  nonresponder_weibull_shape,
+  event_weibull_scale,
+  event_weibull_shape,
+  nonevent_weibull_scale,
+  nonevent_weibull_shape,
   seed = NULL
 )
 }
@@ -24,7 +24,7 @@ generate_visit_data(
 
 \item{n}{sample size of arms}
 
-\item{response_rate}{response rates of arms}
+\item{event_rate}{event rates per arm}
 
 \item{delay}{delay (in months) of recruitment per arm}
 
@@ -34,22 +34,24 @@ generate_visit_data(
 
 \item{max_duration}{maximal overall duration of all arms}
 
-\item{responder_weibull_scale}{parameter of Weibull distribution for TTE responders}
+\item{event_weibull_scale}{parameter of Weibull distribution for TTE}
 
-\item{responder_weibull_shape}{parameter of Weibull distribution for TTE responders}
+\item{event_weibull_shape}{parameter of Weibull distribution for TTE}
 
-\item{nonresponder_weibull_scale}{parameter of Weibull distribution for TTE non-responders (progression)}
+\item{nonevent_weibull_scale}{parameter of Weibull distribution for TTE non-event}
 
-\item{nonresponder_weibull_shape}{parameter of Weibull distribution for TTE non-responders (progression)}
+\item{nonevent_weibull_shape}{parameter of Weibull distribution for TTE non-event}
 
 \item{seed}{random seed to use, NULL uses no seed}
 }
 \value{
 A data frame with sampled data in columns "group_id", "subject_id",
-"t" (visit time point in months since start of trial), "status" (S(table), R(esponse), P(rogression)),
+"t" (visit time point in months since start of trial), "status" (S(table), E(vent), N(on-event)),
 "eof" (end of follow-up, is the visit the last visit of the individual?)
 }
 \description{
 Generate example data from mixture cure rate model with Weibull distributed
-time-to-response and time-to-progression.
+time-to-first-event.
+It is assumed that there is a competing event that blocks the event of interest
+(i.e., an individual can no longer experience the event of interest).
 }

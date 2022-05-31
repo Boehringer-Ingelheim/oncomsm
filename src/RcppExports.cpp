@@ -39,13 +39,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // visits_to_tte_
-DataFrame visits_to_tte_(DataFrame data);
-RcppExport SEXP _bhmbasket_predict_visits_to_tte_(SEXP dataSEXP) {
+DataFrame visits_to_tte_(DataFrame data, String event, String nonevent);
+RcppExport SEXP _bhmbasket_predict_visits_to_tte_(SEXP dataSEXP, SEXP eventSEXP, SEXP noneventSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type data(dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(visits_to_tte_(data));
+    Rcpp::traits::input_parameter< String >::type event(eventSEXP);
+    Rcpp::traits::input_parameter< String >::type nonevent(noneventSEXP);
+    rcpp_result_gen = Rcpp::wrap(visits_to_tte_(data, event, nonevent));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -55,7 +57,7 @@ RcppExport SEXP _rcpp_module_boot_stan_fit4simplified_model_mod();
 static const R_CallMethodDef CallEntries[] = {
     {"_bhmbasket_predict_rtruncexp", (DL_FUNC) &_bhmbasket_predict_rtruncexp, 3},
     {"_bhmbasket_predict_rtruncweibull", (DL_FUNC) &_bhmbasket_predict_rtruncweibull, 4},
-    {"_bhmbasket_predict_visits_to_tte_", (DL_FUNC) &_bhmbasket_predict_visits_to_tte_, 1},
+    {"_bhmbasket_predict_visits_to_tte_", (DL_FUNC) &_bhmbasket_predict_visits_to_tte_, 3},
     {"_rcpp_module_boot_stan_fit4simplified_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4simplified_model_mod, 0},
     {NULL, NULL, 0}
 };
