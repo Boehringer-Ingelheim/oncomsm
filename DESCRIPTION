@@ -33,7 +33,6 @@ Imports:
     stringr,
     ggplot2,
     patchwork,
-    uuid,
     scales
 LinkingTo: 
     BH (>= 1.66.0),

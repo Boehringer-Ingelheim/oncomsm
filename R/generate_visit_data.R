@@ -47,7 +47,7 @@ generate_visit_data <- function(
                 nonevent_weibull_scale, nonevent_weibull_shape
   ) {
     tibble::tibble(
-      subject_id = uuid::UUIDgenerate(n = n), # generate unique patient identifiers
+      subject_id = sprintf("subject_%i", 1:n), # generate unique patient identifiers
       event = stats::rbinom(n, 1, event_rate)
     ) %>%
     mutate(
