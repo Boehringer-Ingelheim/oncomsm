@@ -107,7 +107,7 @@ IndependentMixtureCureRateModel <- function(
         if ((stats::rbinom(1, n = 1, prob = p[group]) == 1) & still_at_risk) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
-          dt <- rtruncweibull(shape[group], scale[group], dtmin, 999)
+          dt <- rtruncweibull(shape[group], scale[group], dtmin, model$max_time_to_event)
           dt2 <- 0
           while (dt2 < dt) {
             dt2 <- dt2 + model$visit_spacing[group]
@@ -201,7 +201,7 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
     tidyr::pivot_wider(names_from = "parameter") %>%
     mutate(
       scale = .data$median_time_to_event/(log(2)^(1/.data$shape)),
-      t = stats::rweibull(n(), .data$shape, .data$scale)
+      t = purrr::map2_dbl(.data$shape, .data$scale, ~rtruncweibull(..1, ..2, 0, x$max_time_to_event))
     ) %>%
     ggplot() +
     aes(.data$t) +
