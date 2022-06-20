@@ -9,7 +9,7 @@ test_that("convert visit data to time-to-event", {
     tbl_tte_1$group_id == "A",
     tbl_tte_1$subject_id == "1",
     tbl_tte_1$t_recruitment == 0,
-    tbl_tte_1$dt1 == Inf,
+    tbl_tte_1$dt1 == 0,
     tbl_tte_1$dt2 == Inf
   ))
 
@@ -24,7 +24,7 @@ test_that("convert visit data to time-to-event", {
     tbl_tte_2$subject_id == "1",
     tbl_tte_2$t_recruitment == 0,
     tbl_tte_2$dt1 == 1,
-    is.na(tbl_tte_2$dt2)
+    tbl_tte_2$dt2 == Inf
   ))
 
   tbl_tte_3 <- tibble::tribble(

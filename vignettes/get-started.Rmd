@@ -264,7 +264,7 @@ specified success threshold to each simulated trial. For instance, one
 could define success as the observed rate exceeding the target rate.
 
 ```{r compute-planning-pos}
-n_sim <- 250L # only for speed reasons - increase!
+n_sim <- 500L # only for speed reasons - increase!
 
 # sample from the prior predictive distribution
 tbl_prior_predictive_sample <- sample_prior_predictive(
@@ -434,11 +434,11 @@ tbl_bhmbasket_posterior_medians %>%
 
 ## Computing dynamic Probability of Success
 
-Looking at a snapshot of the visit data from 10 months into the trial
+Looking at a snapshot of the visit data from 18 months into the trial
 clearly shows the problem with delayed response data.
 
 ```{r restrict-data-to-interim-at-10-months}
-tbl_visits_interim <- filter(tbl_visits, t <= 10) 
+tbl_visits_interim <- filter(tbl_visits, t <= 15) 
 
 plot_visits(tbl_visits_interim)
 ```
@@ -458,7 +458,7 @@ We first convert the visit data to time-to-first-event,
 
 ```{r}
 # convert data to time-to-response
-tbl_tte_interim <- visits_to_tte(tbl_visits, cutoff = 10)
+tbl_tte_interim <- visits_to_tte(tbl_visits, cutoff = 15)
 
 tbl_tte_interim
 ```

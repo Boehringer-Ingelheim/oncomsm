@@ -99,7 +99,12 @@ IndependentMixtureCureRateModel <- function(
       }
       if (!is.infinite(data$dt1[i]) & !is.finite(data$dt2[i])) {
         group <- data$group_id[i]
-        if (stats::rbinom(1, n = 1, prob = p[group]) == 1) {
+        still_at_risk <- if (is.na(data$dt_eof[i])) {
+          TRUE
+        } else {
+          data$t_recruitment + data$dt_eof > now
+        }
+        if ((stats::rbinom(1, n = 1, prob = p[group]) == 1) & still_at_risk) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
           dt <- rtruncweibull(shape[group], scale[group], dtmin, 999)

@@ -129,7 +129,7 @@ sample_prior_predictive.Model <- function(model, n_per_arm, nsim = 1000L, nsim_p
 #' @template param-seed
 #' @template param-dotdotdot
 #'
-#' @return  data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+#' @return  data frame with variables "subject_id", "group_id", "t_recruitment", "dt1", "dt2", "dt_eof"
 #' where dt1 is the minimal and dt2 the maximal time to the event in question.
 #'
 #' @export
@@ -255,7 +255,8 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
     group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
     t_recruitment = rep(NA_real_, n),
     dt1 = rep(NA_real_, n),
-    dt2 = rep(NA_real_, n)
+    dt2 = rep(NA_real_, n),
+    dt_eof = rep(NA_real_, n)
   )
 }
 

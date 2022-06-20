@@ -21,7 +21,8 @@ visits_to_tte(tbl_visits, cutoff = Inf, event = "E", nonevent = "N")
 \value{
 A data frame with one row per subject in tbl_visits. columns:
 "group_id", "subject_id", "t_recruitment" (recruitment time since start of trial),
-"dt1" (minimal time since recruitment to response), "dt2" (maximal time since recruitment to response)
+"dt1" (minimal time since recruitment to event), "dt2" (maximal time since recruitment to event)
+"dt_eof" (time since recruitment to end of follow up)
 }
 \description{
 Convert longitudinal visit data to time-to-event data

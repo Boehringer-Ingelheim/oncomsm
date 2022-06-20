@@ -50,7 +50,7 @@ if NULL, last recorded event time is used instead}
 \item{...}{further arguments passed to method implementations}
 }
 \value{
-data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+data frame with variables "subject_id", "group_id", "t_recruitment", "dt1", "dt2", "dt_eof"
 where dt1 is the minimal and dt2 the maximal time to the event in question.
 }
 \description{

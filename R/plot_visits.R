@@ -8,7 +8,7 @@
 plot_visits <- function(visit_data, epsilon = 5/30, event_positive = TRUE) {
   t_max <- max(visit_data$t)
   res <- visit_data %>%
-    group_by(.data$subject_id) %>%
+    group_by(.data$subject_id, .data$group_id) %>%
     mutate(
       t_end = case_when(
         row_number() == n() & !.data$eof ~ t_max + epsilon,
