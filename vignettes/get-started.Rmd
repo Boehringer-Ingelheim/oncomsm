@@ -38,7 +38,7 @@ criteria is often used as primary endpoint to establish the activity of
 a treatment. Response is often treated as binary variable although it is
 a delayed event endpoint. At the final analysis, this simplification is
 of little concern since all individuals tend to be followed up long
-enough to justify the assumption that non-respodners are unlikely to
+enough to justify the assumption that non-responders are unlikely to
 still become responders. This approach is often plausible since
 individuals with tumors not responding to treatment ultimately progress.
 However, when continuously monitoring such a trial, the assumption of
