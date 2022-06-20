@@ -319,8 +319,8 @@ data2standata.Model <- function(model, data) {
       )
     }
   }
-  lst_stan_data$dt_recruitment <- dt_recruitment
-  lst_stan_data$n_recruited_per_group <- n_recruited_per_group
+  lst_stan_data$dt_recruitment <- base::as.array(dt_recruitment)
+  lst_stan_data$n_recruited_per_group <- base::as.array(n_recruited_per_group)
   # return
   return(lst_stan_data)
 }
