@@ -102,9 +102,15 @@ IndependentMixtureCureRateModel <- function(
         still_at_risk <- if (is.na(data$dt_eof[i])) {
           TRUE
         } else {
-          data$t_recruitment + data$dt_eof > now
+          data$t_recruitment[i] + data$dt_eof[i] > now
         }
-        if ((stats::rbinom(1, n = 1, prob = p[group]) == 1) & still_at_risk) {
+        if (!is.na(data$dt1[i])) {
+          S_t <- 1 - stats::pweibull(data$dt1[i], shape[group], scale[group])
+          p_cond <- S_t*p[group] / ( (1 - p[group]) + p[group]*S_t )
+        } else {
+          p_cond <- p[group]
+        }
+        if ((stats::rbinom(1, n = 1, prob = p_cond) == 1) & still_at_risk) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
           dt <- rtruncweibull(shape[group], scale[group], dtmin, model$max_time_to_event)
