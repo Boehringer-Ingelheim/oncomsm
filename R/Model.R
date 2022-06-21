@@ -143,9 +143,9 @@ impute_posterior_predictive <- function(model, data, now, nsim, nsim_parameters,
 impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 1000L, nsim_parameters = 1000L, warmup_parameters = 250L, seed = NULL, ...) {
   posterior_sample <- sample_posterior(
     model, data = data, rstan_output = TRUE, seed = seed,
-    warmup = warmup_parameters, nsim = nsim_parameters
+    warmup = warmup_parameters, nsim = nsim_parameters, ...
   )
-  .impute(model = model, data = data, now = now, nsim = nsim, seed = seed, ...)
+  .impute(model = model, data = data, now = now, nsim = nsim, seed = seed)
 }
 
 
