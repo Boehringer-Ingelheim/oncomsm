@@ -46,16 +46,9 @@ IndependentMixtureCureRateModel <- function(
 
 
 # see Model.R
-.impute.IndependentMixtureCureRateModel <- function(model, data, nsim, now = NULL, parameter_sample = NULL, warmup_parameters = 250L, nsim_parameters = 1000L, seed = NULL, ...) {
+.impute.IndependentMixtureCureRateModel <- function(model, data, nsim, now, parameter_sample, seed = NULL, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
-  }
-  # sample from prior/posterior if not given
-  if (is.null(parameter_sample)) {
-    parameter_sample <- .sample(
-      model, data = data, warmup = warmup_parameters, nsim = nsim_parameters,
-      seed = seed, rstan_output = TRUE, pars = c("p", "shape", "scale", "monthly_rate"), ...
-    )
   }
   stopifnot(isa(parameter_sample, "stanfit"))
   # extract parameter matrices

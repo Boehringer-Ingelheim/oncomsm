@@ -145,7 +145,7 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
     model, data = data, rstan_output = TRUE, seed = seed,
     warmup = warmup_parameters, nsim = nsim_parameters, ...
   )
-  .impute(model = model, data = data, now = now, nsim = nsim, seed = seed)
+  .impute(model = model, data = data, now = now, parameter_sample = posterior_sample, nsim = nsim, seed = seed)
 }
 
 
@@ -189,7 +189,7 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
 
 
 # must be implemented by "Model" subclass
-.impute <- function(model, data, ...) {
+.impute <- function(model, data, sim, now, parameter_sample, ...) {
   UseMethod(".impute")
 }
 
