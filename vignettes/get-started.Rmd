@@ -218,8 +218,7 @@ separately.
 **Important:** The shape parameter of the time-to-response is near
 unidentifiable in small data sets, hence the prior uncertainty should be
 small to ensure the model is identifiable and can be sampled in a stable
-way. This effectively means that the shape parameter has to be fixed *a
-priori*.
+way. This effectively means that the shape parameter has to be fixed *a priori*.
 
 ```{r prior-specification}
 mdl <- IndependentMixtureCureRateModel(

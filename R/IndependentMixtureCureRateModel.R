@@ -207,7 +207,14 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
     tidyr::pivot_wider(names_from = "parameter") %>%
     mutate(
       scale = .data$median_time_to_event/(log(2)^(1/.data$shape)),
-      t = purrr::map2_dbl(.data$shape, .data$scale, ~rtruncweibull(..1, ..2, 0, x$max_time_to_event))
+      max_time_to_event = purrr::map_dbl(
+          .data$group_id,
+          ~x$max_time_to_event[which(. == attr(x, "group_id"))]
+        ),
+      t = purrr::pmap_dbl(
+          list(.data$shape, .data$scale, .data$max_time_to_event),
+          ~rtruncweibull(..1, ..2, 0, ..3)
+        )
     ) %>%
     ggplot() +
     aes(.data$t) +
