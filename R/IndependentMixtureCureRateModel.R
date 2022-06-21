@@ -113,7 +113,7 @@ IndependentMixtureCureRateModel <- function(
         if ((stats::rbinom(1, n = 1, prob = p_cond) == 1) & still_at_risk) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
-          dt <- rtruncweibull(shape[group], scale[group], dtmin, model$max_time_to_event)
+          dt <- rtruncweibull(shape[group], scale[group], dtmin, model$max_time_to_event[group])
           dt2 <- 0
           while (dt2 < dt) {
             dt2 <- dt2 + model$visit_spacing[group]
