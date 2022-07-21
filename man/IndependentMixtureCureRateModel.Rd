@@ -11,8 +11,7 @@ IndependentMixtureCureRateModel(
   logodds_sd,
   logodds_min = rep(logodds(0.001), length(group_id)),
   logodds_max = rep(logodds(0.999), length(group_id)),
-  log_shape_mean,
-  log_shape_sd,
+  shape,
   median_time_to_event_mean,
   median_time_to_event_sd,
   max_time_to_event,
@@ -42,9 +41,10 @@ IndependentMixtureCureRateModel(
 
 \item{logodds_max}{numeric vector with the maximal logodds per group}
 
-\item{log_shape_mean}{numeric vector with the means of the normal prior on the log-shape parameter of the Weibull distribution for time to response}
-
-\item{log_shape_sd}{numeric vector with the standard deviations of the normal prior on the log-shape parameter of the Weibull distribution for time to response}
+\item{shape}{numeric vector with the shape parameters of the Weibull
+distribution for time to event. This is treated as fixed and no inference
+on the shape is conducted since it is close to unidentifiable in most
+cases.}
 
 \item{median_time_to_event_mean}{numeric vector with the means of the normal prior on the median time to event (truncated at 0)}
 
