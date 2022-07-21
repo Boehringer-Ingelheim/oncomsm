@@ -277,7 +277,7 @@ tbl_prior_predictive_sample %>%
   group_by(iter, group_id) %>% 
   summarize(
     n = n(),
-    r = sum(t_recruitment + dt2 < Inf), # a response is observed if the response time point if finite
+    r = sum(t_recruitment + dt2 < Inf), # a response is observed if the response time point is finite
     .groups = "drop"
   ) %>% 
   mutate(
