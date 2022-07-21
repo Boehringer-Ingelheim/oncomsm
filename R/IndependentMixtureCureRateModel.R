@@ -7,8 +7,10 @@
 #' @param logodds_sd numeric vector with the standard deviations of the normal prior on the logodds of a response per group
 #' @param logodds_min numeric vector with the minimal logodds per group
 #' @param logodds_max numeric vector with the maximal logodds per group
-#' @param log_shape_mean numeric vector with the means of the normal prior on the log-shape parameter of the Weibull distribution for time to response
-#' @param log_shape_sd numeric vector with the standard deviations of the normal prior on the log-shape parameter of the Weibull distribution for time to response
+#' @param shape numeric vector with the shape parameters of the Weibull
+#'   distribution for time to event. This is treated as fixed and no inference
+#'   on the shape is conducted since it is close to unidentifiable in most
+#'   cases.
 #' @param median_time_to_event_mean numeric vector with the means of the normal prior on the median time to event (truncated at 0)
 #' @param median_time_to_event_sd numeric vector with the standard deviations of the normal prior on the median for time to event
 #' @param max_time_to_event numeric vector with the maximal time to event per group
@@ -25,7 +27,7 @@ IndependentMixtureCureRateModel <- function(
   logodds_mean, logodds_sd,
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
-  log_shape_mean, log_shape_sd,
+  shape,
   median_time_to_event_mean, median_time_to_event_sd,
   max_time_to_event,
   visit_spacing,
@@ -37,7 +39,7 @@ IndependentMixtureCureRateModel <- function(
   mdl <- lapply(mdl, base::as.array)
   attr(mdl, "group_id") <- group_id
   attr(mdl, "stanmodel") <- stanmodels[["simplified_model"]]
-  attr(mdl, "parameter_names") <- c("p", "shape", "scale", "median_time_to_event", "monthly_rate")
+  attr(mdl, "parameter_names") <- c("p", "scale", "median_time_to_event", "monthly_rate")
   class(mdl) <- c("IndependentMixtureCureRateModel", "Model", class(mdl))
   return(mdl)
 }
@@ -53,7 +55,6 @@ IndependentMixtureCureRateModel <- function(
   stopifnot(isa(parameter_sample, "stanfit"))
   # extract parameter matrices
   p <- rstan::extract(parameter_sample, "p")[[1]]
-  shape <- rstan::extract(parameter_sample, "shape")[[1]]
   scale <- rstan::extract(parameter_sample, "scale")[[1]]
   monthly_rate <- rstan::extract(parameter_sample, "monthly_rate")[[1]]
   # figure out latest time entry from data
@@ -82,7 +83,7 @@ IndependentMixtureCureRateModel <- function(
   # convert groups to integers
   data$group_id <- as.integer(factor(data$group_id, levels = attr(model, "group_id")))
 
-  ff <- function(data, p, shape, scale, monthly_rate, t_last, now) {
+  ff <- function(data, p, scale, monthly_rate, t_last, now) {
 
     for (i in 1:nrow(data)) {
       if (is.na(data$t_recruitment[i])) {
@@ -98,7 +99,7 @@ IndependentMixtureCureRateModel <- function(
           data$t_recruitment[i] + data$dt_eof[i] > now
         }
         if (!is.na(data$dt1[i])) {
-          S_t <- 1 - stats::pweibull(data$dt1[i], shape[group], scale[group])
+          S_t <- 1 - stats::pweibull(data$dt1[i],  model$shape[group], scale[group])
           p_cond <- S_t*p[group] / ( (1 - p[group]) + p[group]*S_t )
         } else {
           p_cond <- p[group]
@@ -106,7 +107,7 @@ IndependentMixtureCureRateModel <- function(
         if ((stats::rbinom(1, n = 1, prob = p_cond) == 1) & still_at_risk) {
           # event
           dtmin <- max(data$dt1[i], now - data$t_recruitment[i], na.rm = TRUE)
-          dt <- rtruncweibull(shape[group], scale[group], dtmin, model$max_time_to_event[group])
+          dt <- rtruncweibull( model$shape[group], scale[group], dtmin, model$max_time_to_event[group])
           dt2 <- 0
           while (dt2 < dt) {
             dt2 <- dt2 + model$visit_spacing[group]
@@ -128,14 +129,13 @@ IndependentMixtureCureRateModel <- function(
       iter = 1:nsim,
       idx = sample.int(nrow(p), size = nsim),
       p = purrr::map(.data$idx, ~p[., ]),
-      shape = purrr::map(.data$idx, ~shape[., ]),
       scale = purrr::map(.data$idx, ~scale[., ]),
       monthly_rate = purrr::map(.data$idx, ~monthly_rate[., ]),
     ) %>%
     mutate(
       data = purrr::pmap(
-        list(.data$p, .data$shape, .data$scale, .data$monthly_rate),
-        ~ff(data, ..1, ..2, ..3, ..4, t_last, now)
+        list(.data$p, .data$scale, .data$monthly_rate),
+        ~ff(data, ..1, ..2, ..3, t_last, now)
       )
     ) %>%
     select(.data$iter, .data$data) %>%
@@ -195,9 +195,12 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
       panel.grid = element_blank()
     )
 
+  # extract fixed shape parameter from model object
+  tbl_shape <- tibble(group_id = attr(x, "group_id"), shape = x$shape)
   p2 <- sample %>%
-    filter(.data$parameter %in% c("shape", "median_time_to_event")) %>%
+    filter(.data$parameter == "median_time_to_event") %>%
     tidyr::pivot_wider(names_from = "parameter") %>%
+    left_join(tbl_shape, by = "group_id") %>%
     mutate(
       scale = .data$median_time_to_event/(log(2)^(1/.data$shape)),
       max_time_to_event = purrr::map_dbl(

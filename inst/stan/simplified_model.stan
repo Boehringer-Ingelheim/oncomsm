@@ -34,8 +34,7 @@ data {
   vector[M_groups] logodds_min;
   vector[M_groups] logodds_max;
   // alpha (weibull shape)
-  real log_shape_mean[M_groups];
-  real<lower=machine_precision()> log_shape_sd[M_groups];
+  real<lower=machine_precision()> shape[M_groups];
   // weibull median
   real median_time_to_event_mean[M_groups];
   real<lower=machine_precision()> median_time_to_event_sd[M_groups];
@@ -57,7 +56,6 @@ transformed data {
 parameters {
 
   vector<lower=0,upper=1>[M_groups] logodds_raw;
-  real log_shape[M_groups]; // shape aka k, important to bound from 0
   real<lower=sqrt(machine_precision())> median_time_to_event[M_groups];
   real<lower=sqrt(machine_precision())> monthly_rate[M_groups];
 
@@ -68,7 +66,6 @@ parameters {
 transformed parameters {
 
   real p[M_groups];
-  real shape[M_groups] = exp(log_shape);
   real scale[M_groups];
   vector[M_groups] logodds = logodds_min + (logodds_max - logodds_min) .* logodds_raw; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
 
@@ -88,7 +85,6 @@ model {
   // prior
   for (g in 1:M_groups) {
     logodds[g] ~ normal(logodds_mean[g], logodds_sd[g]) T[logodds_min[g],logodds_max[g]];
-    log_shape[g] ~ normal(log_shape_mean[g], log_shape_sd[g]);
     median_time_to_event[g] ~ normal(median_time_to_event_mean[g], median_time_to_event_sd[g]) T[sqrt(machine_precision()),];
     monthly_rate[g] ~ normal(monthly_rate_mean[g], monthly_rate_sd[g]) T[sqrt(machine_precision()),];
   }
