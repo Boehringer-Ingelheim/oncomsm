@@ -18,27 +18,27 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Biarch: true
 Depends: 
-    R (>= 3.6.0)
+    R (>= 3.6)
 Imports: 
     methods,
     Rcpp,
-    assertthat (>= 0.2.1),
-    rstan (>= 2.18.1),
-    rlang (>= 0.4.12),
-    tibble (>= 3.1.6),
-    magrittr (>= 2.0.3), 
-    dplyr (>= 1.0.7),
-    tidyr (>= 1.1.4),
-    purrr (>= 0.3.4),
+    assertthat (>= 0.2),
+    rstan (>= 2.18),
+    rlang (>= 0.4),
+    tibble (>= 3.1),
+    magrittr (>= 2.0), 
+    dplyr (>= 1.0),
+    tidyr (>= 1.1),
+    purrr (>= 0.3),
     stringr,
     ggplot2,
     scales
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
-    RcppEigen (>= 0.3.3.3.0),
-    rstan (>= 2.18.1),
-    StanHeaders (>= 2.18.0)
+    RcppEigen (>= 0.3),
+    rstan (>= 2.18),
+    StanHeaders (>= 2.18)
 SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
