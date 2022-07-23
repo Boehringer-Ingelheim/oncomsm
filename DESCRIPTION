@@ -32,7 +32,6 @@ Imports:
     purrr (>= 0.3.4),
     stringr,
     ggplot2,
-    patchwork,
     scales
 LinkingTo: 
     BH (>= 1.66.0),
@@ -45,6 +44,7 @@ Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
+    patchwork,
     bhmbasket
 VignetteBuilder: knitr
 Config/testthat/edition: 3

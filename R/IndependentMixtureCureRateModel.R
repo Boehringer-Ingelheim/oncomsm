@@ -165,7 +165,6 @@ IndependentMixtureCureRateModel <- function(
 #'
 #' @rdname IndependentMixtureCureRateModel
 #' @importFrom ggplot2 theme ggplot aes geom_histogram theme element_blank
-#' @import patchwork
 #' @export
 plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, warmup = 250L, nsim = 1e4, seed = NULL, ...) {
   if (is.null(sample)) {
@@ -175,6 +174,10 @@ plot.IndependentMixtureCureRateModel <- function(x, sample = NULL, data = NULL, 
       sample <- sample_posterior(x, data = data, warmup = warmup, nsim = nsim, seed = seed, ...)
     }
   }
+
+  # do not want to take hard dependency on "patchwork"
+  if (!requireNamespace("patchwork", quietly = TRUE))
+    stop("patchwork package is required but not available, consider installing patchwork")
 
   p1 <- sample %>%
     filter(.data$parameter == "p") %>%
