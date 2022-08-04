@@ -40,11 +40,13 @@ END_RCPP
 }
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4simplified_model_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4srpc_model_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_bhmbasket_predict_rtruncexp", (DL_FUNC) &_bhmbasket_predict_rtruncexp, 3},
     {"_bhmbasket_predict_rtruncweibull", (DL_FUNC) &_bhmbasket_predict_rtruncweibull, 4},
     {"_rcpp_module_boot_stan_fit4simplified_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4simplified_model_mod, 0},
+    {"_rcpp_module_boot_stan_fit4srpc_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srpc_model_mod, 0},
     {NULL, NULL, 0}
 };
 

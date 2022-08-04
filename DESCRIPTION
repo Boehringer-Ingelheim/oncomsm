@@ -15,7 +15,7 @@ Description: This package implements methods to dynamically predict response sta
 License: file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Biarch: true
 Depends: 
     R (>= 3.6.0)
@@ -48,3 +48,4 @@ Suggests:
     bhmbasket
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+LazyData: true
