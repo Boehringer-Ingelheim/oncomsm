@@ -160,7 +160,7 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
 .sample.Model <- function(
   model, data = NULL,
   warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
-  pars = attr(model, "parameter_names"), ...
+  pars = attr(model, "parameter_names"), refresh = 0L, ...
 ) {
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
@@ -169,14 +169,14 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
     as.list(model), # hyperparameters
     data2standata(model, if (is.null(data)) { .nodata(model) } else { data }) # data
   )
+  set.seed(seed) # global seed affects permutation of extracted parameters if not set
   # sample
   res <- rstan::sampling(
     attr(model, "stanmodel"),
     data = stan_data,
-    pars = pars,
     chains = 1L, cores = 1L,
     iter = warmup + nsim, warmup = warmup,
-    seed = seed, ...
+    seed = seed, pars = pars, refresh = refresh, ...
   )
   if (rstan_output == TRUE)
     return(res)
@@ -202,20 +202,8 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
   UseMethod(".parameter_sample_to_tibble")
 }
 
-#' @importFrom stringr str_extract
 .parameter_sample_to_tibble.Model <- function(model, sample) {
-  stopifnot(isa(sample, "stanfit"))
-  as.matrix(sample) %>%
-    as_tibble() %>%
-    mutate(
-      iter = row_number()
-    ) %>%
-    tidyr::pivot_longer(-.data$iter) %>%
-    filter(.data$name != "lp__") %>%
-    tidyr::separate(.data$name, into = c("parameter", "group_id"), sep = "\\[", fill = "right") %>%
-    mutate(
-      group_id = attr(model, "group_id")[as.integer(stringr::str_extract(.data$group_id, "[0-9]+"))]
-    )
+  stop("not implemented")
 }
 
 
@@ -229,13 +217,7 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
 
 # helper to create empty standata for model
 .nodata.Model <- function(model) {
-  tibble(
-    subject_id = integer(),
-    group_id = integer(),
-    t_recruitment = numeric(),
-    dt1 = numeric(),
-    dt2 = numeric()
-  )
+  stop("not implemented")
 }
 
 
@@ -249,15 +231,7 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
 
 # helper to create all-missing standata for model
 .emptydata.Model <- function(model, n_per_arm) {
-  n <- sum(n_per_arm)
-  tibble(
-    subject_id = 1:n,
-    group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
-    t_recruitment = rep(NA_real_, n),
-    dt1 = rep(NA_real_, n),
-    dt2 = rep(NA_real_, n),
-    dt_eof = rep(NA_real_, n)
-  )
+  stop("not implemented")
 }
 
 
@@ -269,58 +243,7 @@ data2standata <- function(model, data, ...) {
   UseMethod("data2standata")
 }
 
-
-
-
-
 # convert time to event data to stan data list
 data2standata.Model <- function(model, data) {
-  group_id <- attr(model, "group_id")
-  lst_stan_data <- list(
-    M_groups = length(group_id)
-  )
-  # convert group_id to factor (needs to be passed as integer vector)
-  data$group_id <- as.integer(factor(data$group_id, levels = group_id))
-  # interval censored data
-  tmp <- dplyr::filter(data, is.finite(.data$dt1) & is.finite(.data$dt2))
-  lst_stan_data$N_A <- nrow(tmp)
-  lst_stan_data$group_id_A <- base::as.array(tmp$group_id)
-  lst_stan_data$dt1_A <- base::as.array(pmax(1/30, tmp$dt1)) # as.array makes sure we have a vector, even if it is just a single number
-  lst_stan_data$dt2_A <- base::as.array(pmax(tmp$dt1 + sqrt(.Machine$double.eps), tmp$dt2))
-  # right censored data
-  tmp <- dplyr::filter(data, is.finite(.data$dt1) & !is.finite(.data$dt2))
-  lst_stan_data$N_B <- nrow(tmp)
-  lst_stan_data$group_id_B <- base::as.array(tmp$group_id)
-  lst_stan_data$dt1_B <- base::as.array(pmax(1/30, tmp$dt1))
-  # definite non-responders
-  tmp <- dplyr::filter(data, is.infinite(.data$dt1))
-  lst_stan_data$N_C <- nrow(tmp)
-  lst_stan_data$group_id_C <- base::as.array(tmp$group_id)
-  # new individuals
-  tmp <- dplyr::filter(data, is.na(.data$dt1) & is.na(.data$dt2))
-  lst_stan_data$N_D <- nrow(tmp)
-  lst_stan_data$group_id_D <- base::as.array(tmp$group_id)
-  # construct waiting times for recruitment
-  dt_recruitment <- with(lst_stan_data,
-    matrix(0, nrow = N_A + N_B + N_C, ncol = M_groups)
-  )
-  n_recruited_per_group <- integer(lst_stan_data$M_groups)
-  for (i in 1:lst_stan_data$M_groups) {
-    t_recruitment <- data %>%
-      filter(group_id == i, !is.na(t_recruitment)) %>%
-      pull(t_recruitment)
-    # set first waiting time to small positive number (referencing to first patient in)
-    # enforce minimal wait between individuals to avoid numerical issues
-    n_recruited_per_group[i] <- length(t_recruitment)
-    if (n_recruited_per_group[i] > 0) {
-      dt_recruitment[1:(n_recruited_per_group[i]), i] <- c(
-        sqrt(.Machine$double.eps),
-        pmax(sqrt(.Machine$double.eps), diff(sort(t_recruitment)))
-      )
-    }
-  }
-  lst_stan_data$dt_recruitment <- base::as.array(dt_recruitment)
-  lst_stan_data$n_recruited_per_group <- base::as.array(n_recruited_per_group)
-  # return
-  return(lst_stan_data)
+  stop("not implemented")
 }
