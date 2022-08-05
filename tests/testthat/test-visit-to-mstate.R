@@ -16,6 +16,8 @@ test_that("visits to mstate conversion works", {
      group_id == 1,
      from == "stable",
      is.na(to),
+     t_min == 0,
+     t_max == Inf,
      dt_min == 0,
      dt_max == Inf,
      t_sot == 0
@@ -33,6 +35,7 @@ test_that("visits to mstate conversion works", {
     now = 1
   )
   expect_true(tbl_mstate$dt_min == 1)
+  expect_true(tbl_mstate$t_min == 1)
 
   # check longer trajectory
   tbl_visits <- tibble::tribble(
@@ -50,8 +53,8 @@ test_that("visits to mstate conversion works", {
   )
   expect_true(all(tbl_mstate$from == c("stable", "response")))
   expect_true(all(tbl_mstate$to == c("response", "progression")))
-  expect_true(all(tbl_mstate$dt_min == c(1.2, 2.4)))
-  expect_true(all(tbl_mstate$dt_max == c(2.4, 3.6)))
+  expect_equal(tbl_mstate$dt_min, c(1.2, 0))
+  expect_equal(tbl_mstate$dt_max, c(2.4, 2.4))
 
   # check EOF trajectory
   tbl_visits <- tibble::tribble(
@@ -70,8 +73,8 @@ test_that("visits to mstate conversion works", {
   expect_true(all(tbl_mstate$from == c("stable", "response")))
   expect_true(tbl_mstate$to[1] == "response")
   expect_true(is.na(tbl_mstate$to[2]))
-  expect_true(all(tbl_mstate$dt_min == c(1.2, 3.6)))
-  expect_true(all(tbl_mstate$dt_max == c(2.4, Inf)))
+  expect_equal(tbl_mstate$dt_min, c(1.2, 1.2))
+  expect_equal(tbl_mstate$dt_max, c(2.4, -Inf))
 
   # check multiple individuals
   tbl_visits <- tibble::tribble(
@@ -92,8 +95,9 @@ test_that("visits to mstate conversion works", {
     absorbing_states = c("progression")
   )
   expect_true(all(tbl_mstate$from == c("stable", "response", "stable", "response", "stable", "response")))
-  expect_true(all(tbl_mstate$dt_min == c(1.2, 2.4, 0, 1.6, 0, 2)))
-  expect_true(all(tbl_mstate$t_sot == c(0, 0, 2, 2, 1.5, 1.5)))
+  expect_equal(tbl_mstate$dt_min, c(1.2, 0, 2, 0.6, 1.5, 0.5))
+  expect_equal(tbl_mstate$dt_max, c(2.4, 2.4, 3.0, Inf, 3.0, -Inf))
+  expect_equal(tbl_mstate$t_sot, c(0, 0, 2, 2, 1.5, 1.5))
 
   # throw error
   tbl_visits <- tibble::tribble(

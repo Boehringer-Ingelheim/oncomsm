@@ -21,6 +21,8 @@
 visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
                              now = max(tbl_visits$t), eof_indicator = "EOF") {
 
+  tbl_visits <- arrange(tbl_visits, subject_id, t) # make sure everything is sorted
+
   tbl_mstate <- list()
 
   subject_id_lagged <- 0L
@@ -49,8 +51,8 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
           group_id = tbl_visits$group_id[i],
           from = state_lagged,
           to = NA,
-          dt_min = tbl_visits$t[i] - t_sot,
-          dt_max = Inf,
+          t_min = tbl_visits$t[i],
+          t_max = -Inf, # - Inf indicates censoring and end of follow up (event can no longer be observed)
           t_sot = t_sot
         ))
         state_lagged <- tbl_visits$state[i]
@@ -60,8 +62,8 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
             group_id = tbl_visits$group_id[i],
             from = state_lagged,
             to = tbl_visits$state[i],
-            dt_min = tbl_visits$t[i - 1] - t_sot,
-            dt_max = tbl_visits$t[i] - t_sot,
+            t_min = tbl_visits$t[i - 1],
+            t_max = tbl_visits$t[i],
             t_sot = t_sot
           ))
       }
@@ -85,11 +87,19 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
         group_id = tbl_visits$group_id[i],
         from = tbl_visits$state[i],
         to = NA,
-        dt_min = now - t_sot,
-        dt_max = Inf,
+        t_min = now,
+        t_max = Inf, # Inf indicates censoring while still at risk (event can still be observed)
         t_sot = t_sot
       ))
     }
   }
+  # compute min/max sojourn time
+  tbl_mstate <- tbl_mstate %>%
+    group_by(subject_id) %>%
+    mutate(
+      dt_min = t_min - lag(t_max) %>% if_else(is.na(.), 0, .),
+      dt_max = t_max - lag(t_min) %>% if_else(is.na(.), 0, .)
+    ) %>%
+    ungroup()
   return(tbl_mstate)
 }
