@@ -247,3 +247,16 @@ data2standata <- function(model, data, ...) {
 data2standata.Model <- function(model, data) {
   stop("not implemented")
 }
+
+
+
+
+#' @export
+plot_mstate <- function(model, data, ...) {
+  UseMethod("plot_mstate")
+}
+
+#' @export
+plot_mstate.Model <- function(model, data, ...) {
+  stop("not implemented")
+}

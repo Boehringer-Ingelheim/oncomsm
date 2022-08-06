@@ -93,6 +93,5 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
       ))
     }
   }
-  # compute min/max sojourn time
   return(tbl_mstate)
 }

@@ -225,3 +225,88 @@ data2standata.srp_model <- function(model, data) {
     )
 }
 
+
+
+#' @export
+plot_mstate.srp_model <- function(model, tbl_mstate, relative_to_sot = TRUE, ...) {
+
+  starting_state <- attr(mdl, "states")[1]
+
+  tbl_mstate <- tbl_mstate %>%
+    rename(`Group ID` = group_id)
+
+  if (relative_to_sot) {
+    tbl_mstate <- tbl_mstate %>%
+      mutate(
+        t_min = t_min - t_sot,
+        t_max = t_max - t_sot,
+        t_sot = 0
+      )
+  }
+
+  tbl_points <- tbl_mstate %>%
+    filter(t_max != -Inf) %>%
+    mutate(
+      tmp = purrr::pmap(
+        list(from, to, t_min, t_max, t_sot),
+        ~tibble(t = c(..3, ..4, ..5), state = c(..1, ..2, starting_state))
+      )
+    ) %>%
+    select(subject_id, `Group ID`, tmp) %>%
+    tidyr::unnest(tmp) %>%
+    filter(is.finite(t)) %>%
+    distinct() %>%
+    arrange(subject_id, t)
+
+  tbl_intervals <- tbl_mstate %>%
+    bind_rows(
+      select(tbl_mstate, subject_id, `Group ID`, t_sot) %>%
+        distinct() %>%
+        mutate(from = starting_state, to = starting_state, t_min = t_sot, t_max = t_sot)
+    ) %>%
+    arrange(subject_id, t_min, t_max) %>%
+    distinct() %>%
+    group_by(subject_id) %>%
+    transmute(
+      subject_id,
+      `Group ID`,
+      state = if_else(to == lead(from), lead(from), NA_character_),
+      tmp1 = t_max,
+      tmp2 = lead(t_min)
+    ) %>%
+    ungroup() %>%
+    filter(!is.na(state), is.finite(tmp1), is.finite(tmp2), tmp2 > tmp1)
+
+  tbl_at_risk <- tbl_mstate %>%
+    filter(t_max == Inf) %>%
+    transmute(
+      subject_id,
+      `Group ID`,
+      t = t_min,
+      state = from
+    )
+
+  tbl_censored <- tbl_mstate %>%
+    filter(t_max == -Inf) %>%
+    transmute(
+      subject_id,
+      `Group ID`,
+      t = t_min,
+      state = from
+    )
+
+  ggplot2::ggplot() +
+    ggplot2::geom_segment(ggplot2::aes(x = tmp1, xend = tmp2, y = subject_id, yend = subject_id, color = state), data = tbl_intervals) +
+    ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), data = tbl_points) +
+    ggplot2::geom_segment(ggplot2::aes(t, subject_id, xend = t + .25, yend = subject_id, color = state), arrow = ggplot2::arrow(type = "closed", angle = 10), data = tbl_at_risk) +
+    ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), shape = "x", size = 5, data = tbl_censored) +
+    ggplot2::labs(x = if (relative_to_sot) "Time since SoT" else "Time since first SoT", y = "Subject ID") +
+    ggplot2::scale_color_discrete("") +
+    ggplot2::facet_wrap(~`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      legend.position = "right"
+    )
+
+}

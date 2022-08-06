@@ -32,23 +32,36 @@ test_that("can convert data to standata for SRP model", {
 
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id,    ~t,        ~state,
-            1,           1,     0,      "stable",
-            1,           1,   1.2,      "stable",
-            1,           1,   2.4,    "response",
-            1,           1,   3.6, "progression",
-            1,           2,     2,      "stable",
-            1,           2,     3,    "response",
-            1,           3,   1.5,      "stable",
-            1,           3,     3,    "response",
-            1,           3,   3.5,         "EOF"
+          "1",         "1",     0,      "stable",
+          "1",         "1",   1.2,      "stable",
+          "1",         "1",   2.4,    "response",
+          "1",         "1",   3.0,    "response",
+          "1",         "1",   3.6, "progression",
+          "1",         "2",   1.5,      "stable",
+          "1",         "2",     2,      "stable",
+          "1",         "2",     3,    "response",
+          "1",         "3",   1.5,      "stable",
+          "1",         "3",     3,    "response",
+          "1",         "3",     4,    "response",
+          "1",         "3",   4.25,         "EOF"
   )
-  tbl_mstate <- visits_to_mstate(
+  tbl_mstate <<- visits_to_mstate(
     tbl_visits,
     start_state = "stable",
     absorbing_states = c("progression")
   )
   lst_standata <- bhmbasket.predict:::data2standata.srp_model(mdl, tbl_mstate)
   expect_true(FALSE) # TODO: implement check
+
+})
+
+
+
+test_that("can plot mstate data for SRP model", {
+
+  create_plot <- function() plot_mstate(mdl, tbl_mstate)
+
+  vdiffr::expect_doppelganger("plot_mstate.srp_model", create_plot)
 
 })
 
