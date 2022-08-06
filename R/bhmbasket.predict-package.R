@@ -15,7 +15,8 @@
 #' @importFrom rlang .data
 #'
 #' @references
-#' Stan Development Team (2021). RStan: the R interface to Stan. R package version 2.21.3. https://mc-stan.org
+#' Stan Development Team (2021). RStan: the R interface to Stan.
+#' R package version 2.21.3. https://mc-stan.org
 #'
 NULL
 
