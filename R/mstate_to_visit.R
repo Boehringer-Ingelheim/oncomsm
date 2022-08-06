@@ -1,5 +1,21 @@
 #' @export
-mstate_to_visits <- function(tbl_mstate, starting_state = "stable", visit_spacing = 1) {
+mstate_to_visits <- function(model, tbl_mstate, ...) {
+  UseMethod("mstate_to_visits")
+}
+
+#' @export
+mstate_to_visits.Model <- function(model, tbl_mstate, ...) {
+  stop("not implemented")
+}
+
+
+#' @export
+mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
+
+  warning("experimental")
+
+  starting_state <- attr(model, "states")[1]
+  visit_spacing <- attr(model, "visit_spacing")[1] # TODO: respect groups
 
   select(tbl_mstate, subject_id, group_id, from, to, t_min, t_max, t_sot) %>%
     bind_rows(
@@ -32,7 +48,8 @@ mstate_to_visits <- function(tbl_mstate, starting_state = "stable", visit_spacin
         }
       )
     ) %>%
-    unnest(tmp) %>%
-    select(subject_id, group_id, t, state)
+    tidyr::unnest(tmp) %>%
+    select(subject_id, group_id, t, state) %>%
+    ungroup()
 
 }
