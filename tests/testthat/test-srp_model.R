@@ -22,7 +22,7 @@ test_that("can create empty standata for SRP model", {
   lst_standata <- bhmbasket.predict:::data2standata.srp_model(
     mdl, bhmbasket.predict:::.nodata.srp_model(mdl)
   )
-  expect_true(TRUE) # TODO: implement check
+  expect_true(FALSE) # TODO: implement check
 
 })
 
@@ -48,7 +48,7 @@ test_that("can convert data to standata for SRP model", {
     absorbing_states = c("progression")
   )
   lst_standata <- bhmbasket.predict:::data2standata.srp_model(mdl, tbl_mstate)
-  expect_true(TRUE) # TODO: implement check
+  expect_true(FALSE) # TODO: implement check
 
 })
 
@@ -70,22 +70,41 @@ test_that("can sample from prior", {
 
 
 
-test_that("can generate data from SRP model and seed works", {
+test_that("can generate data from SRP model", {
 
-  tbl_prior_predictive1 <<- sample_prior_predictive(mdl, c(10, 10), 10, seed = 42L)
-  tbl_prior_predictive2 <- sample_prior_predictive(mdl, c(10, 10), 10, seed = 42L)
+  tbl_prior_predictive1 <<- sample_prior_predictive(mdl, c(20, 20), 25, seed = 42L)
 
   expect_true(
     tbl_prior_predictive1 %>%
       group_by(group_id) %>%
       summarize(n = length(unique(subject_id))) %>%
       pull(n) %>%
-      {. == c(10, 10)} %>%
+      {. == c(20, 20)} %>%
       all()
   )
+
+  p <- tbl_prior_predictive1 %>% # we throw together iterations to get better estimate
+    filter(from == "stable") %>%
+    group_by(group_id, to) %>%
+    summarize(n = length(unique(subject_id)), .groups = "drop_last") %>%
+    mutate(p = n / sum(n)) %>%
+    ungroup() %>%
+    arrange(group_id, to) %>%
+    pull(p)
+
+  expect_true(all(abs(p - 0.5) < .01))
+
+})
+
+
+
+test_that("prior predictive seed works", {
+
+  tbl_prior_predictive2 <- sample_prior_predictive(mdl, c(20, 20), 25, seed = 42L)
   expect_true(all(tbl_prior_predictive1 == tbl_prior_predictive2))
 
 })
+
 
 
 test_that("can sample from posterior", {

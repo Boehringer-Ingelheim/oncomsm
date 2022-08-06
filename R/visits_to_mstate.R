@@ -94,12 +94,5 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
     }
   }
   # compute min/max sojourn time
-  tbl_mstate <- tbl_mstate %>%
-    group_by(subject_id) %>%
-    mutate(
-      dt_min = t_min - lag(t_max) %>% if_else(is.na(.), 0, .),
-      dt_max = t_max - lag(t_min) %>% if_else(is.na(.), 0, .)
-    ) %>%
-    ungroup()
   return(tbl_mstate)
 }

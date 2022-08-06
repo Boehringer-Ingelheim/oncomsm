@@ -41,7 +41,7 @@ create_srp_model <- function(
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
 
   data <- data %>%
-    arrange(subject_id, (dt_min + dt_max)/2)
+    arrange(t_sot, subject_id, (t_min + t_max)/2)
   data %>%
     group_by(subject_id) %>%
     filter(from != lag(to)) %>%
@@ -49,7 +49,7 @@ create_srp_model <- function(
     {assertthat::assert_that(. == 0)}
 
   res <- tribble(
-      ~subject_id, ~group_id, ~from, ~to, ~dt_min, ~dt_max, ~iter
+      ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter
     )
 
   visit_spacing <- attr(model, "visit_spacing")
@@ -67,8 +67,8 @@ create_srp_model <- function(
         if (data$from[i] == "stable") {
           # first sample response/progression
           pr_response_raw <- p[k, g] # use survival information!
-          pr_survival_response <- 1 - stats::pweibull(data$dt_min[i],  sshape[1], sscale[1])
-          pr_survival_progression <- 1 - stats::pweibull(data$dt_min[i],  sshape[2], sscale[2])
+          pr_survival_response <- 1 - stats::pweibull(data$t_min[i] - data$t_sot[i], sshape[1], sscale[1])
+          pr_survival_progression <- 1 - stats::pweibull(data$t_min[i] - data$t_sot[i], sshape[2], sscale[2])
           pr_response <- pr_response_raw * pr_survival_response / (
             pr_response_raw * pr_survival_response +
               (1 - pr_response_raw) * pr_survival_progression
@@ -76,54 +76,62 @@ create_srp_model <- function(
           response <- rbinom(1, 1, pr_response)
           if (response) {
             # sample exact response time
-            dt_response <- bhmbasket.predict:::rtruncweibull(
-              sshape[1], scale = sscale[1], data$dt_min[i], Inf
+            t_response <- bhmbasket.predict:::rtruncweibull(
+              sshape[1], scale = sscale[1], data$t_min[i], Inf # t_min since time of SoT is known
             )
             # apply visit scheme
-            n_visits_response <- (dt_response - data$dt_min[i]) %/% visit_spacing[g]
-            dtmin_response <- data$dt_min[i] + visit_spacing[g] * n_visits_response
-            dtmax_response <- data$dt_min[i] + visit_spacing[g] * (n_visits_response + 1)
+            n_visits_response <- t_response %/% visit_spacing[g]
+            tmin_response <- data$t_min[i] + visit_spacing[g] * n_visits_response
+            tmax_response <- data$t_min[i] + visit_spacing[g] * (n_visits_response + 1)
             # sample subsequent progression,
             dt_progression <- stats::rweibull(1, sshape[3], sscale[3])
             # apply visit scheme
-            n_visits_progression <- (dt_progression + dt_response - data$dt_min[i]) %/% visit_spacing[g]
-            dtmin_progression <- data$dt_min[i] + visit_spacing[g] * n_visits_progression
-            dtmax_progression <- data$dt_min[i] + visit_spacing[g] * (n_visits_progression + 1)
+            n_visits_progression <- (dt_progression + t_response) %/% visit_spacing[g]
+            tmin_progression <- data$t_min[i] + visit_spacing[g] * n_visits_progression
+            tmax_progression <- data$t_min[i] + visit_spacing[g] * (n_visits_progression + 1)
             res <- bind_rows(
               res, tribble(
-                       ~subject_id, ~group_id,      ~from,           ~to,           ~dt_min,           ~dt_max, ~iter,
-                data$subject_id[i],         g,   "stable",    "response",    dtmin_response,    dtmax_response,     j,
-                data$subject_id[i],         g, "response", "progression", dtmin_progression, dtmax_progression,     j
+                       ~subject_id, ~group_id,      ~from,           ~to,           ~t_min,           ~t_max,        ~t_sot, ~iter,
+                data$subject_id[i],         g,   "stable",    "response",    tmin_response,    tmax_response, data$t_sot[i],      j,
+                data$subject_id[i],         g, "response", "progression", tmin_progression, tmax_progression, data$t_sot[i],      j
               )
             )
-          } else { # sample progression/cure directly
+          } else { # sample progression directly
             dt_progression <- bhmbasket.predict:::rtruncweibull(
-              sshape[2], scale = sscale[2], data$dt_min[i], Inf
+              sshape[2], scale = sscale[2], data$t_min[i], Inf # t_min since time of SoT is known
             )
             # apply visit scheme
-            n_visits_progression <- (dt_progression - data$dt_min[i]) %/% visit_spacing[g]
-            dtmin_progression <- data$dt_min[i] + visit_spacing[g] * n_visits_progression
-            dtmax_progression <- data$dt_min[i] + visit_spacing[g] * (n_visits_progression + 1)
+            n_visits_progression <- dt_progression %/% visit_spacing[g]
+            tmin_progression <- data$t_min[i] + visit_spacing[g] * n_visits_progression
+            tmax_progression <- data$t_min[i] + visit_spacing[g] * (n_visits_progression + 1)
             res <- bind_rows(
               res, tribble(
-                       ~subject_id, ~group_id,    ~from,           ~to,           ~dt_min,           ~dt_max, ~iter,
-                data$subject_id[i],         g, "stable", "progression", dtmin_progression, dtmax_progression,     j
+                       ~subject_id, ~group_id,    ~from,           ~to,           ~t_min,           ~t_max,        ~t_sot, ~iter,
+                data$subject_id[i],         g, "stable", "progression", tmin_progression, tmax_progression, data$t_sot[i], j
               )
             )
           } # end stable -> progression
         } # end from == 1
-        if (data$from[i] == "resp") {
+        if (data$from[i] == "response") {
+          if (data$from[i - 1] != "stable" || data$subject_id[i - 1] != data$subject_id[i]) {
+            stop()
+          }
+          # sample exact response time
+          t_response <- bhmbasket.predict:::rtruncweibull(
+            sshape[1], scale = sscale[1], data$t_min[i - 1], data$t_max[i - 1]
+          )
+          # sample progression time
           dt_progression <- bhmbasket.predict:::rtruncweibull(
-            sshape[3], scale = sscale[3], data$dt_min[i], Inf
+            sshape[3], scale = sscale[3], data$t_min[i] - t_response, Inf
           )
           # apply visit scheme
-          n_visits_progression <- (dt_progression - data$dt_min[i]) %/% visit_spacing[g]
-          dtmin_progression <- data$dt_min[i] + visit_spacing[g] * n_visits_progression
-          dtmax_progression <- data$dt_min[i] + visit_spacing[g] * (n_visits_progression + 1)
+          n_visits_progression <- dt_progression %/% visit_spacing[g]
+          tmin_progression <- data$t_min[i] + visit_spacing[g] * n_visits_progression
+          tmax_progression <- data$t_min[i] + visit_spacing[g] * (n_visits_progression + 1)
           res <- bind_rows(
             res, tribble(
-                     ~subject_id, ~group_id,      ~from,           ~to,           ~dt_min,           ~dt_max, ~iter,
-              data$subject_id[i],         g, "response", "progression", dtmin_progression, dtmax_progression,     j
+                     ~subject_id, ~group_id,      ~from,           ~to,           ~t_min,           ~t_max,        ~t_sot, ~iter,
+              data$subject_id[i],         g, "response", "progression", tmin_progression, tmax_progression, data$t_sot[i],     j
             )
           )
         } # end from == 2
@@ -142,8 +150,8 @@ create_srp_model <- function(
     group_id = integer(),
     from = integer(),
     to = integer(),
-    dt_min = numeric(),
-    dt_max = numeric(),
+    t_min = numeric(),
+    t_max = numeric(),
     t_sot = numeric()
   )
 }
@@ -158,9 +166,11 @@ create_srp_model <- function(
     group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
     from = rep("stable", n),
     to = rep(NA, n),
-    dt_min = rep(0, n),
-    dt_max = rep(Inf, n),
-    t_sot = rep(NA, n)
+    # assume everyone is recruited at zero
+    # only t_min/max - t_sot is relevant anyhow
+    t_min = rep(0, n),
+    t_max = rep(Inf, n),
+    t_sot = rep(0, n)
   )
 }
 
@@ -177,13 +187,20 @@ data2standata.srp_model <- function(model, data) {
         {if_else(is.na(.), "unknown", as.character(.))} %>%
         factor(levels = c(attr(model, "states"), "unknown")) %>%
         as.integer(),
-      dt_min = pmax(1/30, dt_min), # Weibull CDF does not like exactly 0
-      dt_max = pmax(dt_min + 1/30, dt_max)
+      t_min = t_min - t_sot,
+      t_max = t_max - t_sot
     ) %>%
+    arrange(t_sot, subject_id, from) %>% # make sure verything is sorted properly
     as.list()
+
+  # make sure everything is an array
+  for (i in seq_along(lst_stan_data)) {
+    lst_stan_data[[i]] <- as.array(lst_stan_data[[i]])
+  }
 
   lst_stan_data$M_groups <- length(attr(model, "group_id"))
   lst_stan_data$N <- nrow(data)
+  lst_stan_data$N_subjects <- length(unique(data$subject_id))
 
   lst_stan_data <- c(lst_stan_data, as.list(model))
 
