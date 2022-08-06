@@ -1,0 +1,338 @@
+---
+title: "application-to-probability-of-success"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{application-to-probability-of-success}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r setup}
+library(bhmbasket.predict)
+```
+
+## Decision criterion
+
+A quantitative decision criterion can be used to come to a decision at
+the end of a trial. In early phase, this is typically the decision
+whether or not to continue development of a new compound ("go"). The
+space of potential decision criteria is huge and might also depend on
+additional data. Here, only simple criteria based on the posterior
+distribution of the response rate are considered. For instance, a
+decision can be reached by checking whether the probability of exceeding
+a certain target value $p_{target}$ exceeds a pre-defined confidence
+level $\gamma$
+$$\text{success}(r) := \underbrace{\operatorname{Pr}\big[\, p \geq p_{target} \ | \ R = r\,\big]}_{\text{posterior of exceeding target}} \geq \gamma.$$
+
+This is equivalent to the $1-\gamma$ quantile of the posterior
+distribution exceeding $p_{target}$. In settings with multiple arms, a
+threshold per arm is defined.
+
+## Probability of Success
+
+The unconditional probability of observing a success is the Probability
+of Success (PoS)
+$$\operatorname{PoS} := \operatorname{Pr}\big[ \operatorname{success}(r) \,\big]$$
+This probability depends on the unknown parameters and thus requires the
+specification of prior distributions over
+
+1.  the response rate $p$
+2.  the Weibull shape and scale
+3.  the recruitment rate
+
+as well as a minimal follow-up time for each individual to determine
+when the trial ends and a planned spacing between individual visits.
+
+As data is accrued during the trial, PoS can be updated by model-based
+imputation of the final response status of individuals still at risk
+using the mixture-cure--rate model for time-to-first-event outlined
+above. This allows to interpolate between the *a priori* planning PoS
+and 0 (no success) or 1 (success) at the end of the trial. In practice,
+this is done by sampling whether or not individuals at risk will
+experience a response and if so, when the response occurs, from the
+posterior predictive distribution of the Bayesian mixture-cure-rate
+model.
+
+
+# Computing Probability of Success at planning stage
+
+At planning stage, no data is available yet to condition on. The model
+thus samples from the prior predictive distribution and applies the
+specified success threshold to each simulated trial. For instance, one
+could define success as the observed rate exceeding the target rate.
+
+```{r compute-planning-pos}
+n_sim <- 500L # only for speed reasons - increase!
+
+# sample from the prior predictive distribution
+tbl_prior_predictive_sample <- sample_prior_predictive(
+    mdl, 
+    n_per_arm = c(40, 40, 40),
+    nsim = n_sim
+  )
+
+# calculate number of responses per iteration 
+tbl_prior_predictive_sample %>% 
+  group_by(iter, group_id) %>% 
+  summarize(
+    n = n(),
+    r = sum(t_recruitment + dt2 < Inf), # a response is observed if the response time point is finite
+    .groups = "drop"
+  ) %>% 
+  mutate(
+    `response rate` = r/n,
+    success = case_when(
+      group_id == "A" ~ `response rate` >= p_target$A,
+      group_id == "B" ~ `response rate` >= p_target$B,
+      group_id == "C" ~ `response rate` >= p_target$C
+    )
+  ) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    PoS = mean(success) # calculate observed frequency of "successes
+  ) %>% 
+  rename(arm = group_id) %>% 
+  knitr::kable(
+    caption = "Probability of success by arm."
+  )
+```
+
+## Expected power
+
+Expected power is similar to Probability of Success but conditional on a
+relevant response rate. It is thus the natural extension of frequentist
+power under uncertainty.
+
+$$
+\operatorname{EP} := \operatorname{Pr}\big[\,\operatorname{success}(R)\,|\,\,p \geq p_{\text{target}}\big]
+$$
+
+This conditional perspective can be taken by truncating the response
+rate prior from below to the above-target region.
+
+```{r condition-on-effect-size}
+# change hyperparameters
+mdl$logodds_min <- logodds(as.numeric(p_target))
+
+# sample and plot again
+plot(mdl, refresh = 0)
+```
+
+The corresponding success probability is the expected power.
+
+```{r compute-planning-expected-power}
+tbl_prior_predictive_samples <- sample_prior_predictive(
+    mdl, 
+    n_per_arm = c(40, 40, 40),
+    nsim = n_sim
+  )
+
+tbl_prior_predictive_summary <- tbl_prior_predictive_samples %>% 
+  group_by(iter, group_id) %>% 
+  summarize(
+    n = n(),
+    r = sum(t_recruitment + dt2 < Inf),
+    .groups = "drop"
+  ) 
+
+tbl_prior_predictive_summary %>% 
+  mutate(
+    `response rate` = r/n,
+    success = case_when(
+      group_id == "A" ~ `response rate` >= p_target$A,
+      group_id == "B" ~ `response rate` >= p_target$B,
+      group_id == "C" ~ `response rate` >= p_target$C
+    )
+  ) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    `Expected power` = mean(success)
+  ) %>% 
+  rename(arm = group_id) %>% 
+  knitr::kable(
+    caption = "Expected power by arm."
+  )
+```
+
+## Advanced decision boundaries: connection with bhmbasket
+
+`bhmbasket` can be used to implement dynamic borrowing between arms in
+Bayesian hierarchical model and `bhmbasket.predict` can interface with
+it. The following code demonstrates how an ExNex model can be used to
+derive posteriors.
+
+**Note that ...**
+
+-   **currently, the bhmbasket.predict model used to generate samples
+    from the prior/posterior predictive distribution is not a
+    hierarchical model and does not borrow information between arms
+    while the analysis model does.**
+
+-   **bhmbasket does not allow to specify truncated priors. Since we use
+    flat priors on the log-odds of response with a conservative upper
+    bound of 0.6 this means that the PoS with bhmbasket-posterior is
+    higher since the prior leads to more optimistic posteriors.**
+
+```{r bhmbasket-integration}
+# this value should be larger in practice
+nsim_bhmbasket <- 1000L # gibbs sampler - use more
+
+# remove conditioning of response rate (see expected power) 
+# by adjusting lower truncation back to close to 0 (cannot be zero exactly)
+mdl$logodds_min <- logodds(c(.001, .001, .001))
+
+# specify priors for bhmbasket analysis (should be consistent)
+params <- bhmbasket::setPriorParametersExNex(
+  mu_mean   = bhmbasket::logit(0.3), # exchangeable component mean normal prior mean
+  mu_sd     = 1, # exchangeable component mean normal prior standard deviation
+  tau_scale = 1, # standard deviation of half-normal prior on tau
+  mu_j      = bhmbasket::logit(c(.4, .2, .2)), # individual components means
+  tau_j     = rep(1, 3), # individual components standard deviations
+  w_j       = 0.5 # probability of being exchangeable
+)
+
+tbl_bhmbasket_posterior_medians <- tbl_prior_predictive_summary %>%
+  # convert to bhmbasket trial objects
+  group_by(iter) %>%
+  summarize(
+    trial = list(bhmbasket::createTrial(n, r))
+  ) %>% 
+  mutate(
+    # map a function over all "trial" realizations which computes the
+    # posterior medians
+    tmp = purrr::map(trial, function(trial) {
+        posterior_medians <- suppressMessages(bhmbasket::performAnalyses(
+            scenario_list         = trial,
+            method_names          = "exnex",
+            prior_parameters_list = params,
+            n_mcmc_iterations     = nsim_bhmbasket,
+            verbose               = FALSE
+          )) %>%
+          bhmbasket::getEstimates() %>%
+          {as.numeric(.$exnex[,"50%"])} # extract posterior median
+        tibble(
+          group_id = c("A", "B", "C"),
+          posterior_median = posterior_medians
+        )
+      }
+    )
+  ) %>% 
+  select(-trial) %>% 
+  tidyr::unnest(tmp)
+
+# combine the posterior medians with the target rates 
+# and check the success criterion
+tbl_bhmbasket_posterior_medians %>% 
+  mutate(p_target = purrr::map_dbl(group_id, ~p_target[[.]])) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    PoS = mean(posterior_median >= p_target)
+  )
+```
+
+## Computing dynamic Probability of Success
+
+Looking at a snapshot of the visit data from 18 months into the trial
+clearly shows the problem with delayed response data.
+
+```{r restrict-data-to-interim-at-10-months}
+tbl_visits_interim <- filter(tbl_visits, t <= 15) 
+
+plot_visits(tbl_visits_interim)
+```
+
+Several subjects are still at risk in the respective arms. Counting them
+as non-responders is clearly biasing the interim analysis towards lower
+response rates. Excluding these can lead to bias if time-to-progression
+and time-to-response follow different distributions (conditional on the
+final response status). Also, there are small efficiency gains possible
+if information about the typical time-to-response is available. If for
+instance, an individual is stable after 8 months but the likelihood of
+response post 6 months is minimal, the mixture cure rate model will take
+that into account and see this individual as more likely to ultimately
+become a non-responder.
+
+We first convert the visit data to time-to-first-event,
+
+```{r}
+# convert data to time-to-response
+tbl_tte_interim <- visits_to_tte(tbl_visits, cutoff = 15)
+
+tbl_tte_interim
+```
+
+Next, we sample from the posterior predictive distribution to impute the
+outcomes of the individuals still at risk and those still to be
+recruited.
+
+```{r sample-from-posterior-predictive}
+min_follow_up <- 3 # months, follow up of last individual
+
+tbl_posterior_predictive_summary <- impute_posterior_predictive(
+    mdl, data = tbl_tte_interim, seed = 42L, nsim = n_sim, refresh = 0
+  ) %>% 
+  group_by(iter, group_id) %>%
+  tidyr::nest() %>%
+  arrange(iter) %>% 
+  mutate(
+    r = purrr::map_int(data, function(data) {
+          with(data,
+            sum(t_recruitment + dt2 <= max(t_recruitment) + min_follow_up)
+          )
+        }
+      ),
+    n = purrr::map_int(data, nrow)
+  ) %>% 
+  select(-data)
+```
+
+Exactly as before, bhmbasket can be applied to the posterior predictive
+samples.
+
+```{r}
+tbl_bhmbasket_interim_posterior_medians <- tbl_posterior_predictive_summary %>%
+  # convert to bhmbasket trial objects
+  group_by(iter) %>%
+  summarize(
+    trial = list(bhmbasket::createTrial(n, r))
+  ) %>% 
+  mutate(
+    # map a function over all realizations computing the
+    # posterior medians
+    tmp = purrr::map(trial, function(trial) {
+        posterior_medians <- suppressMessages(bhmbasket::performAnalyses(
+            scenario_list         = trial,
+            method_names          = "exnex",
+            prior_parameters_list = params,
+            n_mcmc_iterations     = nsim_bhmbasket,
+            verbose               = FALSE
+          )) %>%
+          bhmbasket::getEstimates() %>%
+          {as.numeric(.$exnex[,"50%"])} # extract posterior median
+        tibble(
+          group_id = c("A", "B", "C"),
+          posterior_median = posterior_medians
+        )
+      }
+    )
+  ) %>% 
+  select(-trial) %>% 
+  tidyr::unnest(tmp)
+```
+
+```{r}
+tbl_bhmbasket_interim_posterior_medians %>% 
+  mutate(p_target = purrr::map_dbl(group_id, ~p_target[[.]])) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    PoS = mean(posterior_median >= p_target)
+  )
+```

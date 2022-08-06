@@ -12,7 +12,7 @@ mstate_to_visits.Model <- function(model, tbl_mstate, ...) {
 #' @export
 mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
 
-  warning("experimental")
+  warning("'mstate_to_visits.srp_model' is experimental")
 
   starting_state <- attr(model, "states")[1]
   visit_spacing <- attr(model, "visit_spacing")[1] # TODO: respect groups

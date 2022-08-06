@@ -35,13 +35,20 @@ create_srp_model <- function(
   }
   # TODO: convert data to matrix and process in c++
   stopifnot(isa(parameter_sample, "stanfit"))
+  # extract subject and group id levels for conversion to and back from integer
+  subject_id_levels <- unique(as.character(data$subject_id))
+  group_id_levels <- attr(model, "group_id") # important to maintain ordering
   # extract parameter matrices
   p <- rstan::extract(parameter_sample, "p")[[1]]
   scale <- rstan::extract(parameter_sample, "scale")[[1]]
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
 
   data <- data %>%
-    arrange(t_sot, subject_id, (t_min + t_max)/2)
+    arrange(t_sot, subject_id, (t_min + t_max)/2) %>%
+    mutate(
+      subject_id = as.integer(factor(as.character(subject_id), levels = subject_id_levels)),
+      group_id = as.integer(factor(group_id, levels = group_id_levels))
+    )
   data %>%
     group_by(subject_id) %>%
     filter(from != lag(to)) %>%
@@ -138,6 +145,16 @@ create_srp_model <- function(
       } # end iterate of j
     } # end if/else
   } # end iteration over i
+  # convert subject and group id back
+  res <- res %>%
+    mutate(
+      subject_id = as.character(
+          factor(subject_id, levels = seq_along(subject_id_levels), labels = subject_id_levels)
+        ),
+      group_id = as.character(
+          factor(group_id, levels = seq_along(group_id_levels), labels = group_id_levels)
+        )
+    )
   return(res)
 }
 
@@ -190,7 +207,7 @@ data2standata.srp_model <- function(model, data) {
       t_min = t_min - t_sot,
       t_max = t_max - t_sot
     ) %>%
-    arrange(t_sot, subject_id, from) %>% # make sure verything is sorted properly
+    arrange(subject_id, from) %>% # make sure verything is sorted properly
     as.list()
 
   # make sure everything is an array
@@ -302,11 +319,67 @@ plot_mstate.srp_model <- function(model, tbl_mstate, relative_to_sot = TRUE, ...
     ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), shape = "x", size = 5, data = tbl_censored) +
     ggplot2::labs(x = if (relative_to_sot) "Time since SoT" else "Time since first SoT", y = "Subject ID") +
     ggplot2::scale_color_discrete("") +
-    ggplot2::facet_wrap(~`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right") +
+    ggplot2::facet_wrap(~`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right", scales = "free_y") +
     ggplot2::theme_bw() +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_text(size = 5),
       legend.position = "right"
     )
 
+}
+
+
+
+#' @export
+plot.srp_model <- function(model, dt, sample = NULL, seed = NULL, n_grid = 50, ...) {
+  if(is.null(sample)) {
+    sample <- sample_prior(model, seed = seed, ...)
+  }
+  # plot transition times
+  p1 <- sample %>%
+    filter(parameter %in% c("shape", "scale")) %>%
+    tidyr::pivot_wider(names_from = parameter, values_from = value) %>%
+    tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
+    mutate(
+      pdf = pweibull(dt, shape = shape, scale = scale)
+    ) %>%
+    group_by(group_id, transition, dt) %>%
+    summarize(pdf = mean(pdf), .groups = "drop") %>%
+    filter(is.finite(pdf)) %>%
+    mutate(
+      transition = case_when(
+        transition == 1 ~ "stable to response",
+        transition == 2 ~ "stable to progression",
+        transition == 3 ~ "response to progression",
+      ) %>%
+      factor(levels = c("stable to response", "stable to progression", "response to progression"))
+    ) %>%
+    ggplot2::ggplot() +
+      ggplot2::geom_line(ggplot2::aes(dt, pdf, color = group_id)) +
+      ggplot2::labs(x = "time to next event", y = "CDF") +
+      ggplot2::scale_color_discrete("") +
+      ggplot2::facet_wrap(~transition, nrow = 1) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        legend.position = "top",
+        panel.grid.minor = ggplot2::element_blank()
+      )
+  # plot response probability
+  p2 <- sample %>%
+    filter(parameter == "p") %>%
+    ggplot2::ggplot() +
+      ggplot2::stat_ecdf(aes(value, color = group_id), geom = "line") +
+      ggplot2::coord_cartesian(xlim = c(0, 1)) +
+      ggplot2::labs(x = "response probability", y = "ECDF") +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        legend.position = "none",
+        panel.grid.minor = ggplot2::element_blank()
+      )
+  design <- "
+  111
+  223
+  "
+  p1 + p2 + patchwork::guide_area() + patchwork::plot_layout(design = design, guides = "collect")
 }

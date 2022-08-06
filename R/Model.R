@@ -30,7 +30,7 @@ sample_prior <- function(model, warmup, nsim, seed, rstan_output, pars, ...) {
 #' @rdname sample_prior
 #' @export
 sample_prior.Model <- function(
-  model, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
+  model, warmup = 500L, nsim = 2000L, seed = NULL, rstan_output = FALSE,
   pars = attr(model, "parameter_names"), ...
 ) {
   .sample(
@@ -259,4 +259,18 @@ plot_mstate <- function(model, data, ...) {
 #' @export
 plot_mstate.Model <- function(model, data, ...) {
   stop("not implemented")
+}
+
+
+
+#' @export
+generate_visit_data <- function(model, n_per_group, ...) {
+  UseMethod("generate_visit_data")
+}
+
+#' @export
+generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
+  sample_prior_predictive(mdl, n_per_group, 1, seed = seed) %>%
+    select(-iter) %>%
+    mstate_to_visits(mdl, .)
 }

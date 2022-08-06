@@ -120,6 +120,16 @@ test_that("prior predictive seed works", {
 
 
 
+test_that("can generate visit data from SRP model", {
+
+  generate_visit_data(mdl, c(20, 20), seed = 112341)
+
+  expect_true(FALSE) # TODO: plausi checks on data
+
+})
+
+
+
 test_that("can sample from posterior", {
 
   tbl_data <- tbl_prior_predictive1 %>%
