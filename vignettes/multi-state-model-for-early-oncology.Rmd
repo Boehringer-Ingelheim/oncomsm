@@ -311,8 +311,28 @@ plot_mstate(mdl, tbl_mstate_interim, relative_to_sot = FALSE)
 ```
 
 ```{r}
-tbl_mstate_interim %>% filter(row_number() <= 2)
-sample_posterior(mdl, tbl_mstate_interim %>% filter(row_number() == 1), refresh = 10)
+# estimate of the response rates
+tbl_mstate_interim %>% 
+  filter(from == "stable", !is.na(to)) %>% 
+  group_by(group_id) %>% 
+  summarize(p_response = sum(to == "response")/n())
+
+# crude approximation of the median jump times from "stable"
+tbl_prior_predictive %>%  
+  filter(from == "stable", !is.na(to)) %>% 
+  group_by(group_id, from, to) %>% 
+  summarize(t_jump_approx = median(t_min + t_max)/2, .groups = "drop") 
+```
+
+```{r}
+tbl_posterior <- sample_posterior(mdl, tbl_mstate_interim, refresh = 100, nsim = 1000, warmup = 250, seed = 76947)
+
+plot(mdl, dt = c(0, 36), sample = tbl_posterior)
+
+tbl_posterior %>% 
+  filter(parameter == "p") %>% 
+  group_by(group_id) %>% 
+  summarize(p_posterior_mean = mean(value))
 ```
 
 

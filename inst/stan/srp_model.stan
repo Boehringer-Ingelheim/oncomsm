@@ -135,8 +135,8 @@ model {
         // here we need to use the mixture distribution since the next state
         // is unknown
         target += log(
-                 p[g]  * exp(weibull_trunc_lpdf(dt_jump | shape[g, 1], scale[g, 1], dt_jump_min, positive_infinity()))
-          + (1 - p[g]) * exp(weibull_trunc_lpdf(dt_jump | shape[g, 2], scale[g, 2], dt_jump_min, positive_infinity()))
+                 p[g]  * exp(weibull_trunc_lpdf(dt_jump | shape[g, 1], scale[g, 1], dt_jump_min, 9999))
+          + (1 - p[g]) * exp(weibull_trunc_lpdf(dt_jump | shape[g, 2], scale[g, 2], dt_jump_min, 9999))
           + eps // numerical stability, prevent log(0)
         );
       }

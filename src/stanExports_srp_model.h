@@ -773,7 +773,7 @@ public:
                     current_statement_begin__ = 134;
                     if (as_bool(logical_eq(get_base1(to, i, "to", 1), 4))) {
                         current_statement_begin__ = 137;
-                        lp_accum__.add(stan::math::log((((get_base1(p, g, "p", 1) * stan::math::exp(weibull_trunc_lpdf(dt_jump, get_base1(get_base1(shape, g, "shape", 1), 1, "shape", 2), get_base1(get_base1(scale, g, "scale", 1), 1, "scale", 2), dt_jump_min, stan::math::positive_infinity(), pstream__))) + ((1 - get_base1(p, g, "p", 1)) * stan::math::exp(weibull_trunc_lpdf(dt_jump, get_base1(get_base1(shape, g, "shape", 1), 2, "shape", 2), get_base1(get_base1(scale, g, "scale", 1), 2, "scale", 2), dt_jump_min, stan::math::positive_infinity(), pstream__)))) + eps)));
+                        lp_accum__.add(stan::math::log((((get_base1(p, g, "p", 1) * stan::math::exp(weibull_trunc_lpdf(dt_jump, get_base1(get_base1(shape, g, "shape", 1), 1, "shape", 2), get_base1(get_base1(scale, g, "scale", 1), 1, "scale", 2), dt_jump_min, 9999, pstream__))) + ((1 - get_base1(p, g, "p", 1)) * stan::math::exp(weibull_trunc_lpdf(dt_jump, get_base1(get_base1(shape, g, "shape", 1), 2, "shape", 2), get_base1(get_base1(scale, g, "scale", 1), 2, "scale", 2), dt_jump_min, 9999, pstream__)))) + eps)));
                     }
                 }
                 current_statement_begin__ = 144;
