@@ -29,7 +29,7 @@ create_srp_model <- function(
 
 
 # see Model.R
-.impute.srp_model <- function(model, data, nsim, now, parameter_sample, seed = NULL, ...) {
+.impute.srp_model <- function(model, data, nsim, parameter_sample, seed = NULL, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -225,7 +225,8 @@ data2standata.srp_model <- function(model, data) {
 }
 
 #' @importFrom stringr str_extract
-.parameter_sample_to_tibble.srp_model <- function(model, sample) {
+#' @export
+parameter_sample_to_tibble.srp_model <- function(model, sample) {
   stopifnot(isa(sample, "stanfit"))
   as.matrix(sample) %>%
     as_tibble() %>%
@@ -245,7 +246,7 @@ data2standata.srp_model <- function(model, data) {
 
 
 #' @export
-plot_mstate.srp_model <- function(model, tbl_mstate, relative_to_sot = TRUE, ...) {
+plot_mstate.srp_model <- function(model, tbl_mstate, now = max(tbl_mstate$t_max), relative_to_sot = TRUE, ...) {
 
   starting_state <- attr(mdl, "states")[1]
 
@@ -262,16 +263,20 @@ plot_mstate.srp_model <- function(model, tbl_mstate, relative_to_sot = TRUE, ...
   }
 
   tbl_points <- tbl_mstate %>%
-    filter(t_max != -Inf) %>%
+    # filter(t_max != -Inf) %>%
     mutate(
       tmp = purrr::pmap(
         list(from, to, t_min, t_max, t_sot),
-        ~tibble(t = c(..3, ..4, ..5), state = c(..1, ..2, starting_state))
+        ~if (is.na(..2)) {
+          tibble(t = c(..3, ..5), state = c(..1, starting_state))
+        } else {
+          tibble(t = c(..3, ..4, ..5), state = c(..1, ..2, starting_state))
+        }
       )
     ) %>%
     select(subject_id, `Group ID`, tmp) %>%
     tidyr::unnest(tmp) %>%
-    filter(is.finite(t)) %>%
+    filter(is.finite(t), t < now) %>%
     distinct() %>%
     arrange(subject_id, t)
 
@@ -312,11 +317,18 @@ plot_mstate.srp_model <- function(model, tbl_mstate, relative_to_sot = TRUE, ...
       state = from
     )
 
+  scale <- max(tbl_points$t)
+
   ggplot2::ggplot() +
     ggplot2::geom_segment(ggplot2::aes(x = tmp1, xend = tmp2, y = subject_id, yend = subject_id, color = state), data = tbl_intervals) +
     ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), data = tbl_points) +
-    ggplot2::geom_segment(ggplot2::aes(t, subject_id, xend = t + .25, yend = subject_id, color = state), arrow = ggplot2::arrow(type = "closed", angle = 10), data = tbl_at_risk) +
+    ggplot2::geom_segment(
+      ggplot2::aes(t, subject_id, xend = t + scale/33, yend = subject_id, color = state),
+      arrow = ggplot2::arrow(type = "closed", angle = 10, length = ggplot2::unit(0.05, "npc")),
+      data = tbl_at_risk
+    ) +
     ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), shape = "x", size = 5, data = tbl_censored) +
+    ggplot2::geom_vline(xintercept = now) +
     ggplot2::labs(x = if (relative_to_sot) "Time since SoT" else "Time since first SoT", y = "Subject ID") +
     ggplot2::scale_color_discrete("") +
     ggplot2::facet_wrap(~`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right", scales = "free_y") +
@@ -336,6 +348,7 @@ plot.srp_model <- function(model, dt, sample = NULL, seed = NULL, n_grid = 50, .
   if(is.null(sample)) {
     sample <- sample_prior(model, seed = seed, ...)
   }
+  sample <- parameter_sample_to_tibble(model, sample)
   # plot transition times
   p1 <- sample %>%
     filter(parameter %in% c("shape", "scale")) %>%
@@ -382,4 +395,57 @@ plot.srp_model <- function(model, dt, sample = NULL, seed = NULL, n_grid = 50, .
   223
   "
   p1 + p2 + patchwork::guide_area() + patchwork::plot_layout(design = design, guides = "collect")
+}
+
+
+
+#' @export
+sample_pfs_rate.srp_model <- function(
+  model,
+  t, # PFS_r is 1 - Pr[progression or death before time t]
+  sample = NULL,
+  warmup = 500L,
+  nsim = 2000L,
+  seed = NULL,
+  ...
+) {
+  if (is.null(sample)) {
+    sample <- sample_prior(model, warmup = warmup, nsim = nsim, seed = seed,
+      rstan_output = TRUE, pars = attr(model, "parameter_names"), ...
+    )
+  }
+  sample <- parameter_sample_to_tibble(model, sample)
+  pr_direct_progression <- function(shape_3, scale_3, t) {
+    return(pweibull(t, shape_3, scale_3))
+  }
+  pr_indirect_progression <- function(shape_1, shape_2, scale_1, scale_2, t) {
+    # need to integrate over response time
+    integrand <- function(t_response) {
+      dweibull(t_response, shape_1, scale_1) * pweibull(t - t_response, shape_2, scale_2)
+    }
+    # can reduce absolute tolerance substantially - doesn't matter for probabilities
+    res <- integrate(
+      integrand, lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
+    )
+    return(res$value)
+  }
+  tbl_pfs <- sample %>%
+    # pivot parameters
+    tidyr::pivot_wider(names_from = c(parameter, transition), values_from = value) %>%
+    rename(pr_response = p_NA) %>%
+    # cross with time points
+    tidyr::expand_grid(t = t) %>%
+    # compute PFS before t
+    mutate(
+      pfs = purrr::pmap_dbl(
+        list(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t),
+        function(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t) {
+          pr_progression_t <- pr_response * pr_indirect_progression(shape_1, shape_2, scale_1, scale_2, t) +
+            (1 - pr_response) * pr_direct_progression(shape_3, scale_3, t)
+          return(1 - pr_progression_t)
+        }
+      )
+    ) %>%
+    select(iter, group_id, t, pfs) # only keep interesting stuff
+  return(tbl_pfs)
 }

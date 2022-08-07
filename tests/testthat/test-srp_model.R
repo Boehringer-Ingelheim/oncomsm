@@ -59,7 +59,7 @@ test_that("can convert data to standata for SRP model", {
 
 test_that("can plot mstate data for SRP model", {
 
-  create_plot <- function() plot_mstate(mdl, tbl_mstate)
+  create_plot <- function() plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
 
   vdiffr::expect_doppelganger("plot_mstate.srp_model", create_plot)
 
@@ -69,9 +69,9 @@ test_that("can plot mstate data for SRP model", {
 
 test_that("can sample from prior", {
 
-  tbl_prior_sample <- sample_prior(mdl, seed = 1414322)
+  smpl_prior <- sample_prior(mdl, seed = 1414322)
 
-  p <- tbl_prior_sample %>%
+  p <- parameter_sample_to_tibble(mdl, smpl_prior) %>%
     filter(parameter == "p") %>%
     group_by(group_id) %>%
     summarize(mean = mean(value)) %>%
@@ -85,7 +85,12 @@ test_that("can sample from prior", {
 
 test_that("can generate data from SRP model", {
 
-  tbl_prior_predictive1 <<- sample_prior_predictive(mdl, c(20, 20), 25, seed = 42L)
+  tbl_prior_predictive1 <<- sample_predictive(
+    mdl,
+    n_per_arm = c(20, 20),
+    nsim = 25,
+    seed = 42L
+  )
 
   expect_true(
     tbl_prior_predictive1 %>%
@@ -113,7 +118,12 @@ test_that("can generate data from SRP model", {
 
 test_that("prior predictive seed works", {
 
-  tbl_prior_predictive2 <- sample_prior_predictive(mdl, c(20, 20), 25, seed = 42L)
+  tbl_prior_predictive2 <-sample_predictive(
+    mdl,
+    n_per_arm = c(20, 20),
+    nsim = 25,
+    seed = 42L
+  )
   expect_true(all(tbl_prior_predictive1 == tbl_prior_predictive2))
 
 })
@@ -122,7 +132,7 @@ test_that("prior predictive seed works", {
 
 test_that("can generate visit data from SRP model", {
 
-  generate_visit_data(mdl, c(20, 20), seed = 112341)
+  generate_visit_data(mdl, n_per_group = c(20, 20), seed = 112341)
 
   expect_true(FALSE) # TODO: plausi checks on data
 
@@ -142,9 +152,9 @@ test_that("can sample from posterior", {
     summarize(p = mean(to == "response")) %>%
     pull(p)
 
-  tbl_posterior_sample <- sample_posterior(mdl, tbl_data)
+  smpl_posterior <- sample_posterior(mdl, tbl_data)
 
-  p <- tbl_posterior_sample %>%
+  p <- parameter_sample_to_tibble(mdl, smpl_posterior) %>%
     filter(parameter == "p") %>%
     group_by(group_id) %>%
     summarize(mean = mean(value)) %>%
@@ -166,7 +176,7 @@ test_that("can sample from posterior predictive", {
     filter(iter == 1) %>%
     select(-iter)
 
-  impute_posterior_predictive(mdl, tbl_data, nsim = 10)
+  impute_predictive(mdl, data = tbl_data, nsim = 10)
   expect_true(TRUE) # TODO: implement check
 
 })

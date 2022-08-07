@@ -30,13 +30,22 @@ sample_prior <- function(model, warmup, nsim, seed, rstan_output, pars, ...) {
 #' @rdname sample_prior
 #' @export
 sample_prior.Model <- function(
-  model, warmup = 500L, nsim = 2000L, seed = NULL, rstan_output = FALSE,
-  pars = attr(model, "parameter_names"), ...
+  model,
+  warmup = 500L,
+  nsim = 2000L,
+  seed = NULL,
+  rstan_output = TRUE,
+  pars = attr(model, "parameter_names"),
+  ...
 ) {
-  .sample(
+  res <- .sample(
     model, data = NULL,
-    warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
+    warmup = warmup, nsim = nsim, seed = seed, pars = pars, ...
   )
+  if (rstan_output == FALSE) { # convert to tibble representation
+    res <- parameter_sample_to_tibble(model, res)
+  }
+  return(res)
 }
 
 
@@ -68,22 +77,30 @@ sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output, pars
 #' @rdname sample_posterior
 #' @export
 sample_posterior.Model <- function(
-  model, data, warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
-  pars = attr(model, "parameter_names"), ...
+  model,
+  data,
+  warmup = 500L,
+  nsim = 2000L,
+  seed = NULL,
+  rstan_output = TRUE,
+  pars = attr(model, "parameter_names"),
+  ...
 ) {
-  .sample(
+  res <- .sample(
     model, data = data,
-    warmup = warmup, nsim = nsim, seed = seed, rstan_output = rstan_output, pars = pars, ...
+    warmup = warmup, nsim = nsim, seed = seed, pars = pars, ...
   )
+  if (rstan_output == FALSE) { # convert to tibble representation
+    res <- parameter_sample_to_tibble(model, res)
+  }
+  return(res)
 }
 
 
 
 
 
-#' Sample data from prior-predictive distribution
-#'
-#' Sample time-to-first event data from given model prior-predictive distribution.
+#' Sample data from predictive distribution of a model
 #'
 #' @template param-model
 #' @template param-n_per_arm
@@ -93,32 +110,40 @@ sample_posterior.Model <- function(
 #' @template param-seed
 #' @template param-dotdotdot
 #'
-#' @return  data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
-#' where dt1 is the minimal and dt2 the maximal time to the event in question.
+#' @return TODO:
 #'
 #' @export
-sample_prior_predictive <- function(model, n_per_arm, nsim, nsim_parameters, warmup_parameters, seed, ...) {
-  UseMethod("sample_prior_predictive")
+sample_predictive <- function(model, n_per_arm, sample, nsim, nsim_parameters, warmup_parameters, seed, ...) {
+  UseMethod("sample_predictive")
 }
 
-#' @rdname sample_prior_predictive
 #' @export
-sample_prior_predictive.Model <- function(model, n_per_arm, nsim = 1000L, nsim_parameters = 1000L, warmup_parameters = 250, seed = NULL, ...) {
-  prior_sample <- sample_prior(
-    model, rstan_output = TRUE, seed = seed,
-    warmup = warmup_parameters, nsim = nsim_parameters
-  )
-  .impute(model = model, data = .emptydata(model, n_per_arm), parameter_sample = prior_sample, now = 0, nsim = nsim, seed = seed, ...)
+sample_predictive.Model <- function(
+  model,
+  n_per_arm,
+  sample = NULL,
+  nsim = 100L,
+  nsim_parameters = 1000L,
+  warmup_parameters = 250,
+  seed = NULL,
+  ...
+) {
+  if (is.null(sample)) {
+    sample <- sample_prior(
+      model, rstan_output = TRUE, seed = seed,
+      warmup = warmup_parameters, nsim = nsim_parameters
+    )
+  }
+  .impute(model = model, data = .emptydata(model, n_per_arm), parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
 }
 
 
 
 
 
-#' Sample data from posterior-predictive distribution
+#' Impute data from predictive distribution
 #'
-#' Sample time-to-first event data from given model posterior-predictive
-#' distribution given data.
+#' If no parameter sample is provided, sample from posterior predictive
 #'
 #' @template param-model
 #' @template param-data-condition
@@ -129,23 +154,33 @@ sample_prior_predictive.Model <- function(model, n_per_arm, nsim = 1000L, nsim_p
 #' @template param-seed
 #' @template param-dotdotdot
 #'
-#' @return  data frame with variables "subject_id", "group_id", "t_recruitment", "dt1", "dt2", "dt_eof"
-#' where dt1 is the minimal and dt2 the maximal time to the event in question.
+#' @return TODO
 #'
 #' @export
-impute_posterior_predictive <- function(model, data, now, nsim, nsim_parameters, warmup_parameters, seed, ...) {
-  UseMethod("impute_posterior_predictive")
+impute_predictive <- function(model, data, sample, nsim, nsim_parameters, warmup_parameters, seed, ...) {
+  UseMethod("impute_predictive")
 }
 
 
-#' @rdname impute_posterior_predictive
+
 #' @export
-impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 1000L, nsim_parameters = 1000L, warmup_parameters = 250L, seed = NULL, ...) {
-  posterior_sample <- sample_posterior(
-    model, data = data, rstan_output = TRUE, seed = seed,
-    warmup = warmup_parameters, nsim = nsim_parameters, ...
-  )
-  .impute(model = model, data = data, now = now, parameter_sample = posterior_sample, nsim = nsim, seed = seed)
+impute_predictive.Model <- function(
+  model,
+  data,
+  sample = NULL,
+  nsim = 1000L,
+  nsim_parameters = 1000L,
+  warmup_parameters = 250L,
+  seed = NULL,
+  ...
+) {
+  if (is.null(sample)) { # the default is to sample from the posterior predictive
+    sample <- sample_posterior(
+      model, data = data, rstan_output = TRUE, seed = seed,
+      warmup = warmup_parameters, nsim = nsim_parameters, ...
+    )
+  }
+  .impute(model = model, data = data, parameter_sample = sample, nsim = nsim, seed = seed)
 }
 
 
@@ -158,9 +193,14 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
 
 # sample from stan model (hidden)
 .sample.Model <- function(
-  model, data = NULL,
-  warmup = 250L, nsim = 1000L, seed = NULL, rstan_output = FALSE,
-  pars = attr(model, "parameter_names"), refresh = 0L, ...
+  model,
+  data = NULL,
+  warmup = 250L,
+  nsim = 1000L,
+  seed = NULL,
+  pars = attr(model, "parameter_names"),
+  refresh = 0L,
+  ...
 ) {
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
@@ -178,10 +218,7 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
     iter = warmup + nsim, warmup = warmup,
     seed = seed, pars = pars, refresh = refresh, ...
   )
-  if (rstan_output == TRUE)
-    return(res)
-  else
-    return(.parameter_sample_to_tibble(model, res))
+  return(res)
 }
 
 
@@ -198,11 +235,13 @@ impute_posterior_predictive.Model <- function(model, data, now = NULL, nsim = 10
 
 
 # convert stanfit result to tibble
-.parameter_sample_to_tibble <- function(model, sample, ...) {
-  UseMethod(".parameter_sample_to_tibble")
+#' @export
+parameter_sample_to_tibble <- function(model, sample, ...) {
+  UseMethod("parameter_sample_to_tibble")
 }
 
-.parameter_sample_to_tibble.Model <- function(model, sample) {
+#' @export
+parameter_sample_to_tibble.Model <- function(model, sample) {
   stop("not implemented")
 }
 
@@ -270,7 +309,27 @@ generate_visit_data <- function(model, n_per_group, ...) {
 
 #' @export
 generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
-  sample_prior_predictive(mdl, n_per_group, 1, seed = seed) %>%
+  sample_predictive(mdl, n_per_arm = n_per_group, nsim = 1, seed = seed) %>%
     select(-iter) %>%
     mstate_to_visits(mdl, .)
+}
+
+
+
+#' @export
+sample_pfs_rate <- function(model, t, sample, warmup, nsim, seed, ...) {
+  UseMethod("sample_pfs_rate")
+}
+
+#' @export
+sample_pfs_rate.Model <- function(
+  model,
+  t, # PFS_r is 1 - Pr[progression or death before time t]
+  sample = NULL,
+  warmup = 500L,
+  nsim = 2000L,
+  seed = NULL,
+  ...
+) {
+  stop("not implemented")
 }

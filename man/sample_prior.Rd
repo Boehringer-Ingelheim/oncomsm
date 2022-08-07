@@ -12,7 +12,7 @@ sample_prior(model, warmup, nsim, seed, rstan_output, pars, ...)
   warmup = 500L,
   nsim = 2000L,
   seed = NULL,
-  rstan_output = FALSE,
+  rstan_output = TRUE,
   pars = attr(model, "parameter_names"),
   ...
 )

@@ -1,5 +1,6 @@
 ---
-title: "multi-state-model-for-early-oncology"
+title: "Multi-State Models for Early Oncology"
+author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{multi-state-model-for-early-oncology}
@@ -154,7 +155,7 @@ They can be modeled separately if required.
 
 We assume a time-scale of months.
 
-```{r specify-model, eval = TRUE}
+```{r specify-model}
 mdl <- create_srp_model(
     # names of the arms/groups
     group_id = c("control", "intervention"),
@@ -191,21 +192,29 @@ First we plot the cumulative distribution functions (CDF) of the
 time-to-next-event over the first 36 (months) and the (empirical) CDF of the 
 response probabilities per group.
 These are based on a sample drawn from the prior distribution of the model.
+We can re-use the same parameter sample for sampling from the prior-predictive
+distribution by separating the sampling from the plotting steps.
+If no parameter sample is provided to the plotting function it samples 
+automatically.
 
-```{r plotting-the-prior, eval = TRUE}
-library(patchwork)
-plot(mdl, dt = c(0, 36), seed = 36L)
+```{r plotting-the-prior}
+smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
+
+library(patchwork) # TODO: how do we integrate this in the package?
+plot(mdl, dt = c(0, 36), sample = smpl_prior)
 ```
 
 Next, we draw samples from the prior-predictive distribution of the model.
 We sample 100 trials with 30 individuals per arm.
+Here, we can re-use the sample prior sample already used for plotting.
 
-```{r prior-predictive, eval = TRUE}
-tbl_prior_predictive <- sample_prior_predictive(
+```{r prior-predictive}
+tbl_prior_predictive <- sample_predictive(
   mdl, 
+  sample = smpl_prior,
   n_per_arm = c(30L, 30L), 
   nsim = 100, 
-  seed = 36457
+  seed = 3423423
 ) 
 
 # estimate of the response rates
@@ -223,14 +232,85 @@ tbl_prior_predictive %>%
 
 The generated data can also be visualized in swimmer plots
 
-```{r plot-preior-predictive, fig.height=6, eval = TRUE}
+```{r plot-preior-predictive, fig.height=6}
 # TODO: improve sorting
 plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
 ```
 
 
+## Analyzing progression-free-survival
+
+Often, the rate of progression free survival (PFS) at a particular cutoff timepoint
+is of interest. 
+This quantity is a direct function of the model parameters:
+$$
+qed.
+$$
+
+Any parameter sample thus also induces a sample of the PFS rate at any given 
+time point. 
+Here, the PFS rates at 3, 6, and 12 months are computed.
+
+```{r}
+tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12), sample = smpl_prior) %>% 
+  mutate(t = factor(t))
+  
+ggplot(tbl_pfs_rates) +
+  geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
+  scale_color_discrete("") +
+  labs(x = "t", y = "Pr[no death or progression before t]") +
+  theme_bw()
+```
+
+The distribution of the PFS time might also be of interest.
+Currently, the best way to obtain this, is via a prior predictive sample.
+It might make sense to reduce the visit_spacing to get more precise measurements 
+of the transition times though.
+
+```{r}
+# copy model object
+mdl_tmp <- mdl
+# adjust visit spacing
+attr(mdl_tmp, "visit_spacing") <- c(1/30, 1/30)
+
+tbl_prior_predictive_2 <- sample_predictive(
+  mdl_tmp, 
+  sample = smpl_prior,
+  n_per_arm = c(1L, 1L), # we only need one per arm here
+  nsim = 1000, 
+  seed = 3423423
+)
+
+rm(mdl_tmp) # clean up
+
+# compute PFS 
+tbl_pfs_times <- tbl_prior_predictive_2 %>% 
+  # interval censoring can be ignored her, average to exact time
+  mutate(
+    t = (t_min + t_max) / 2
+  ) %>% 
+  # no need to group by subject since only one per iteration and group
+  group_by(iter, group_id) %>% 
+  summarize(
+    t = max(t[to == "progression"]), .groups = "drop"
+  )
+
+ggplot(tbl_pfs_times) +
+  stat_ecdf(aes(t, color = group_id), geom = "line") +
+  coord_cartesian(xlim = c(0, 36)) + 
+  scale_color_discrete("") + 
+  labs(y = "Pr[no progression or death before t]") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank()
+  )
+```
+
+
 
 # Inference
+
+## Building a visit data set
 
 Usually, data will come in the form of individual visits, not yet in the
 form of interval censored transitions.
@@ -249,7 +329,8 @@ print(tbl_visits, n = 25)
 
 Next, we add recruitment times.
 
-```{r}
+```{r, fig.height=6}
+recruitment_rate_overall <- 3
 # sample from poisson process
 set.seed(31532)
 tbl_sot <- tbl_visits %>% 
@@ -260,7 +341,7 @@ tbl_sot <- tbl_visits %>%
   distinct() %>% 
   arrange(runif(n())) %>% # permute groups
   mutate(
-    t_sot = cumsum(rexp(n = n(), rate = 3)) # poisson recruitment process
+    t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)) # poisson recruitment process
   )
 
 # add to visit times
@@ -275,65 +356,138 @@ tbl_visits %>%
   plot_mstate(mdl, ., relative_to_sot = FALSE)
 ```
 
+
+
+## A hypothetical interim analysis
+
 If we now cut the data at 15 months after the first SoT, we can imitate a
 hypothetical interim analysis.
-Since there are still some individuals waiting to be recruited, we need to
-add them back in such that their future trajectories can be imputed.
-We do this by adding their hypothetical first visits at 15 months. 
-If we want to explore different recruitment scenarios, we can then modify the
-SoT of each individual with SoT = 15 months.
 
-```{r}
+```{r, fig.height=6}
 tbl_visits_interim <- tbl_visits %>% 
   filter(t <= 15) 
-
-tbl_visits_interim <- bind_rows(
-    tbl_visits_interim,
-    tibble(
-      subject_id = setdiff(unique(tbl_visits$subject_id), unique(tbl_visits_interim$subject_id)),
-      t = 15,
-      state = "stable"
-    ) %>% 
-    left_join(
-      distinct(select(tbl_visits, subject_id, group_id)), 
-      by = "subject_id"
-    )
-  )
 
 # convert to mstate plot
 tbl_mstate_interim <- visits_to_mstate(
   tbl_visits_interim, 
   start_state = "stable", 
   absorbing_states = "progression", 
-  now = 17
+  now = 15
 )
-plot_mstate(mdl, tbl_mstate_interim, relative_to_sot = FALSE)
+plot_mstate(mdl, tbl_mstate_interim, relative_to_sot = FALSE, now = 15)
 ```
 
+We can check the observed response rates. 
+Careful, due to the different time-to-event these will be biased.
+
 ```{r}
-# estimate of the response rates
+# estimate of the response rates (biased due to missing!)
 tbl_mstate_interim %>% 
   filter(from == "stable", !is.na(to)) %>% 
   group_by(group_id) %>% 
   summarize(p_response = sum(to == "response")/n())
-
-# crude approximation of the median jump times from "stable"
-tbl_prior_predictive %>%  
-  filter(from == "stable", !is.na(to)) %>% 
-  group_by(group_id, from, to) %>% 
-  summarize(t_jump_approx = median(t_min + t_max)/2, .groups = "drop") 
 ```
+
+We can now do inference by drawing sample from the posterior distribution.
+Clearly, this is a very extreme sample from the prior and a shift of the
+posterior as compared to the prior is to be expected.
 
 ```{r}
-tbl_posterior <- sample_posterior(mdl, tbl_mstate_interim, refresh = 100, nsim = 1000, warmup = 250, seed = 76947)
+smpl_posterior <- sample_posterior(
+  mdl, 
+  tbl_mstate_interim, 
+  refresh = 500, nsim = 5000, warmup = 250, seed = 76947
+)
 
-plot(mdl, dt = c(0, 36), sample = tbl_posterior)
+plot(mdl, dt = c(0, 36), sample = smpl_posterior)
 
-tbl_posterior %>% 
+smpl_posterior %>% 
+  parameter_sample_to_tibble(mdl, .) %>% 
   filter(parameter == "p") %>% 
   group_by(group_id) %>% 
-  summarize(p_posterior_mean = mean(value))
+  summarize(
+    p_posterior_mean = median(value), 
+    q25 = quantile(value, probs = .25), 
+    q75 = quantile(value, probs = .75)
+  )
 ```
+
+The Bayesian approach specifies a full generative model.
+This can be used to draw samples from the posterior
+predictive distribution for the individuals still at risk and the ones not
+yet recruited.
+The process is the same as for sampling from the prior predictive - just with
+replacing the prior distribution with the posterior distribution obtained
+from conditioning on any available data. 
+
+At 15 months into the trial, there are still individuals who have not been 
+recruited (the final sample size was set to 30 per group). 
+
+```{r}
+tbl_interim_sample_sizes <- tbl_mstate_interim %>% 
+  select(group_id, subject_id) %>% 
+  distinct() %>% 
+  group_by(group_id) %>% 
+  summarize(n = n())
+
+print(tbl_interim_sample_sizes)
+```
+
+We now sample recruitment dates and randomization probabilities for the 
+still-to-be-recruited individuals.
+
+```{r}
+tbl_to_be_recruited <- tibble(
+    group_id = tbl_interim_sample_sizes$group_id,
+    n_to_be_recruited = 30 - tbl_interim_sample_sizes$n  
+  ) %>% 
+  mutate(
+    tmp = purrr::map(
+      n_to_be_recruited, 
+      ~tibble(
+        # use unique identifiers to avoid clashing between groups
+        subject_id = uuid::UUIDgenerate(n = .),
+        # sample recruitment times per group using half the overall 
+        # recruitment rate
+        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall/2))
+      )
+    )
+  ) %>% 
+  select(-n_to_be_recruited) %>% 
+  tidyr::unnest(tmp) %>% 
+  # add information on starting state etc to expand to full mstate table
+  mutate(
+    from = "stable",
+    to = NA_character_,
+    t_min = t_sot + 1/30, # preclude events on the day of recruitment
+    t_max = Inf # right censored
+  )
+
+tbl_to_be_recruited
+```
+
+The hypothetical future first-visits can now be combined with the interim data
+and the trajectories can be sampled forward using the already fitted
+posterior distribution.
+
+```{r, fig.height=6}
+tbl_mstate_interim_forward <- bind_rows(tbl_mstate_interim, tbl_to_be_recruited)
+
+tbl_posterior_predictive <- impute_predictive(
+    mdl,
+    data = tbl_mstate_interim_forward, 
+    sample = smpl_posterior,
+    nsim = 1
+  )
+
+plot_mstate(mdl, tbl_posterior_predictive, relative_to_sot = FALSE)
+```
+
+Repeatedly sampling from the posterior-predictive distribution allows to evaluate
+any decision criterion as if the full trial were completed since the 
+individual-level data is practically imputed using the posterior predictive 
+distribution.
+This allows to compute the Probability of Success, see [???].
 
 
 
