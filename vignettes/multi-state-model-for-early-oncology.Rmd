@@ -496,4 +496,3 @@ This allows to compute the Probability of Success, see [???].
 ```{r session-info}
 sessionInfo()
 ```
-
