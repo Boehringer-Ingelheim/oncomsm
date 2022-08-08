@@ -1,5 +1,6 @@
 ---
-title: "application-to-probability-of-success"
+title: "Application to Probability of Success Calculation"
+author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{application-to-probability-of-success}
@@ -16,8 +17,18 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(bhmbasket.predict)
+library(oncomsm)
 ```
+
+
+
+# Background
+
+For a general introduction to the multi-state approach used throughout this
+package, see the vignette *Multi-state Models for Early Oncology*.
+
+
+
 
 ## Decision criterion
 

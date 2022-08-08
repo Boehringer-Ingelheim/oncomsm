@@ -1,7 +1,7 @@
-Package: bhmbasket.predict
+Package: oncomsm
 Type: Package
-Title: Probability of Success for bhmbasket
-Version: 0.2.0.9000
+Title: Bayesian Multi-State Models for Early Oncology
+Version: 0.1.0.9000
 Authors@R: c(
     person("Kevin", "Kunzmann", 
       role = c("aut", "cre"), 
@@ -9,9 +9,12 @@ Authors@R: c(
       comment = c(ORCID = "0000-0002-1140-7143")
     )
   )
-Description: This package implements methods to dynamically predict response status
-    of individuals in a basket trial with delayed binary response endpoint 
-    (e.g. tumor response) at arbitrary time points.
+Description: This package implements methods to dynamically predict response 
+    and progression of individuals in early oncology trials using parametric
+    multi-state models and Bayesian inference.
+    This allows the dynamic computation of Probability of Success for a wide
+    range of success criteria.
+    The inference is implemented using stan.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -31,9 +34,7 @@ Imports:
     tidyr (>= 1.1.4),
     purrr (>= 0.3.4),
     stringr,
-    ggplot2,
-    patchwork,
-    scales
+    ggplot2
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
@@ -45,9 +46,10 @@ Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
+    patchwork,
     bhmbasket,
     vdiffr,
-    DiagrammeR
+    DiagrammeR,
+    uuid
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-LazyData: true

@@ -44,13 +44,13 @@ create_srp_model <- function(
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
 
   data <- data %>%
-    arrange(t_sot, subject_id, (t_min + t_max)/2) %>%
+    arrange(.data$t_sot, .data$subject_id, (t_min + t_max)/2) %>%
     mutate(
-      subject_id = as.integer(factor(as.character(subject_id), levels = subject_id_levels)),
+      subject_id = as.integer(factor(as.character(.data$subject_id), levels = subject_id_levels)),
       group_id = as.integer(factor(group_id, levels = group_id_levels))
     )
   data %>%
-    group_by(subject_id) %>%
+    group_by(.data$subject_id) %>%
     filter(from != lag(to)) %>%
     nrow() %>%
     {assertthat::assert_that(. == 0)}
@@ -80,10 +80,10 @@ create_srp_model <- function(
             pr_response_raw * pr_survival_response +
               (1 - pr_response_raw) * pr_survival_progression
           )
-          response <- rbinom(1, 1, pr_response)
+          response <- stats::rbinom(1, 1, pr_response)
           if (response) {
             # sample exact response time
-            t_response <- bhmbasket.predict:::rtruncweibull(
+            t_response <- rtruncweibull(
               sshape[1], scale = sscale[1], data$t_min[i], Inf # t_min since time of SoT is known
             )
             # apply visit scheme
@@ -104,7 +104,7 @@ create_srp_model <- function(
               )
             )
           } else { # sample progression directly
-            dt_progression <- bhmbasket.predict:::rtruncweibull(
+            dt_progression <- rtruncweibull(
               sshape[2], scale = sscale[2], data$t_min[i], Inf # t_min since time of SoT is known
             )
             # apply visit scheme
@@ -124,11 +124,11 @@ create_srp_model <- function(
             stop()
           }
           # sample exact response time
-          t_response <- bhmbasket.predict:::rtruncweibull(
+          t_response <- rtruncweibull(
             sshape[1], scale = sscale[1], data$t_min[i - 1], data$t_max[i - 1]
           )
           # sample progression time
-          dt_progression <- bhmbasket.predict:::rtruncweibull(
+          dt_progression <- rtruncweibull(
             sshape[3], scale = sscale[3], data$t_min[i] - t_response, Inf
           )
           # apply visit scheme
@@ -149,7 +149,7 @@ create_srp_model <- function(
   res <- res %>%
     mutate(
       subject_id = as.character(
-          factor(subject_id, levels = seq_along(subject_id_levels), labels = subject_id_levels)
+          factor(.data$subject_id, levels = seq_along(subject_id_levels), labels = subject_id_levels)
         ),
       group_id = as.character(
           factor(group_id, levels = seq_along(group_id_levels), labels = group_id_levels)
@@ -204,8 +204,8 @@ data2standata.srp_model <- function(model, data) {
         {if_else(is.na(.), "unknown", as.character(.))} %>%
         factor(levels = c(attr(model, "states"), "unknown")) %>%
         as.integer(),
-      t_min = t_min - t_sot,
-      t_max = t_max - t_sot
+      t_min = .data$t_min - .data$t_sot,
+      t_max = t_max - .data$t_sot
     ) %>%
     arrange(subject_id, from) %>% # make sure verything is sorted properly
     as.list()
@@ -226,7 +226,7 @@ data2standata.srp_model <- function(model, data) {
 
 #' @importFrom stringr str_extract
 #' @export
-parameter_sample_to_tibble.srp_model <- function(model, sample) {
+parameter_sample_to_tibble.srp_model <- function(model, sample, ...) {
   stopifnot(isa(sample, "stanfit"))
   as.matrix(sample) %>%
     as_tibble() %>%
@@ -246,18 +246,18 @@ parameter_sample_to_tibble.srp_model <- function(model, sample) {
 
 
 #' @export
-plot_mstate.srp_model <- function(model, tbl_mstate, now = max(tbl_mstate$t_max), relative_to_sot = TRUE, ...) {
+plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), relative_to_sot = TRUE, ...) {
 
   starting_state <- attr(mdl, "states")[1]
 
-  tbl_mstate <- tbl_mstate %>%
-    rename(`Group ID` = group_id)
+  tbl_mstate <- data %>%
+    rename(`Group ID` = .data$group_id)
 
   if (relative_to_sot) {
     tbl_mstate <- tbl_mstate %>%
       mutate(
-        t_min = t_min - t_sot,
-        t_max = t_max - t_sot,
+        t_min = .data$t_min - .data$t_sot,
+        t_max = t_max - .data$t_sot,
         t_sot = 0
       )
   }
@@ -266,7 +266,7 @@ plot_mstate.srp_model <- function(model, tbl_mstate, now = max(tbl_mstate$t_max)
     # filter(t_max != -Inf) %>%
     mutate(
       tmp = purrr::pmap(
-        list(from, to, t_min, t_max, t_sot),
+        list(from, to, .data$t_min, t_max, .data$t_sot),
         ~if (is.na(..2)) {
           tibble(t = c(..3, ..5), state = c(..1, starting_state))
         } else {
@@ -282,39 +282,44 @@ plot_mstate.srp_model <- function(model, tbl_mstate, now = max(tbl_mstate$t_max)
 
   tbl_intervals <- tbl_mstate %>%
     bind_rows(
-      select(tbl_mstate, subject_id, `Group ID`, t_sot) %>%
+      select(tbl_mstate, subject_id, `Group ID`, .data$t_sot) %>%
         distinct() %>%
-        mutate(from = starting_state, to = starting_state, t_min = t_sot, t_max = t_sot)
+        mutate(
+          from = starting_state,
+          to = starting_state,
+          t_min = .data$t_sot,
+          t_max = .data$t_sot
+        )
     ) %>%
-    arrange(subject_id, t_min, t_max) %>%
+    arrange(.data$subject_id, .data$t_min, .data$t_max) %>%
     distinct() %>%
-    group_by(subject_id) %>%
+    group_by(.data$subject_id) %>%
     transmute(
-      subject_id,
-      `Group ID`,
-      state = if_else(to == lead(from), lead(from), NA_character_),
-      tmp1 = t_max,
-      tmp2 = lead(t_min)
+      .data$subject_id,
+      .data$`Group ID`,
+      state = if_else(to == lead(.data$from), lead(.data$from), NA_character_),
+      tmp1 = .data$t_max,
+      tmp2 = lead(.data$t_min)
     ) %>%
     ungroup() %>%
-    filter(!is.na(state), is.finite(tmp1), is.finite(tmp2), tmp2 > tmp1)
+    filter(!is.na(.data$state), is.finite(.data$tmp1), is.finite(.data$tmp2), .data$tmp2 > .data$tmp1)
 
   tbl_at_risk <- tbl_mstate %>%
-    filter(t_max == Inf) %>%
+    filter(.data$t_max == Inf) %>%
     transmute(
-      subject_id,
-      `Group ID`,
-      t = t_min,
-      state = from
+      .data$subject_id,
+      .data$`Group ID`,
+      t = .data$t_min,
+      state = .data$from
     )
 
   tbl_censored <- tbl_mstate %>%
     filter(t_max == -Inf) %>%
     transmute(
-      subject_id,
-      `Group ID`,
-      t = t_min,
-      state = from
+      .data$subject_id,
+      .data$`Group ID`,
+      t = .data$t_min,
+      state = .data$from
     )
 
   scale <- max(tbl_points$t)
@@ -344,11 +349,14 @@ plot_mstate.srp_model <- function(model, tbl_mstate, now = max(tbl_mstate$t_max)
 
 
 #' @export
-plot.srp_model <- function(model, dt, sample = NULL, seed = NULL, n_grid = 50, ...) {
+plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) {
   if(is.null(sample)) {
-    sample <- sample_prior(model, seed = seed, ...)
+    sample <- sample_prior(x, seed = seed, ...)
   }
-  sample <- parameter_sample_to_tibble(model, sample)
+  if (!requireNamespace("patchwork", quietly = TRUE)) {
+    stop("the patchwork package is required to plot SRP models")
+  }
+  sample <- parameter_sample_to_tibble(x, sample)
   # plot transition times
   p1 <- sample %>%
     filter(parameter %in% c("shape", "scale")) %>%
@@ -416,12 +424,12 @@ sample_pfs_rate.srp_model <- function(
   }
   sample <- parameter_sample_to_tibble(model, sample)
   pr_direct_progression <- function(shape_3, scale_3, t) {
-    return(pweibull(t, shape_3, scale_3))
+    return(stats::pweibull(t, shape_3, scale_3))
   }
   pr_indirect_progression <- function(shape_1, shape_2, scale_1, scale_2, t) {
     # need to integrate over response time
     integrand <- function(t_response) {
-      dweibull(t_response, shape_1, scale_1) * pweibull(t - t_response, shape_2, scale_2)
+      stats::dweibull(t_response, shape_1, scale_1) * stats::pweibull(t - t_response, shape_2, scale_2)
     }
     # can reduce absolute tolerance substantially - doesn't matter for probabilities
     res <- integrate(

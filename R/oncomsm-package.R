@@ -1,13 +1,16 @@
-#' The bhmbasket.predict package.
+#' The oncomsm package.
 #'
 #' @description This package implements methods to dynamically predict response
-#' status of individuals in a basket trial with delayed binary response
-#' endpoint (e.g. tumor response) at arbitrary time points during the trial.
+#' and progression of individuals in early oncology trials using parametric
+#' multi-state models and Bayesian inference.
+#' This allows the dynamic computation of Probability of Success for a wide
+#' range of success criteria.
+#' The inference is implemented using stan.
 #'
 #' @docType package
-#' @name bhmbasket.predict-package
-#' @aliases bhmbasket.predict
-#' @useDynLib bhmbasket.predict, .registration = TRUE
+#' @name oncomsm-package
+#' @aliases oncomsm
+#' @useDynLib oncomsm, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @import dplyr

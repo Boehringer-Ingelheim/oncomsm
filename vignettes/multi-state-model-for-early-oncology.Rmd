@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(bhmbasket.predict)
+library(oncomsm)
 library(dplyr, warn.conflicts = FALSE)
 library(ggplot2)
 ```
@@ -116,17 +116,28 @@ hazards over time.
 
 Transition 2 is fully characterized by the corresponding Weibull distribution
 since there is no competing event.
+Let $\tau_i,\ i\in\{1,2,3\}$ be the respective transition times 
+($\tau_i=\infty$ means that the transition does not occur) and $R$ a
+binary random variable with $R=1$ if a response occurs, then the model
+can be specified as:
 
 $$
-\operatorname{Pr}[2|response] = 1 \\
-dt_{response \ \to \ \cdot} \sim \operatorname{Weibull}(shape_2, scale_2) \\
-\operatorname{Pr}[1|stable] = p \\
-dt_{s \ \to \ x} | x = r \sim \operatorname{Weibull}(shape_2, scale_2) \\
-dt_{s \ \to \ x} | x = p \sim \operatorname{Weibull}(shape_3, scale_3) \\
+\begin{align}
+R &\sim \operatorname{Bernoulli}(p) \\
+\tau_1 \,|\, R = 1 &\sim \operatorname{Weibull}(shape[1], scale[1]) \\
+\tau_1 \,|\, R = 0 &\sim \delta_{\infty} \\
+\tau_2 \,|\, R = 0 &\sim \operatorname{Weibull}(shape[2], scale[2]) \\
+\tau_2 \,|\, R = 1 &\sim \delta_{\infty} \\
+\tau_3 &\sim \operatorname{Weibull}(shape[3], scale[3]) 
+\end{align}
 $$
+where $\delta_{\infty}$ is a point measure at infinity. 
+Let further $f_i(t)$ be the PDF of the Weibull distribution of transition 
+$i\in\{1,2,3\}$ as indicated in the above figure and let $F_i(t)$ the 
+corresponding CDF.
 This model implies that 
 $$
-dt_{s \ \to \ x}  \sim p \operatorname{Weibull}(shape_1, scale_1)  + (1 - p) \operatorname{Weibull}(shape_2, scale_2)\\
+\operatorname{Pr}\big[\,\tau_1 > t \text{ and } \tau_2 > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_2(t))\\
 $$
 hence, it can be seen as a mixture model. 
 
@@ -200,7 +211,6 @@ automatically.
 ```{r plotting-the-prior}
 smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
 
-library(patchwork) # TODO: how do we integrate this in the package?
 plot(mdl, dt = c(0, 36), sample = smpl_prior)
 ```
 
@@ -240,13 +250,23 @@ plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
 
 ## Analyzing progression-free-survival
 
-Often, the rate of progression free survival (PFS) at a particular cutoff timepoint
+Often, the rate of progression free survival (PFS) at a particular time point 
 is of interest. 
-This quantity is a direct function of the model parameters:
-$$
-qed.
-$$
+This quantity is a direct function of the model parameters.
+Since the simplified model does not distinguish between progression or 
+death, we denote the combined endpoint as "progression".
 
+$$
+\begin{align}
+\operatorname{PFS}(t) :&= \operatorname{Pr}\big[\,\text{no progression before } t\,\big] \\
+  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,] \\
+  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,] \\
+  &\qquad- \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,] \\
+  &= 1 - p\cdot\int_0^t f_1(u) \cdot F_2(t - u) \operatorname{d}u - (1 - p)\cdot F_3(t) \ .
+\end{align}
+$$
+Here, the integral arises from the need to reflect the uncertainty over the 
+state change from "stable" to "response" on the way to "progression".
 Any parameter sample thus also induces a sample of the PFS rate at any given 
 time point. 
 Here, the PFS rates at 3, 6, and 12 months are computed.
@@ -324,7 +344,7 @@ tbl_visits <- tbl_prior_predictive %>%
   filter(iter == 1) %>% 
   mstate_to_visits(mdl, .)
 
-print(tbl_visits, n = 25)
+print(tbl_visits)
 ```
 
 Next, we add recruitment times.

@@ -241,7 +241,7 @@ parameter_sample_to_tibble <- function(model, sample, ...) {
 }
 
 #' @export
-parameter_sample_to_tibble.Model <- function(model, sample) {
+parameter_sample_to_tibble.Model <- function(model, sample, ...) {
   stop("not implemented")
 }
 
@@ -291,12 +291,12 @@ data2standata.Model <- function(model, data) {
 
 
 #' @export
-plot_mstate <- function(model, data, ...) {
+plot_mstate <- function(model, data, now, relative_to_sot, ...) {
   UseMethod("plot_mstate")
 }
 
 #' @export
-plot_mstate.Model <- function(model, data, ...) {
+plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
   stop("not implemented")
 }
 

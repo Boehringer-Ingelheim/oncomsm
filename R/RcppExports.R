@@ -2,10 +2,10 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 rtruncexp <- function(rate, a, b) {
-    .Call(`_bhmbasket_predict_rtruncexp`, rate, a, b)
+    .Call(`_oncomsm_rtruncexp`, rate, a, b)
 }
 
 rtruncweibull <- function(shape, scale, a, b) {
-    .Call(`_bhmbasket_predict_rtruncweibull`, shape, scale, a, b)
+    .Call(`_oncomsm_rtruncweibull`, shape, scale, a, b)
 }
 
