@@ -137,7 +137,7 @@ $i\in\{1,2,3\}$ as indicated in the above figure and let $F_i(t)$ the
 corresponding CDF.
 This model implies that 
 $$
-\operatorname{Pr}\big[\,\tau_1 > t \text{ and } \tau_2 > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_2(t))\\
+\operatorname{Pr}\big[\,\tau_1 > t \text{ and } \tau_3 > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_3(t))\\
 $$
 hence, it can be seen as a mixture model. 
 
