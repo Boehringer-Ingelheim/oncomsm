@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // rtruncexp
 double rtruncexp(double rate, double a, double b);
-RcppExport SEXP _bhmbasket_predict_rtruncexp(SEXP rateSEXP, SEXP aSEXP, SEXP bSEXP) {
+RcppExport SEXP _oncomsm_rtruncexp(SEXP rateSEXP, SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,7 +26,7 @@ END_RCPP
 }
 // rtruncweibull
 double rtruncweibull(double shape, double scale, double a, double b);
-RcppExport SEXP _bhmbasket_predict_rtruncweibull(SEXP shapeSEXP, SEXP scaleSEXP, SEXP aSEXP, SEXP bSEXP) {
+RcppExport SEXP _oncomsm_rtruncweibull(SEXP shapeSEXP, SEXP scaleSEXP, SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,16 +39,16 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4simplified_model_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_mod();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bhmbasket_predict_rtruncexp", (DL_FUNC) &_bhmbasket_predict_rtruncexp, 3},
-    {"_bhmbasket_predict_rtruncweibull", (DL_FUNC) &_bhmbasket_predict_rtruncweibull, 4},
-    {"_rcpp_module_boot_stan_fit4simplified_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4simplified_model_mod, 0},
+    {"_oncomsm_rtruncexp", (DL_FUNC) &_oncomsm_rtruncexp, 3},
+    {"_oncomsm_rtruncweibull", (DL_FUNC) &_oncomsm_rtruncweibull, 4},
+    {"_rcpp_module_boot_stan_fit4srp_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srp_model_mod, 0},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_bhmbasket_predict(DllInfo *dll) {
+RcppExport void R_init_oncomsm(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

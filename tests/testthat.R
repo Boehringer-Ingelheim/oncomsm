@@ -2,6 +2,6 @@ library(dplyr)
 library(rlang)
 library(purrr)
 library(testthat)
-library(bhmbasket.predict)
+library(oncomsm)
 
-test_check("bhmbasket.predict")
+test_check("oncomsm")

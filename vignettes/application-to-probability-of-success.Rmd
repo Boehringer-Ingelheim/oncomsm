@@ -1,114 +1,34 @@
 ---
-title: "Get Started"
-author: Kevin Kunzmann
+title: "Application to Probability of Success Calculation"
+author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Get Started}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{application-to-probability-of-success}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  markdown: 
-    wrap: 72
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r vignette-setup, include = FALSE}
+```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width = 6,
-  fig.align = "center"
+  eval = FALSE
 )
 ```
 
 ```{r setup}
-library(bhmbasket.predict)
-library(dplyr, warn.conflicts = FALSE)
-library(ggplot2)
+library(oncomsm)
 ```
+
+
 
 # Background
 
-**tl;dr:** *objective response ignores time-to-first-event aspect of
-endpoint. This outcome delay should be addressed when performing interim
-analyses, e.g. for computing probability of success or a posterior
-probability.*
+For a general introduction to the multi-state approach used throughout this
+package, see the vignette *Multi-state Models for Early Oncology*.
 
-In early oncology trials, (objective tumor) response based on the RECIST
-criteria is often used as primary endpoint to establish the activity of
-a treatment. Response is often treated as binary variable although it is
-a delayed event endpoint. At the final analysis, this simplification is
-of little concern since all individuals tend to be followed up long
-enough to justify the assumption that non-responders are unlikely to
-still become responders. This approach is often plausible since
-individuals with tumors not responding to treatment ultimately progress.
-However, when continuously monitoring such a trial, the assumption of
-sufficient follow-up is no longer fulfilled and a simple binary analysis
-may be biased.
 
-In this vignette, the problem is addressed by extending the statistic
-binary response model to a time-to-first-event model with the event of
-interest being "response".
 
-## A mixture-cure rate model for binary response data
-
-A mixture-cure-rate model decouples the modeling of an event probability
-$p$ from the corresponding time-to-event distribution. This is an
-alternative to multistate modeling via cause specific hazards (???
-Jackson paper). The advantage for response-rate modeling lies in the
-fact that the response probability is modeled directly and that the same
-prior assumptions which are valid for a Binomial model can be used as
-part of the prior for a model also encompassing the time-to-response.
-
-A mixture-cure-rate-type model for binary response assumes that the
-population is a mixture of (ultimate) responders and (ultimate)
-non-responders. In this context the "survival function" defines the
-proportion of a population that has not experienced a response up to
-time $dt$ (time since first visit of individual). The "survival
-function" of the non-responder subpopulation is constantly $1$ since, by
-definition, this subpopulation never experiences the event in question
-(a response). The survival function of the responders, $S_r(dt)$, i.e.
-the fraction of responders who did not experience a response up to $dt$,
-needs to be modeled. Here we chose a Weibull distribution. A complex
-(semi- or non-parametric) survival function would be next to impossible
-to identify in the small data settings usually encountered in early
-phase trials and the Weibull distribution is flexible enough to allow
-for increasing or decreasing hazards over time. The population survival
-function is then a mixture of the survival functions of the respective
-subpopulation weighted by the response probability (interpreted as
-proportion of responders in the overall population):
-$$S(dt) = (1 - p)\,\underbrace{1}_{\hspace{-1.5cm}\text{non-responder}} + p\,\underbrace{S_r(dt)}_{\text{responder}}$$
-It is clear that $p$ has the same interpretation as the response
-probability in a binomial model and any prior assumption on $p$ can be
-used interchangeably between the two models. The mixture-cure-rate
-approach is thus a direct extension of the binomial model. However,
-since time-to-response is also modeled, it is possible include
-individuals who are still "at risk" of experiencing a response due to
-short follow-up in a principled way. Additionally, the explicit modeling
-of time-to-response allows to predict or impute not only whether an
-individual at risk will ultimately become a responder or not, but also
-when the response might occur.
-
-## Recruitment
-
-For inference about the absolute time of response since the start of a
-trial for individuals who have not yet been recruited, a model for
-recruitment time $t$ relative to the start of the trial is also
-required. Here we choose a simple homogeneous Poisson process to model
-recruitment, i.e., the recruitment rate is constant in time. We assume
-that $t$ and thus $dt$ are on the scale of months.
-
-## Observation process
-
-The exact time of a response is not observed since the status is only
-assessed during (scheduled) visits. This intermittently observed panel
-data means that the response times are interval censored between the
-last non-response visit and the first response visit. Note that concepts
-like confirmed response can be reflected in the definition of "response"
-if needed.
-
-We furthermore assume a fixed visit spacing (on the scale of months)
-i.e. that future visits occur with perfect regularity and are not
-stochastic.
 
 ## Decision criterion
 
@@ -152,107 +72,6 @@ experience a response and if so, when the response occurs, from the
 posterior predictive distribution of the Bayesian mixture-cure-rate
 model.
 
-# Example data
-
-We consider the example of a three-arm basket trial. `bhmbasket.predict`
-provides a function to simulate visit data under a simple model
-(independence of arms).
-
-```{r generate-example-data}
-n_per_arm <- c(40, 30, 30)
-
-tbl_visits <- generate_visit_data(
-    group_id = c("A", "B", "C"),
-    n = n_per_arm, # sample size per arm
-    event_rate = c(0.33, .4, .2), 
-    recruitment_rate = c(2, 1.5, 1.5), # per month
-    visit_spacing = c(1.2, 1.2, 1.2), # how many months between visits?
-    max_duration = 48, # in months
-    event_weibull_scale = rep(4, 3),
-    event_weibull_shape = rep(5, 3),
-    nonevent_weibull_scale = rep(4, 3),
-    nonevent_weibull_shape = rep(2, 3)
-  )
-
-tbl_visits
-```
-
-Here, `eof` stands for end of follow up and indicates whether a
-particular visit is a patient's last visit. This information needs to be
-stored explicitly to identify whether an individual is still "at risk"
-of a response at a certain point in time. Three states `S`(table),
-`P`(rogressive), `R`(responding) characterize the status of an
-individual at each visit.
-
-A plotting function for longitudinal visit-type data like this is
-provided in `bhmbasket.predict`. The simulated data does not contain
-post-response follow-up and duration-of-response analyses are not
-currently implemented.
-
-```{r plot-visit-data}
-# epsilon is thickness of last visit state as fraction of a months
-plot_visits(tbl_visits, epsilon = 15/30)
-```
-
-# Specifying a model
-
-The model specification requires input about the prior hyperparameters
-for each arm (group). Normal priors with mean and standard deviation are
-used for all (transformed) parameters.
-
--   The response rate is parameterized in terms of its log-odds and
-    additionally a minimum and maximum can be specified, which means
-    that the prior is a truncated normal prior on the log-odds.
-
--   To make the prior on the Weibull parameters more accessible, instead
-    of putting a prior on the scale parameter, a prior on the log median
-    time to event and a lognormal prior on shape are used.
-
--   The prior for the recruitment rate is specified on the log scale and
-    a maximal waiting time between recruitment of individuals can be
-    given (i.e. truncating the exponential waiting time).
-
-The sub-models for recruitment and time-to-response are specified
-separately.
-
-**Important:** The shape parameter of the time-to-response is near
-unidentifiable in small data sets, hence the prior uncertainty should be
-small to ensure the model is identifiable and can be sampled in a stable
-way. This effectively means that the shape parameter has to be fixed *a priori*.
-
-```{r prior-specification}
-mdl <- IndependentMixtureCureRateModel(
-  group_id = c("A", "B", "C"),
-  logodds_mean = logodds(c(.4, .2, .2)),
-  logodds_sd = c(.5, .5, .5),
-  logodds_max = logodds(c(.6, .6, .6)),
-  shape = (c(2, 2, 2)),
-  median_time_to_event_mean = c(4, 4, 4),
-  median_time_to_event_sd = c(.25, .25, .25),
-  max_time_to_event = c(18, 18, 18),
-  visit_spacing = c(1.2, 1.2, 1.2),
-  monthly_rate_mean = c(2, 1, 1),
-  monthly_rate_sd = c(.25, .25, .25)
-)
-```
-
-Here we use the following relevance thresholds for $p_{target}$
-
-```{r define-relevance-threshold}
-p_target <- list(A = .3, B = .3, C = .3)
-```
-
-## Prior checks
-
-The prior assumptions can be visualized directly using a custom `plot`
-method when specifying per-arm sample sizes. The latter are only
-relevant for recruitment time. Recruitment rate and response probability
-are shown directly. The time to response prior is visualized by the time
-to response distribution (prior predictive).
-
-```{r prior-sample}
-plot(mdl, refresh = 0)
-```
 
 # Computing Probability of Success at planning stage
 
@@ -527,10 +346,4 @@ tbl_bhmbasket_interim_posterior_medians %>%
   summarize(
     PoS = mean(posterior_median >= p_target)
   )
-```
-
-# Session info
-
-```{r session-info}
-sessionInfo()
 ```
