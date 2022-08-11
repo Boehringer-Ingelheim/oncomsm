@@ -390,7 +390,7 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
   p2 <- sample %>%
     filter(parameter == "p") %>%
     ggplot2::ggplot() +
-      ggplot2::stat_ecdf(aes(value, color = group_id), geom = "line") +
+      ggplot2::stat_ecdf(ggplot2::aes(value, color = group_id), geom = "line") +
       ggplot2::coord_cartesian(xlim = c(0, 1)) +
       ggplot2::labs(x = "response probability", y = "ECDF") +
       ggplot2::theme_bw() +

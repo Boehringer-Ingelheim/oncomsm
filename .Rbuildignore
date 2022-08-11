@@ -4,3 +4,4 @@
 ^man-roxygen$
 ^LICENSE\.md$
 ^.lintr$
+^.cache$

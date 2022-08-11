@@ -6,3 +6,5 @@ inst/doc
 
 *.o
 *.html
+
+.cache

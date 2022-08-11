@@ -12,12 +12,18 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  fig.width = 7,
+  fig.height = 7/1.61,
+  fig.align = "center"
 )
 ```
 
 ```{r setup}
 library(oncomsm)
+library(ggplot2)
+library(dplyr, warn.conflicts = FALSE)
+library(future) # parallel processing
+plan(multisession) # instruct future how to run in parallel
 ```
 
 
@@ -27,323 +33,346 @@ library(oncomsm)
 For a general introduction to the multi-state approach used throughout this
 package, see the vignette *Multi-state Models for Early Oncology*.
 
-
+Under a fully generative multi-state model, future trial data can be sampled
+from the prior predictive distribution (if no data is available) or the
+posterior predictive distribution conditioning on data as it accrues.
+This can be used to evaluate any decision criterion to determine trial success
+and thus compute the *Probability of Success*.
 
 
 ## Decision criterion
 
-A quantitative decision criterion can be used to come to a decision at
-the end of a trial. In early phase, this is typically the decision
-whether or not to continue development of a new compound ("go"). The
-space of potential decision criteria is huge and might also depend on
-additional data. Here, only simple criteria based on the posterior
-distribution of the response rate are considered. For instance, a
-decision can be reached by checking whether the probability of exceeding
-a certain target value $p_{target}$ exceeds a pre-defined confidence
-level $\gamma$
-$$\text{success}(r) := \underbrace{\operatorname{Pr}\big[\, p \geq p_{target} \ | \ R = r\,\big]}_{\text{posterior of exceeding target}} \geq \gamma.$$
+Assume that the sample size (and follow-up) of the trial and the randomization 
+scheme are fixed upfront.
+Let further $D_t \in \mathbb{D}$ be the observed (visit) data at time point 
+$t$ after the start of the trial.
+Let $\tau$ be the stopping time of the trial (all $n$ individuals 
+recruited an minimal follow-up reached)
+The final decision whether or not the trial is considered a success can then
+be modeled as a function $\phi: \mathbb{D} \to \{0,1\}$ 
+with 
 
-This is equivalent to the $1-\gamma$ quantile of the posterior
-distribution exceeding $p_{target}$. In settings with multiple arms, a
-threshold per arm is defined.
+$$\phi(D_\tau)=1 :\Leftrightarrow D_\tau\ \text{is considered a success}\ . $$
 
-## Probability of Success
-
-The unconditional probability of observing a success is the Probability
-of Success (PoS)
-$$\operatorname{PoS} := \operatorname{Pr}\big[ \operatorname{success}(r) \,\big]$$
-This probability depends on the unknown parameters and thus requires the
-specification of prior distributions over
-
-1.  the response rate $p$
-2.  the Weibull shape and scale
-3.  the recruitment rate
-
-as well as a minimal follow-up time for each individual to determine
-when the trial ends and a planned spacing between individual visits.
-
-As data is accrued during the trial, PoS can be updated by model-based
-imputation of the final response status of individuals still at risk
-using the mixture-cure--rate model for time-to-first-event outlined
-above. This allows to interpolate between the *a priori* planning PoS
-and 0 (no success) or 1 (success) at the end of the trial. In practice,
-this is done by sampling whether or not individuals at risk will
-experience a response and if so, when the response occurs, from the
-posterior predictive distribution of the Bayesian mixture-cure-rate
-model.
-
-
-# Computing Probability of Success at planning stage
-
-At planning stage, no data is available yet to condition on. The model
-thus samples from the prior predictive distribution and applies the
-specified success threshold to each simulated trial. For instance, one
-could define success as the observed rate exceeding the target rate.
-
-```{r compute-planning-pos}
-n_sim <- 500L # only for speed reasons - increase!
-
-# sample from the prior predictive distribution
-tbl_prior_predictive_sample <- sample_prior_predictive(
-    mdl, 
-    n_per_arm = c(40, 40, 40),
-    nsim = n_sim
-  )
-
-# calculate number of responses per iteration 
-tbl_prior_predictive_sample %>% 
-  group_by(iter, group_id) %>% 
-  summarize(
-    n = n(),
-    r = sum(t_recruitment + dt2 < Inf), # a response is observed if the response time point is finite
-    .groups = "drop"
-  ) %>% 
-  mutate(
-    `response rate` = r/n,
-    success = case_when(
-      group_id == "A" ~ `response rate` >= p_target$A,
-      group_id == "B" ~ `response rate` >= p_target$B,
-      group_id == "C" ~ `response rate` >= p_target$C
-    )
-  ) %>% 
-  group_by(group_id) %>% 
-  summarize(
-    PoS = mean(success) # calculate observed frequency of "successes
-  ) %>% 
-  rename(arm = group_id) %>% 
-  knitr::kable(
-    caption = "Probability of success by arm."
-  )
-```
-
-## Expected power
-
-Expected power is similar to Probability of Success but conditional on a
-relevant response rate. It is thus the natural extension of frequentist
-power under uncertainty.
-
+If we can sample data $D_\tau|\theta$ given a generative model and parameters 
+$\theta$, we can evaluate the Probability of Success 
 $$
-\operatorname{EP} := \operatorname{Pr}\big[\,\operatorname{success}(R)\,|\,\,p \geq p_{\text{target}}\big]
+\operatorname{PoS} = \int \phi(D_\tau) \cdot f(\theta) \operatorname{d}\theta
+$$
+where $f(\theta)$ is a prior over the model parameters using MCMC integration
+by simulating forward form the predictive distribution. 
+If data $D_t=d_t$ is observed for $t\leq\tau$, one can update PoS using Bayes Theorem
+$$
+\operatorname{PoS}\,|\, (D_t=d_t \ ) = \int \phi(D_\tau\,|\,D_t=d_t) \cdot f(\theta\,|\,D_t=d_t) \operatorname{d}\theta \ .
 $$
 
-This conditional perspective can be taken by truncating the response
-rate prior from below to the above-target region.
+Examples for such decision rules could be ...
 
-```{r condition-on-effect-size}
-# change hyperparameters
-mdl$logodds_min <- logodds(as.numeric(p_target))
+1. a quantile of the posterior distribution of the response rate being above a
+certain relevance threshold,
+2. a quantile of the posterior distribution of the PFS6 rate being above a
+certain relevance threshold,
+3. a quantile of the posterior distribution of PFS being above a certain threshold,
+4. or a combination of the above.
 
-# sample and plot again
-plot(mdl, refresh = 0)
+
+
+# Example
+
+## Prior specification
+
+Assume the following prior for the multi-state model .
+
+```{r prior-specification}
+mdl <- create_srp_model(
+    # names of the arms/groups
+    group_id = c("A", "B", "C"),
+    # per-group logodds of response|stable
+    logodds_mean =  c(logodds(.20), logodds(.3), logodds(.3)),
+    logodds_sd = c(.5, .5, .5),
+    # m[i,j] is the median time to next event for group i and transition j
+    median_time_to_next_event = matrix(c(
+      3, 2, 6,
+      2, 8, 9,
+      2, 6, 24 
+    ), byrow = TRUE,  nrow = 3, ncol = 3),
+    # fixed standard deviation of the prior for all median times
+    median_time_to_next_event_sd = matrix( 
+      1, byrow = TRUE,  nrow = 3, ncol = 3
+    ),
+    # uniform prior over the shape parameter, difficult to identify, 
+    # better keep it tight to avoid issues with the sampler
+    shape_min = matrix( 
+      .75, byrow = TRUE,  nrow = 3, ncol = 3
+    ),
+    shape_max = matrix( 
+      2, byrow = TRUE,  nrow = 3, ncol = 3
+    ),
+    # the visit interval
+    visit_spacing = c(1.2, 1.2, 1.2)
+  )
 ```
 
-The corresponding success probability is the expected power.
+We can now sample from the prior and visualize it.
 
-```{r compute-planning-expected-power}
-tbl_prior_predictive_samples <- sample_prior_predictive(
-    mdl, 
-    n_per_arm = c(40, 40, 40),
-    nsim = n_sim
-  )
+```{r sample-from-prios}
+smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 6835L)
 
-tbl_prior_predictive_summary <- tbl_prior_predictive_samples %>% 
-  group_by(iter, group_id) %>% 
-  summarize(
-    n = n(),
-    r = sum(t_recruitment + dt2 < Inf),
-    .groups = "drop"
-  ) 
+plot(mdl, dt = c(0, 36), sample = smpl_prior)
+```
 
-tbl_prior_predictive_summary %>% 
-  mutate(
-    `response rate` = r/n,
-    success = case_when(
-      group_id == "A" ~ `response rate` >= p_target$A,
-      group_id == "B" ~ `response rate` >= p_target$B,
-      group_id == "C" ~ `response rate` >= p_target$C
-    )
+The induced prior over PFS rates at 3, 6, 12, and 18 months is 
+
+```{r pfsx-rates}
+tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12, 18), sample = smpl_prior) %>% 
+  mutate(t = factor(t))
+  
+ggplot(tbl_pfs_rates) +
+  geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
+  scale_color_discrete("") +
+  labs(x = "t", y = "Pr[no death or progression before t]") +
+  theme_bw()
+```
+
+
+## Definition of success criterion
+
+Let us consider two success criteria per arm:
+
+1. $\phi_1^i(D_\tau) = 0.25 \ \text{posterior quantile of response is greater than} \ 0.3$
+2. $\phi_2^i(D_\tau) = 0.25 \ \text{posterior quantile of the PFS12 rate is greater than} \ 0.5$
+
+```{r}
+# the simulation number is only chosen so small for demonstration purposes
+# we compute both phi_1 and phi_2 jointly to reuse the same posterior sample
+eval_phi <- function(data, prob = 0.25, nsim = 250) {
+  smpl <- sample_posterior(mdl, data = data, seed = 38497, warmup = 150L, nsim = nsim)
+  mtx_p <- rstan::extract(smpl, "p")$p
+  p <- apply(mtx_p, 2, function(x) quantile(x, .25))
+  res <- sample_pfs_rate(mdl, 12, smpl) %>% 
+    group_by(group_id) %>% 
+    summarize(pfs12 = quantile(pfs, .25)) %>% 
+    mutate(
+      p = p,
+      phi_1 = p >= 0.3,
+      phi_2 = pfs12 >= 0.5
+    ) %>% 
+    select(group_id, phi_1, phi_2)
+  return(res)
+}
+```
+
+
+
+```{r sample-prior-predictive}
+tbl_prior_predictive <- sample_predictive(
+    mdl,
+    n_per_arm = rep(30L, 3),
+    sample = smpl_prior,
+    nsim = 100L, # same, here, only for demonstration purposes
+    seed = 34930L
   ) %>% 
+  group_by(iter) %>% 
+  tidyr::nest()
+```
+
+```{r}
+plan(multisession) # instruct future how to run in parallel
+
+# it is a good idea to cache long running simulation ;)
+tbl_results <- xfun::cache_rds({ 
+  
+  tbl_prior_predictive %>%
+    ungroup() %>% 
+    mutate(
+      res = furrr::future_map(
+        data, eval_phi,
+        .options = furrr::furrr_options(seed = TRUE, scheduling = 5L)
+      )
+    ) %>% 
+    select(-data)
+  
+}, dir = ".cache/", file = "sim_results.rds") # end caching
+```
+
+```{r}
+tbl_results %>% 
+  tidyr::unnest(res) %>% 
   group_by(group_id) %>% 
   summarize(
-    `Expected power` = mean(success)
-  ) %>% 
-  rename(arm = group_id) %>% 
-  knitr::kable(
-    caption = "Expected power by arm."
+    pos_phi_1 = mean(phi_1),
+    pos_phi_2 = mean(phi_2)
   )
 ```
+
+
 
 ## Advanced decision boundaries: connection with bhmbasket
 
-`bhmbasket` can be used to implement dynamic borrowing between arms in
-Bayesian hierarchical model and `bhmbasket.predict` can interface with
-it. The following code demonstrates how an ExNex model can be used to
-derive posteriors.
+The `bhmbasket` package implements dynamic borrowing between arms in
+basket trials via Bayesian hierarchical models (BHMs).
+Here, we demonstrate how the prior predictive sample generated earlier can be
+used in conjunction with such a shrinkage estimator to compute PoS for a
+decision based on a BHM.
+We use the "Berry" type model for analysis of the response data and use a
+posterior $0.25$ quantile of the response rate above $0.3$ to declare success 
+($\phi_3^i$).
 
-**Note that ...**
-
--   **currently, the bhmbasket.predict model used to generate samples
-    from the prior/posterior predictive distribution is not a
-    hierarchical model and does not borrow information between arms
-    while the analysis model does.**
-
--   **bhmbasket does not allow to specify truncated priors. Since we use
-    flat priors on the log-odds of response with a conservative upper
-    bound of 0.6 this means that the PoS with bhmbasket-posterior is
-    higher since the prior leads to more optimistic posteriors.**
-
-```{r bhmbasket-integration}
-# this value should be larger in practice
-nsim_bhmbasket <- 1000L # gibbs sampler - use more
-
-# remove conditioning of response rate (see expected power) 
-# by adjusting lower truncation back to close to 0 (cannot be zero exactly)
-mdl$logodds_min <- logodds(c(.001, .001, .001))
-
-# specify priors for bhmbasket analysis (should be consistent)
-params <- bhmbasket::setPriorParametersExNex(
-  mu_mean   = bhmbasket::logit(0.3), # exchangeable component mean normal prior mean
-  mu_sd     = 1, # exchangeable component mean normal prior standard deviation
-  tau_scale = 1, # standard deviation of half-normal prior on tau
-  mu_j      = bhmbasket::logit(c(.4, .2, .2)), # individual components means
-  tau_j     = rep(1, 3), # individual components standard deviations
-  w_j       = 0.5 # probability of being exchangeable
+```{r}
+prms_berry <- bhmbasket::setPriorParametersBerry(
+  mu_mean   = bhmbasket::logit(0.25),
+  mu_sd     = 1,
+  tau_scale = 1
 )
 
-tbl_bhmbasket_posterior_medians <- tbl_prior_predictive_summary %>%
-  # convert to bhmbasket trial objects
-  group_by(iter) %>%
-  summarize(
-    trial = list(bhmbasket::createTrial(n, r))
-  ) %>% 
-  mutate(
-    # map a function over all "trial" realizations which computes the
-    # posterior medians
-    tmp = purrr::map(trial, function(trial) {
-        posterior_medians <- suppressMessages(bhmbasket::performAnalyses(
-            scenario_list         = trial,
-            method_names          = "exnex",
-            prior_parameters_list = params,
-            n_mcmc_iterations     = nsim_bhmbasket,
-            verbose               = FALSE
-          )) %>%
-          bhmbasket::getEstimates() %>%
-          {as.numeric(.$exnex[,"50%"])} # extract posterior median
-        tibble(
-          group_id = c("A", "B", "C"),
-          posterior_median = posterior_medians
-        )
-      }
-    )
-  ) %>% 
-  select(-trial) %>% 
-  tidyr::unnest(tmp)
+data_to_bhmbasket_trial <- function(data) {
+  data %>% 
+    group_by(group_id, subject_id) %>% 
+    summarize(responder = any(to == "response")) %>% 
+    summarize(r = sum(responder), n = n()) %>% 
+    {bhmbasket::createTrial(.$n, .$r)} %>% 
+    return()
+}
 
-# combine the posterior medians with the target rates 
-# and check the success criterion
-tbl_bhmbasket_posterior_medians %>% 
-  mutate(p_target = purrr::map_dbl(group_id, ~p_target[[.]])) %>% 
+eval_phi_3 <- function(data, nsim = 250) {
+  prob = 0.25 # needs to be hard coded
+  set.seed(2340239L)
+  res <- suppressMessages(bhmbasket::performAnalyses(
+      scenario_list         = data_to_bhmbasket_trial(data),
+      method_names          = "berry",
+      evidence_levels       = 1 - prob,
+      prior_parameters_list = prms_berry,
+      target_rates          = c(.2, .3, .3),
+      n_mcmc_iterations     = nsim,
+      verbose               = FALSE
+    ))
+  return(tibble(
+    group_id = attr(mdl, "group_id"),
+    phi_3 = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
+  ))
+}
+```
+
+```{r}
+# it is a good idea to cache long running simulation ;)
+tbl_results_bhmbasket <- xfun::cache_rds({ 
+  
+  tbl_prior_predictive %>%
+    ungroup() %>% 
+    mutate(
+      res = furrr::future_map(
+        data, eval_phi_3,
+        .options = furrr::furrr_options(seed = TRUE)
+      )
+    ) %>% 
+    select(-data)
+  
+}, dir = ".cache/", file = "sim_results_bhmbasket.rds") # end caching
+```
+
+```{r}
+tbl_results_bhmbasket %>% 
+  tidyr::unnest(res) %>% 
   group_by(group_id) %>% 
   summarize(
-    PoS = mean(posterior_median >= p_target)
+    pos_phi_3 = mean(phi_3)
+  ) %>% 
+  left_join(
+    tbl_results %>% 
+      tidyr::unnest(res) %>% 
+      group_by(group_id) %>% 
+      summarize(
+        pos_phi_1 = mean(phi_1),
+        pos_phi_2 = mean(phi_2)
+      ), 
+    by = "group_id"
   )
 ```
 
-## Computing dynamic Probability of Success
 
-Looking at a snapshot of the visit data from 18 months into the trial
-clearly shows the problem with delayed response data.
 
-```{r restrict-data-to-interim-at-10-months}
-tbl_visits_interim <- filter(tbl_visits, t <= 15) 
+# Computing dynamic Probability of Success
 
-plot_visits(tbl_visits_interim)
-```
-
-Several subjects are still at risk in the respective arms. Counting them
-as non-responders is clearly biasing the interim analysis towards lower
-response rates. Excluding these can lead to bias if time-to-progression
-and time-to-response follow different distributions (conditional on the
-final response status). Also, there are small efficiency gains possible
-if information about the typical time-to-response is available. If for
-instance, an individual is stable after 8 months but the likelihood of
-response post 6 months is minimal, the mixture cure rate model will take
-that into account and see this individual as more likely to ultimately
-become a non-responder.
-
-We first convert the visit data to time-to-first-event,
+The Bayesian framework has two distinct advantages when applied in an early
+setting. 
 
 ```{r}
-# convert data to time-to-response
-tbl_tte_interim <- visits_to_tte(tbl_visits, cutoff = 15)
-
-tbl_tte_interim
-```
-
-Next, we sample from the posterior predictive distribution to impute the
-outcomes of the individuals still at risk and those still to be
-recruited.
-
-```{r sample-from-posterior-predictive}
-min_follow_up <- 3 # months, follow up of last individual
-
-tbl_posterior_predictive_summary <- impute_posterior_predictive(
-    mdl, data = tbl_tte_interim, seed = 42L, nsim = n_sim, refresh = 0
+recruitment_rate_overall <- 3
+tbl_interim <- sample_predictive(
+    mdl, 
+    sample = smpl_prior,
+    n_per_arm = c(30L, 30L), 
+    nsim = 250, 
+    seed = 3423423
   ) %>% 
-  group_by(iter, group_id) %>%
-  tidyr::nest() %>%
-  arrange(iter) %>% 
-  mutate(
-    r = purrr::map_int(data, function(data) {
-          with(data,
-            sum(t_recruitment + dt2 <= max(t_recruitment) + min_follow_up)
-          )
-        }
+  filter(iter == 1) %>% 
+  select(-t_sot) %>% 
+  {left_join(
+    .,
+    select(., subject_id, group_id) %>% 
+      distinct() %>% 
+      arrange(runif(n())) %>% # permute groups
+      mutate(
+        t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)), # poisson recruitment process
       ),
-    n = purrr::map_int(data, nrow)
+    by = c("subject_id", "group_id")
+  )} %>% 
+  mutate(
+    t_min = t_min + t_sot,
+    t_max = t_max + t_sot
   ) %>% 
-  select(-data)
-```
+  mstate_to_visits(mdl, .) %>% 
+  filter(t <= 10) %>% 
+  visits_to_mstate(
+    start_state = "stable", 
+    absorbing_states = "progression", 
+    now = 10
+  )
 
-Exactly as before, bhmbasket can be applied to the posterior predictive
-samples.
+tbl_interim_sample_sizes <- tbl_interim %>% 
+  select(group_id, subject_id) %>% 
+  distinct() %>% 
+  group_by(group_id) %>% 
+  summarize(n = n())
 
-```{r}
-tbl_bhmbasket_interim_posterior_medians <- tbl_posterior_predictive_summary %>%
-  # convert to bhmbasket trial objects
-  group_by(iter) %>%
-  summarize(
-    trial = list(bhmbasket::createTrial(n, r))
+smpl_posterior <- sample_posterior(
+  mdl, 
+  tbl_interim, 
+  nsim = 2000, warmup = 250, seed = 76947
+)
+
+tbl_to_be_recruited <- tibble(
+    group_id = tbl_interim_sample_sizes$group_id,
+    n_to_be_recruited = 30 - tbl_interim_sample_sizes$n  
   ) %>% 
   mutate(
-    # map a function over all realizations computing the
-    # posterior medians
-    tmp = purrr::map(trial, function(trial) {
-        posterior_medians <- suppressMessages(bhmbasket::performAnalyses(
-            scenario_list         = trial,
-            method_names          = "exnex",
-            prior_parameters_list = params,
-            n_mcmc_iterations     = nsim_bhmbasket,
-            verbose               = FALSE
-          )) %>%
-          bhmbasket::getEstimates() %>%
-          {as.numeric(.$exnex[,"50%"])} # extract posterior median
-        tibble(
-          group_id = c("A", "B", "C"),
-          posterior_median = posterior_medians
-        )
-      }
+    tmp = purrr::map(
+      n_to_be_recruited, 
+      ~tibble(
+        # use unique identifiers to avoid clashing between groups
+        subject_id = uuid::UUIDgenerate(n = .),
+        # sample recruitment times per group using half the overall 
+        # recruitment rate
+        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall/2))
+      )
     )
   ) %>% 
-  select(-trial) %>% 
-  tidyr::unnest(tmp)
-```
+  select(-n_to_be_recruited) %>% 
+  tidyr::unnest(tmp) %>% 
+  # add information on starting state etc to expand to full mstate table
+  mutate(
+    from = "stable",
+    to = NA_character_,
+    t_min = t_sot + 1/30, # preclude events on the day of recruitment
+    t_max = Inf # right censored
+  )
 
-```{r}
-tbl_bhmbasket_interim_posterior_medians %>% 
-  mutate(p_target = purrr::map_dbl(group_id, ~p_target[[.]])) %>% 
-  group_by(group_id) %>% 
-  summarize(
-    PoS = mean(posterior_median >= p_target)
+tbl_mstate_interim_forward <- bind_rows(tbl_interim, tbl_to_be_recruited)
+
+tbl_posterior_predictive <- impute_predictive(
+    mdl,
+    data = tbl_mstate_interim_forward, 
+    sample = smpl_posterior,
+    nsim = 100
   )
 ```
