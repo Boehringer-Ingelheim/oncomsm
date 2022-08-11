@@ -1,3 +1,5 @@
+[![R-CMD-check](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/check.yml)
+
 # Fully Bayesian generative models for delayed event rates with time-to-first-event endpoints
 
 ...
