@@ -18,7 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
 
     env:
@@ -35,6 +34,11 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+      
+      - name: Install JAGS
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jags
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
