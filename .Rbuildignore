@@ -5,3 +5,7 @@
 ^LICENSE\.md$
 ^.lintr$
 ^.cache$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
