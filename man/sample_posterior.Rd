@@ -2,21 +2,9 @@
 % Please edit documentation in R/Model.R
 \name{sample_posterior}
 \alias{sample_posterior}
-\alias{sample_posterior.Model}
 \title{Sample model posterior parameters}
 \usage{
 sample_posterior(model, data, warmup, nsim, seed, rstan_output, pars, ...)
-
-\method{sample_posterior}{Model}(
-  model,
-  data,
-  warmup = 500L,
-  nsim = 2000L,
-  seed = NULL,
-  rstan_output = TRUE,
-  pars = attr(model, "parameter_names"),
-  ...
-)
 }
 \arguments{
 \item{model}{a model of class "Model"}

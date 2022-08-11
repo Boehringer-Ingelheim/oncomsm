@@ -12,31 +12,41 @@ mstate_to_visits.Model <- function(model, tbl_mstate, ...) {
 #' @export
 mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
 
-  warning("'mstate_to_visits.srp_model' is experimental")
+  message("'mstate_to_visits.srp_model' is experimental")
 
   starting_state <- attr(model, "states")[1]
   visit_spacing <- attr(model, "visit_spacing")[1] # TODO: respect groups
 
-  select(tbl_mstate, subject_id, group_id, from, to, t_min, t_max, t_sot) %>%
+  tbl_mstate %>% select(
+      .data$subject_id,
+      .data$group_id,
+      .data$from,
+      .data$to,
+      .data$t_min,
+      .data$t_max,
+      .data$t_sot
+    ) %>%
     bind_rows(
-      select(tbl_mstate, subject_id, group_id, t_sot) %>%
+      tbl_mstate %>%
+        select(.data$subject_id, .data$group_id, .data$t_sot) %>%
         distinct() %>%
-        mutate(from = starting_state, to = starting_state, t_min = t_sot, t_max = t_sot)
+        mutate(from = starting_state, to = starting_state, t_min = .data$t_sot, t_max = .data$t_sot)
     ) %>%
-    arrange(subject_id, t_min, t_max) %>%
-    select(-t_sot) %>%
+    arrange(.data$subject_id, .data$t_min, .data$t_max) %>%
+    select(-.data$t_sot) %>%
     distinct() %>%
-    group_by(subject_id) %>%
+    group_by(.data$subject_id) %>%
     mutate(
-      a = t_max,
-      b = lead(t_min) %>% if_else(is.na(.), a, .),
-      c = to, d = lead(from)
+      a = .data$t_max,
+      b = lead(.data$t_min) %>% if_else(is.na(.), .data$a, .),
+      c = .data$to,
+      d = lead(.data$from)
     ) %>%
-    filter(is.finite(a), is.finite(b), !is.na(to)) %>%
+    filter(is.finite(.data$a), is.finite(.data$b), !is.na(.data$to)) %>%
     rowwise() %>%
     mutate(
       tmp = purrr::pmap(
-        list(c, d, a, b),
+        list(.data$c, .data$d, .data$a, .data$b),
         ~{
           if (a == b) {
             res <- tibble(t = ..3, state = ..1)
@@ -48,8 +58,8 @@ mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
         }
       )
     ) %>%
-    tidyr::unnest(tmp) %>%
-    select(subject_id, group_id, t, state) %>%
+    tidyr::unnest(.data$tmp) %>%
+    select(.data$subject_id, .data$group_id, .data$t, .data$state) %>%
     ungroup()
 
 }

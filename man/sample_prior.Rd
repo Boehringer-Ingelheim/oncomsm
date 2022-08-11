@@ -2,20 +2,9 @@
 % Please edit documentation in R/Model.R
 \name{sample_prior}
 \alias{sample_prior}
-\alias{sample_prior.Model}
 \title{Sample model prior parameters}
 \usage{
 sample_prior(model, warmup, nsim, seed, rstan_output, pars, ...)
-
-\method{sample_prior}{Model}(
-  model,
-  warmup = 500L,
-  nsim = 2000L,
-  seed = NULL,
-  rstan_output = TRUE,
-  pars = attr(model, "parameter_names"),
-  ...
-)
 }
 \arguments{
 \item{model}{a model of class "Model"}

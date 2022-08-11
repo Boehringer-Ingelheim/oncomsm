@@ -6,7 +6,7 @@
 \usage{
 sample_predictive(
   model,
-  n_per_arm,
+  n_per_group,
   sample,
   nsim,
   nsim_parameters,
@@ -18,7 +18,7 @@ sample_predictive(
 \arguments{
 \item{model}{a model of class "Model"}
 
-\item{n_per_arm}{integer vector with number of individuals to be recruited per arm.}
+\item{n_per_group}{integer vector with number of individuals per group.}
 
 \item{nsim}{number of samples to draw}
 

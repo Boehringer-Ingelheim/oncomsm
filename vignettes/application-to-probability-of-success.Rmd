@@ -176,7 +176,7 @@ eval_phi <- function(data, prob = 0.25, nsim = 250) {
 ```{r sample-prior-predictive}
 tbl_prior_predictive <- sample_predictive(
     mdl,
-    n_per_arm = rep(30L, 3),
+    n_per_group = rep(30L, 3),
     sample = smpl_prior,
     nsim = 100L, # same, here, only for demonstration purposes
     seed = 34930L
@@ -185,7 +185,7 @@ tbl_prior_predictive <- sample_predictive(
   tidyr::nest()
 ```
 
-```{r}
+```{r, warning=FALSE}
 plan(multisession) # instruct future how to run in parallel
 
 # it is a good idea to cache long running simulation ;)
@@ -262,7 +262,7 @@ eval_phi_3 <- function(data, nsim = 250) {
 }
 ```
 
-```{r, eval=JAGS_FOUND}
+```{r, eval=JAGS_FOUND, warning=FALSE}
 # it is a good idea to cache long running simulation ;)
 tbl_results_bhmbasket <- xfun::cache_rds({ 
   
@@ -310,7 +310,7 @@ recruitment_rate_overall <- 3
 tbl_interim <- sample_predictive(
     mdl, 
     sample = smpl_prior,
-    n_per_arm = c(30L, 30L), 
+    n_per_group = c(30L, 30L), 
     nsim = 250, 
     seed = 3423423
   ) %>% 
@@ -384,4 +384,6 @@ tbl_posterior_predictive <- impute_predictive(
     sample = smpl_posterior,
     nsim = 100
   )
+
+tbl_posterior_predictive
 ```

@@ -1,3 +1,16 @@
+#' An abstract multi-state model class
+#'
+#' This is abstract class defining a standard set of methods for any implemented
+#' multi-state model.
+#' Objects of class 'Model' cannot be instantiated directly.
+#' Only objects of the respective sub-classes can.
+#'
+#' @seealso [srp_model]
+#'
+#' @name Model
+NULL
+
+
 # standard format/print methods
 format.Model <- function(x, ...) class(x)[1]
 print.Model <- function(x, ...) cat(format(x, ...), "\n")
@@ -27,7 +40,7 @@ sample_prior <- function(model, warmup, nsim, seed, rstan_output, pars, ...) {
   UseMethod("sample_prior")
 }
 
-#' @rdname sample_prior
+#' @rdname Model
 #' @export
 sample_prior.Model <- function(
   model,
@@ -74,7 +87,7 @@ sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output, pars
   UseMethod("sample_posterior")
 }
 
-#' @rdname sample_posterior
+#' @rdname Model
 #' @export
 sample_posterior.Model <- function(
   model,
@@ -103,7 +116,7 @@ sample_posterior.Model <- function(
 #' Sample data from predictive distribution of a model
 #'
 #' @template param-model
-#' @template param-n_per_arm
+#' @template param-n_per_group
 #' @template param-nsim
 #' @template param-nsim_parameters
 #' @template param-warmup_parameters
@@ -113,14 +126,16 @@ sample_posterior.Model <- function(
 #' @return TODO:
 #'
 #' @export
-sample_predictive <- function(model, n_per_arm, sample, nsim, nsim_parameters, warmup_parameters, seed, ...) {
+sample_predictive <- function(model, n_per_group, sample, nsim, nsim_parameters, warmup_parameters, seed, ...) {
   UseMethod("sample_predictive")
 }
 
+#'
+#' @rdname Model
 #' @export
 sample_predictive.Model <- function(
   model,
-  n_per_arm,
+  n_per_group,
   sample = NULL,
   nsim = 100L,
   nsim_parameters = 1000L,
@@ -134,7 +149,7 @@ sample_predictive.Model <- function(
       warmup = warmup_parameters, nsim = nsim_parameters
     )
   }
-  .impute(model = model, data = .emptydata(model, n_per_arm), parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
+  .impute(model = model, data = .emptydata(model, n_per_group), parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
 }
 
 
@@ -264,12 +279,12 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 
 # create a data set with no observed data
-.emptydata <- function(model, n_per_arm) {
+.emptydata <- function(model, n_per_group) {
   UseMethod(".emptydata")
 }
 
 # helper to create all-missing standata for model
-.emptydata.Model <- function(model, n_per_arm) {
+.emptydata.Model <- function(model, n_per_group) {
   stop("not implemented")
 }
 
@@ -302,16 +317,24 @@ plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
 
 
 
+#' Generate Visit data from a multi-state model
+#'
+#' @template param-model
+#' @template param-n_per_group
+#'
 #' @export
 generate_visit_data <- function(model, n_per_group, ...) {
   UseMethod("generate_visit_data")
 }
 
+#'
+#' @rdname Model
+#'
 #' @export
 generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
-  sample_predictive(mdl, n_per_arm = n_per_group, nsim = 1, seed = seed) %>%
-    select(-iter) %>%
-    mstate_to_visits(mdl, .)
+  sample_predictive(model, n_per_group = n_per_group, nsim = 1, seed = seed) %>%
+    select(-.data$iter) %>%
+    mstate_to_visits(model, .)
 }
 
 

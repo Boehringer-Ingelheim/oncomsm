@@ -28,3 +28,7 @@ NULL
 #' @importFrom Rcpp sourceCpp
 ## usethis namespace: end
 NULL
+
+# just for not getting RCMD CHECK warnings about undefined.
+# (see magrittr package)
+. <- NULL

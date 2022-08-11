@@ -21,7 +21,7 @@
 visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
                              now = max(tbl_visits$t), eof_indicator = "EOF") {
 
-  tbl_visits <- arrange(tbl_visits, subject_id, t) # make sure everything is sorted
+  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t) # make sure everything is sorted
 
   tbl_mstate <- list()
 

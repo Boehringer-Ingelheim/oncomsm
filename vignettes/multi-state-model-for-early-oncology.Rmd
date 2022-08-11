@@ -222,7 +222,7 @@ Here, we can re-use the sample prior sample already used for plotting.
 tbl_prior_predictive <- sample_predictive(
   mdl, 
   sample = smpl_prior,
-  n_per_arm = c(30L, 30L), 
+  n_per_group = c(30L, 30L), 
   nsim = 100, 
   seed = 3423423
 ) 
@@ -296,7 +296,7 @@ attr(mdl_tmp, "visit_spacing") <- c(1/30, 1/30)
 tbl_prior_predictive_2 <- sample_predictive(
   mdl_tmp, 
   sample = smpl_prior,
-  n_per_arm = c(1L, 1L), # we only need one per arm here
+  n_per_group = c(1L, 1L), # we only need one per arm here
   nsim = 1000, 
   seed = 3423423
 )

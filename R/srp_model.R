@@ -1,4 +1,11 @@
-#' todo
+#' A Stable-Response-Progression Model
+#'
+#' TODO
+#'
+#' @name srp_model
+#' @aliases create_srp_model
+#' @seealso [Model]
+#'
 #' @export
 create_srp_model <- function(
   group_id,
@@ -44,16 +51,11 @@ create_srp_model <- function(
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
 
   data <- data %>%
-    arrange(.data$t_sot, .data$subject_id, (t_min + t_max)/2) %>%
+    arrange(.data$t_sot, .data$subject_id, (.data$t_min + .data$t_max)/2) %>%
     mutate(
       subject_id = as.integer(factor(as.character(.data$subject_id), levels = subject_id_levels)),
-      group_id = as.integer(factor(group_id, levels = group_id_levels))
+      group_id = as.integer(factor(.data$group_id, levels = group_id_levels))
     )
-  data %>%
-    group_by(.data$subject_id) %>%
-    filter(from != lag(to)) %>%
-    nrow() %>%
-    {assertthat::assert_that(. == 0)}
 
   res <- tribble(
       ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter
@@ -152,7 +154,7 @@ create_srp_model <- function(
           factor(.data$subject_id, levels = seq_along(subject_id_levels), labels = subject_id_levels)
         ),
       group_id = as.character(
-          factor(group_id, levels = seq_along(group_id_levels), labels = group_id_levels)
+          factor(.data$group_id, levels = seq_along(group_id_levels), labels = group_id_levels)
         )
     )
   return(res)
@@ -176,11 +178,11 @@ create_srp_model <- function(
 
 
 # helper to create all-missing standata for model
-.emptydata.srp_model <- function(model, n_per_arm) {
-  n <- sum(n_per_arm)
+.emptydata.srp_model <- function(model, n_per_group) {
+  n <- sum(n_per_group)
   tibble(
     subject_id = 1:n,
-    group_id = attr(model, "group_id")[rep(1:length(n_per_arm), times = n_per_arm)],
+    group_id = attr(model, "group_id")[rep(1:length(n_per_group), times = n_per_group)],
     from = rep("stable", n),
     to = rep(NA, n),
     # assume everyone is recruited at zero
@@ -200,14 +202,17 @@ data2standata.srp_model <- function(model, data) {
       group_id = as.integer(factor(.data$group_id, levels = attr(model, "group_id"))),
       subject_id = as.integer(factor(.data$subject_id)),
       from = as.integer(factor(.data$from, levels = attr(model, "states"))),
-      to = .data$to %>%
-        {if_else(is.na(.), "unknown", as.character(.))} %>%
+      to = if_else(
+          is.na(.data$to),
+          "unknown",
+          as.character(.data$to)
+        ) %>%
         factor(levels = c(attr(model, "states"), "unknown")) %>%
         as.integer(),
       t_min = .data$t_min - .data$t_sot,
-      t_max = t_max - .data$t_sot
+      t_max = .data$t_max - .data$t_sot
     ) %>%
-    arrange(subject_id, from) %>% # make sure verything is sorted properly
+    arrange(.data$subject_id, .data$from) %>% # make sure everything is sorted properly
     as.list()
 
   # make sure everything is an array
@@ -239,7 +244,7 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) {
     tidyr::separate(.data$group_id, into = c("group_id", "transition"), sep = "[\\]|,]", fill = "right", extra = "drop") %>%
     mutate(
       group_id = attr(model, "group_id")[as.integer(stringr::str_extract(.data$group_id, "[0-9]+"))],
-      transition = as.integer(transition)
+      transition = as.integer(.data$transition)
     )
 }
 
@@ -248,7 +253,7 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) {
 #' @export
 plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), relative_to_sot = TRUE, ...) {
 
-  starting_state <- attr(mdl, "states")[1]
+  starting_state <- attr(model, "states")[1]
 
   tbl_mstate <- data %>%
     rename(`Group ID` = .data$group_id)
@@ -257,16 +262,15 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), rela
     tbl_mstate <- tbl_mstate %>%
       mutate(
         t_min = .data$t_min - .data$t_sot,
-        t_max = t_max - .data$t_sot,
+        t_max = .data$t_max - .data$t_sot,
         t_sot = 0
       )
   }
 
   tbl_points <- tbl_mstate %>%
-    # filter(t_max != -Inf) %>%
     mutate(
       tmp = purrr::pmap(
-        list(from, to, .data$t_min, t_max, .data$t_sot),
+        list(.data$from, .data$to, .data$t_min, .data$t_max, .data$t_sot),
         ~if (is.na(..2)) {
           tibble(t = c(..3, ..5), state = c(..1, starting_state))
         } else {
@@ -274,15 +278,15 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), rela
         }
       )
     ) %>%
-    select(subject_id, `Group ID`, tmp) %>%
-    tidyr::unnest(tmp) %>%
-    filter(is.finite(t), t < now) %>%
+    select(.data$subject_id, .data$`Group ID`, .data$tmp) %>%
+    tidyr::unnest(.data$tmp) %>%
+    filter(is.finite(.data$t), .data$t < now) %>%
     distinct() %>%
-    arrange(subject_id, t)
+    arrange(.data$subject_id, .data$t)
 
   tbl_intervals <- tbl_mstate %>%
     bind_rows(
-      select(tbl_mstate, subject_id, `Group ID`, .data$t_sot) %>%
+      select(tbl_mstate, .data$subject_id, .data$`Group ID`, .data$t_sot) %>%
         distinct() %>%
         mutate(
           from = starting_state,
@@ -297,7 +301,7 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), rela
     transmute(
       .data$subject_id,
       .data$`Group ID`,
-      state = if_else(to == lead(.data$from), lead(.data$from), NA_character_),
+      state = if_else(.data$to == lead(.data$from), lead(.data$from), NA_character_),
       tmp1 = .data$t_max,
       tmp2 = lead(.data$t_min)
     ) %>%
@@ -314,7 +318,7 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), rela
     )
 
   tbl_censored <- tbl_mstate %>%
-    filter(t_max == -Inf) %>%
+    filter(.data$t_max == -Inf) %>%
     transmute(
       .data$subject_id,
       .data$`Group ID`,
@@ -325,18 +329,23 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), rela
   scale <- max(tbl_points$t)
 
   ggplot2::ggplot() +
-    ggplot2::geom_segment(ggplot2::aes(x = tmp1, xend = tmp2, y = subject_id, yend = subject_id, color = state), data = tbl_intervals) +
-    ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), data = tbl_points) +
     ggplot2::geom_segment(
-      ggplot2::aes(t, subject_id, xend = t + scale/33, yend = subject_id, color = state),
+      ggplot2::aes(x = .data$tmp1, xend = .data$tmp2,
+                   y = .data$subject_id, yend = .data$subject_id,
+                   color = .data$state),
+      data = tbl_intervals
+    ) +
+    ggplot2::geom_point(ggplot2::aes(.data$t, .data$subject_id, color = .data$state), data = tbl_points) +
+    ggplot2::geom_segment(
+      ggplot2::aes(.data$t, .data$subject_id, xend = .data$t + scale/33, yend = .data$subject_id, color = .data$state),
       arrow = ggplot2::arrow(type = "closed", angle = 10, length = ggplot2::unit(0.05, "npc")),
       data = tbl_at_risk
     ) +
-    ggplot2::geom_point(ggplot2::aes(t, subject_id, color = state), shape = "x", size = 5, data = tbl_censored) +
+    ggplot2::geom_point(ggplot2::aes(.data$t, .data$subject_id, color = .data$state), shape = "x", size = 5, data = tbl_censored) +
     ggplot2::geom_vline(xintercept = now) +
     ggplot2::labs(x = if (relative_to_sot) "Time since SoT" else "Time since first SoT", y = "Subject ID") +
     ggplot2::scale_color_discrete("") +
-    ggplot2::facet_wrap(~`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right", scales = "free_y") +
+    ggplot2::facet_wrap(~.data$`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right", scales = "free_y") +
     ggplot2::theme_bw() +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
@@ -359,28 +368,28 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
   sample <- parameter_sample_to_tibble(x, sample)
   # plot transition times
   p1 <- sample %>%
-    filter(parameter %in% c("shape", "scale")) %>%
-    tidyr::pivot_wider(names_from = parameter, values_from = value) %>%
+    filter(.data$parameter %in% c("shape", "scale")) %>%
+    tidyr::pivot_wider(names_from = .data$parameter, values_from = .data$value) %>%
     tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
     mutate(
-      pdf = pweibull(dt, shape = shape, scale = scale)
+      pdf = stats::pweibull(.data$dt, shape = .data$shape, scale = .data$scale)
     ) %>%
-    group_by(group_id, transition, dt) %>%
-    summarize(pdf = mean(pdf), .groups = "drop") %>%
-    filter(is.finite(pdf)) %>%
+    group_by(.data$group_id, .data$transition, .data$dt) %>%
+    summarize(pdf = mean(.data$pdf), .groups = "drop") %>%
+    filter(is.finite(.data$pdf)) %>%
     mutate(
       transition = case_when(
-        transition == 1 ~ "stable to response",
-        transition == 2 ~ "stable to progression",
-        transition == 3 ~ "response to progression",
+        .data$transition == 1 ~ "stable to response",
+        .data$transition == 2 ~ "stable to progression",
+        .data$transition == 3 ~ "response to progression",
       ) %>%
       factor(levels = c("stable to response", "stable to progression", "response to progression"))
     ) %>%
     ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(dt, pdf, color = group_id)) +
+      ggplot2::geom_line(ggplot2::aes(.data$dt, .data$pdf, color = .data$group_id)) +
       ggplot2::labs(x = "time to next event", y = "CDF") +
       ggplot2::scale_color_discrete("") +
-      ggplot2::facet_wrap(~transition, nrow = 1) +
+      ggplot2::facet_wrap(~.data$transition, nrow = 1) +
       ggplot2::theme_bw() +
       ggplot2::theme(
         legend.position = "top",
@@ -388,9 +397,9 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
       )
   # plot response probability
   p2 <- sample %>%
-    filter(parameter == "p") %>%
+    filter(.data$parameter == "p") %>%
     ggplot2::ggplot() +
-      ggplot2::stat_ecdf(ggplot2::aes(value, color = group_id), geom = "line") +
+      ggplot2::stat_ecdf(ggplot2::aes(.data$value, color = .data$group_id), geom = "line") +
       ggplot2::coord_cartesian(xlim = c(0, 1)) +
       ggplot2::labs(x = "response probability", y = "ECDF") +
       ggplot2::theme_bw() +
@@ -432,21 +441,21 @@ sample_pfs_rate.srp_model <- function(
       stats::dweibull(t_response, shape_1, scale_1) * stats::pweibull(t - t_response, shape_2, scale_2)
     }
     # can reduce absolute tolerance substantially - doesn't matter for probabilities
-    res <- integrate(
+    res <- stats::integrate(
       integrand, lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
     )
     return(res$value)
   }
   tbl_pfs <- sample %>%
     # pivot parameters
-    tidyr::pivot_wider(names_from = c(parameter, transition), values_from = value) %>%
-    rename(pr_response = p_NA) %>%
+    tidyr::pivot_wider(names_from = c(.data$parameter, .data$transition), values_from = .data$value) %>%
+    rename(pr_response = .data$p_NA) %>%
     # cross with time points
     tidyr::expand_grid(t = t) %>%
     # compute PFS before t
     mutate(
       pfs = purrr::pmap_dbl(
-        list(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t),
+        list(.data$pr_response, .data$scale_1, .data$scale_2, .data$scale_3, .data$shape_1, .data$shape_2, .data$shape_3, t),
         function(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t) {
           pr_progression_t <- pr_response * pr_indirect_progression(shape_1, shape_2, scale_1, scale_2, t) +
             (1 - pr_response) * pr_direct_progression(shape_3, scale_3, t)
@@ -454,6 +463,6 @@ sample_pfs_rate.srp_model <- function(
         }
       )
     ) %>%
-    select(iter, group_id, t, pfs) # only keep interesting stuff
+    select(.data$iter, .data$group_id, .data$t, .data$pfs) # only keep interesting stuff
   return(tbl_pfs)
 }

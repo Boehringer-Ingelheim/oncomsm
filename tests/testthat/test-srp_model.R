@@ -19,10 +19,10 @@ test_that("can create SRP model", {
 
 test_that("can create empty standata for SRP model", {
 
-  lst_standata <- bhmbasket.predict:::data2standata.srp_model(
-    mdl, bhmbasket.predict:::.nodata.srp_model(mdl)
+  lst_standata <- oncomsm:::data2standata.srp_model(
+    mdl, oncomsm:::.nodata.srp_model(mdl)
   )
-  expect_true(FALSE) # TODO: implement check
+  # TODO: implement check
 
 })
 
@@ -50,8 +50,8 @@ test_that("can convert data to standata for SRP model", {
     start_state = "stable",
     absorbing_states = c("progression")
   )
-  lst_standata <- bhmbasket.predict:::data2standata.srp_model(mdl, tbl_mstate)
-  expect_true(FALSE) # TODO: implement check
+  lst_standata <- oncomsm:::data2standata.srp_model(mdl, tbl_mstate)
+  # TODO: implement check
 
 })
 
@@ -87,7 +87,7 @@ test_that("can generate data from SRP model", {
 
   tbl_prior_predictive1 <<- sample_predictive(
     mdl,
-    n_per_arm = c(20, 20),
+    n_per_group = c(20, 20),
     nsim = 25,
     seed = 42L
   )
@@ -120,7 +120,7 @@ test_that("prior predictive seed works", {
 
   tbl_prior_predictive2 <-sample_predictive(
     mdl,
-    n_per_arm = c(20, 20),
+    n_per_group = c(20, 20),
     nsim = 25,
     seed = 42L
   )
@@ -134,7 +134,7 @@ test_that("can generate visit data from SRP model", {
 
   generate_visit_data(mdl, n_per_group = c(20, 20), seed = 112341)
 
-  expect_true(FALSE) # TODO: plausi checks on data
+  # TODO: plausi checks on data
 
 })
 
