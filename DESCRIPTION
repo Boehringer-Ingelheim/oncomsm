@@ -50,7 +50,9 @@ Suggests:
     bhmbasket,
     vdiffr,
     DiagrammeR,
-    uuid
+    uuid,
+    future,
+    furrr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://boehringer-ingelheim.github.io/oncomsm/
