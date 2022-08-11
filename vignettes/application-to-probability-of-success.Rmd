@@ -8,13 +8,22 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r knitr-setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
   fig.height = 7/1.61,
   fig.align = "center"
+)
+
+# see whether jags can be found, if not deactivate last part of vignette
+# we don't want to depend on jags for one example
+JAGS_FOUND <- tryCatch({
+    rjags::jags.version()
+    TRUE
+  }, 
+  error = function(e) FALSE
 )
 ```
 
@@ -253,7 +262,7 @@ eval_phi_3 <- function(data, nsim = 250) {
 }
 ```
 
-```{r}
+```{r, eval=JAGS_FOUND}
 # it is a good idea to cache long running simulation ;)
 tbl_results_bhmbasket <- xfun::cache_rds({ 
   
@@ -270,7 +279,7 @@ tbl_results_bhmbasket <- xfun::cache_rds({
 }, dir = ".cache/", file = "sim_results_bhmbasket.rds") # end caching
 ```
 
-```{r}
+```{r, eval=JAGS_FOUND}
 tbl_results_bhmbasket %>% 
   tidyr::unnest(res) %>% 
   group_by(group_id) %>% 
@@ -296,7 +305,7 @@ tbl_results_bhmbasket %>%
 The Bayesian framework has two distinct advantages when applied in an early
 setting. 
 
-```{r}
+```{r, eval=JAGS_FOUND}
 recruitment_rate_overall <- 3
 tbl_interim <- sample_predictive(
     mdl, 
