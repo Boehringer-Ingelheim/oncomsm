@@ -40,6 +40,7 @@ sample_prior <- function(model, warmup, nsim, seed, rstan_output, pars, ...) {
   UseMethod("sample_prior")
 }
 
+#' @inheritParams sample_prior
 #' @rdname Model
 #' @export
 sample_prior.Model <- function(
@@ -117,6 +118,7 @@ sample_posterior.Model <- function(
 #'
 #' @template param-model
 #' @template param-n_per_group
+#' @template param-sample
 #' @template param-nsim
 #' @template param-nsim_parameters
 #' @template param-warmup_parameters
@@ -126,7 +128,8 @@ sample_posterior.Model <- function(
 #' @return TODO:
 #'
 #' @export
-sample_predictive <- function(model, n_per_group, sample, nsim, nsim_parameters, warmup_parameters, seed, ...) {
+sample_predictive <- function(model, n_per_group, sample, nsim,
+                              nsim_parameters, warmup_parameters, seed, ...) {
   UseMethod("sample_predictive")
 }
 
@@ -161,23 +164,27 @@ sample_predictive.Model <- function(
 #' If no parameter sample is provided, sample from posterior predictive
 #'
 #' @template param-model
-#' @template param-data-condition
-#' @template param-now
+#' @param data the (multi-state) data frame to impute further trajectories for.
+#' @param sample a stanfit object containing samples. These parameter samples
+#'   represent the parameter distribution over which the predictive distribution
+#'   averages. Technically, the parameters are resampled with replacement from
+#'   this sample to match the desired number of imputations.
 #' @template param-nsim
 #' @template param-nsim_parameters
 #' @template param-warmup_parameters
 #' @template param-seed
 #' @template param-dotdotdot
 #'
-#' @return TODO
+#' @return a data frame with imputed version of the input data.
 #'
 #' @export
-impute_predictive <- function(model, data, sample, nsim, nsim_parameters, warmup_parameters, seed, ...) {
+impute_predictive <- function(model, data, sample, nsim, nsim_parameters,
+                              warmup_parameters, seed, ...) {
   UseMethod("impute_predictive")
 }
 
-
-
+#' @inheritParams impute_predictive
+#' @rdname Model
 #' @export
 impute_predictive.Model <- function(
   model,
@@ -249,12 +256,21 @@ impute_predictive.Model <- function(
 
 
 
-# convert stanfit result to tibble
+#' Convert stanfit sample to data table
+#'
+#' @template param-model
+#' @template param-sample
+#' @template param-dotdotdot
+#'
+#' @return a tibble with the sampled parameters in long format
+#'
 #' @export
 parameter_sample_to_tibble <- function(model, sample, ...) {
   UseMethod("parameter_sample_to_tibble")
 }
 
+#' @inheritParams parameter_sample_to_tibble
+#' @rdname Model
 #' @export
 parameter_sample_to_tibble.Model <- function(model, sample, ...) {
   stop("not implemented")
@@ -305,11 +321,22 @@ data2standata.Model <- function(model, data) {
 
 
 
+#' Swimmer-like plot of multi-state data
+#'
+#' @template param-model
+#' @param data a data table with multi-state data
+#' @param now the current time relative to the start of the trial (sot)
+#' @param relative_to_sot Boolean, should the timeline be relative to the start
+#'   of trial or the start of treatment for each individual
+#' @template param-dotdotdot
+#'
 #' @export
 plot_mstate <- function(model, data, now, relative_to_sot, ...) {
   UseMethod("plot_mstate")
 }
 
+#' @inheritParams plot_mstate
+#' @name Model
 #' @export
 plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
   stop("not implemented")
@@ -321,15 +348,16 @@ plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
 #'
 #' @template param-model
 #' @template param-n_per_group
+#' @template param-dotdotdot
 #'
 #' @export
 generate_visit_data <- function(model, n_per_group, ...) {
   UseMethod("generate_visit_data")
 }
 
-#'
+#' @inheritParams generate_visit_data
+#' @template param-seed
 #' @rdname Model
-#'
 #' @export
 generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
   sample_predictive(model, n_per_group = n_per_group, nsim = 1, seed = seed) %>%
@@ -339,11 +367,30 @@ generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
 
 
 
+#' Sample from the progression-free-survival rate
+#'
+#' Progression-free-survival rate at time t (PFS-t rate) is a function of the
+#' parameters of a given multi-state model. Hence any prior or posterior sample
+#' from such a model gives rise to a sample of the corresponding PFS t rate.
+#'
+#' @template param-model
+#' @param t a vector of time-points at which the PFS rate should be computed
+#' @template param-sample
+#' @template param-warmup
+#' @template param-nsim
+#' @template param-seed
+#' @template param-dotdotdot
+#'
+#' @return a data frame with samples of PFS rates at each of the time points
+#' in the vector t.
+#'
 #' @export
 sample_pfs_rate <- function(model, t, sample, warmup, nsim, seed, ...) {
   UseMethod("sample_pfs_rate")
 }
 
+#' @inheritParams sample_pfs_rate
+#' @rdname Model
 #' @export
 sample_pfs_rate.Model <- function(
   model,

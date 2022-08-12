@@ -52,7 +52,9 @@ Suggests:
     DiagrammeR,
     uuid,
     future,
-    furrr
+    furrr,
+    rjags,
+    xfun
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://boehringer-ingelheim.github.io/oncomsm/

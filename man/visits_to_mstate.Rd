@@ -13,22 +13,18 @@ visits_to_mstate(
 )
 }
 \arguments{
-\item{tbl_visits}{visit data in long format; columns "group_id" (character),
-"subject_id" (character), "t" (numeric, visit time point in months since start of trial),
-"status" (character, S/P/R), and "eof"
-(logical, end of follow-up, is the visit the last visit of the individual?)}
+\item{tbl_visits}{visit data in long format}
 
-\item{cutoff}{maximal visit times to consider - allows retrospective analyses.}
+\item{start_state}{staring state}
 
-\item{event}{character, string encoding an event of interest}
+\item{absorbing_states}{character vector of absorbing states}
 
-\item{nonevent}{character, string encoding a competing event}
+\item{now}{time point since start of trial (might be later than last recorded visit)}
+
+\item{eof_indicator}{state name indicating (exactly observed) eond of follow up.}
 }
 \value{
-A data frame with one row per subject in tbl_visits. columns:
-"group_id", "subject_id", "t_recruitment" (recruitment time since start of trial),
-"dt1" (minimal time since recruitment to event), "dt2" (maximal time since recruitment to event)
-"dt_eof" (time since recruitment to end of follow up)
+A data frame
 }
 \description{
 Convert longitudinal visit data to time-to-event data

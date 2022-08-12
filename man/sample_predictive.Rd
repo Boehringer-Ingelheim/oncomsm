@@ -20,6 +20,8 @@ sample_predictive(
 
 \item{n_per_group}{integer vector with number of individuals per group.}
 
+\item{sample}{a stanfit object with samples from the respective model.}
+
 \item{nsim}{number of samples to draw}
 
 \item{nsim_parameters}{integer, number of parameter samples}

@@ -1,6 +1,32 @@
 #' A Stable-Response-Progression Model
 #'
+#' Create a new instance of an SRP model
+#'
 #' TODO
+#'
+#' @param group_id a character vector with the group ids, these are used to
+#'   check compatibility of data later
+#' @param logodds_mean a vector with the means of the (truncated) normal priors
+#'   on the log-odds of the response probability
+#' @param logodds_sd a vector with the standard deviations of the (truncated)
+#'   normal priors on the log-odds of the response probability
+#' @param median_time_to_next_event_mean a matrix with the means of the
+#'   (truncated) normal priors on the median time to next event for each of the
+#'   Weibull transition probabilities, the (i,j)-th entry is the i-th group
+#'   median time to next event for transition j
+#'   (1=stable-response, 2=stable-progression, 3=response-progression)
+#' @param median_time_to_next_event_sd a matrix with the standard deviations of
+#'   the (truncated) normal priors on the median time to next event for each of
+#'   the Weibull transition probabilities, the (i,j)-th entry is the i-th group
+#'   median time to next event for transition j
+#'   (1=stable-response, 2=stable-progression, 3=response-progression)
+#' @param visit_spacing vector of time differences between visits per group
+#' @param logodds_min lower boundary on the log-odds per group
+#' @param logodds_max upper boundary on the log-odds per group
+#' @param shape_min matrix of lower boundaries of the uniform prior of the
+#'   Weibull distribution per group/transition
+#' @param shape_max matrix of upper boundaries of the uniform prior of the
+#'   Weibull distribution per group/transition
 #'
 #' @name srp_model
 #' @aliases create_srp_model
@@ -250,6 +276,8 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) {
 
 
 
+#' @inheritParams plot_mstate
+#' @name srp_model
 #' @export
 plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), relative_to_sot = TRUE, ...) {
 

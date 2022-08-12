@@ -18,11 +18,12 @@ impute_predictive(
 \arguments{
 \item{model}{a model of class "Model"}
 
-\item{data}{a data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
-where dt1 is the minimal and dt2 the maximal time to the event in question.
-If both are Inf, the individual has not and will never experience the event.
-If dt1 < Inf but dt2 == Inf the individual is still at risk.
-"t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.}
+\item{data}{the (multi-state) data frame to impute further trajectories for.}
+
+\item{sample}{a stanfit object containing samples. These parameter samples
+represent the parameter distribution over which the predictive distribution
+averages. Technically, the parameters are resampled with replacement from
+this sample to match the desired number of imputations.}
 
 \item{nsim}{number of samples to draw}
 
@@ -33,12 +34,9 @@ If dt1 < Inf but dt2 == Inf the individual is still at risk.
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
 \item{...}{further arguments passed to method implementations}
-
-\item{now}{numeric, current time in months since start of trial (might be later than last recorded event);
-if NULL, last recorded event time is used instead}
 }
 \value{
-TODO
+a data frame with imputed version of the input data.
 }
 \description{
 If no parameter sample is provided, sample from posterior predictive

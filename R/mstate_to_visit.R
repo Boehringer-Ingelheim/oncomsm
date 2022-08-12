@@ -1,14 +1,34 @@
+#' Convert data from multi-state to visit format
+#'
+#' This is still experimental since the conversion is not 1:1. The multi-state
+#' representation drops non-changing visits, hence the exact visit data cannot
+#' be recovered form a multi-state representation.
+#'
+#' @template param-model
+#' @template param-tbl_mstate
+#' @template param-dotdotdot
+#'
+#' @details The intermediate visits are reconstructed using the visit spacing
+#' information stored in the model.
+#'
+#' @return A data frame (tibble) in visit format, where each line corresponds to
+#' individual visits.
+#'
 #' @export
 mstate_to_visits <- function(model, tbl_mstate, ...) {
   UseMethod("mstate_to_visits")
 }
 
+#' @inheritParams mstate_to_visits
+#' @rdname Model
 #' @export
 mstate_to_visits.Model <- function(model, tbl_mstate, ...) {
   stop("not implemented")
 }
 
 
+#' @inheritParams mstate_to_visits
+#' @rdname srp_model
 #' @export
 mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
 
@@ -30,7 +50,8 @@ mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
       tbl_mstate %>%
         select(.data$subject_id, .data$group_id, .data$t_sot) %>%
         distinct() %>%
-        mutate(from = starting_state, to = starting_state, t_min = .data$t_sot, t_max = .data$t_sot)
+        mutate(from = starting_state, to = starting_state,
+               t_min = .data$t_sot, t_max = .data$t_sot)
     ) %>%
     arrange(.data$subject_id, .data$t_min, .data$t_max) %>%
     select(-.data$t_sot) %>%
@@ -51,7 +72,10 @@ mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
           if (a == b) {
             res <- tibble(t = ..3, state = ..1)
           } else {
-            res <- tibble(t = seq(..3, max(..3, ..4), length.out = max(2, (..4 - ..3)/visit_spacing)), state = rep(..1, length(t)))
+            res <- tibble(
+              t = seq(..3, max(..3, ..4), length.out = max(2, (..4 - ..3)/visit_spacing)),
+              state = rep(..1, length(t))
+            )
             res$state[nrow(res)] <- ..2
           }
           res
