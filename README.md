@@ -13,9 +13,9 @@
 
 **Tl;dr:** This package implements methods to dynamically predict response 
 and progression of individuals in early oncology trials using parametric
-multi-state models and Bayesian inference. 
+[multi-state models](https://boehringer-ingelheim.github.io/oncomsm/articles/multi-state-model-for-early-oncology.html) and Bayesian inference. 
 This allows the dynamic computation of Probability of Success for a wide 
-range of success criteria.
+range of success criteria. 
 
 
 ## Installation
