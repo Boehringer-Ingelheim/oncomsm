@@ -2,3 +2,6 @@ url: https://boehringer-ingelheim.github.io/oncomsm/
 template:
   bootstrap: 5
 
+structure:
+  left:  [intro, articles, reference, tutorials, news]
+  right: [search, github]

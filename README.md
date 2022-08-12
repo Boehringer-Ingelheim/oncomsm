@@ -26,14 +26,26 @@ remotes::install_github("https://github.com/Boehringer-Ingelheim/oncomsm")
 ```
 
 
-## Background
+## Documentation
 
-...
+The package documentation is hosted [here](https://boehringer-ingelheim.github.io/oncomsm/).
 
-## Compiling from source
+
+## Contributing
+
+### Giving feedback
+
+Even if you do not feel comfortable opening an issue in this repository or even
+a pull request, your feedback and error reports are highly valued.
+Just get in touch with the maintainer directly and try to be specific in 
+describing a potential problem. 
+Feature suggestions etc. are better suited for an issue on GitHub though ;)
+
+
+### Updating stan models
 
 The stan models contained in `inst/stan` are not automatically updated to avoid
-taking a dependency on the `rstantools` package. 
+taking a dependency on the `rstantools` package.  
 After modifying or adding new models, run 
 ```{r}
 rstantools::rstan_config()
