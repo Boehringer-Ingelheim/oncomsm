@@ -11,7 +11,7 @@
 
 # Bayesian multi-state models for oncology
 
-Tl;dr: This package implements methods to dynamically predict response 
+**Tl;dr:** This package implements methods to dynamically predict response 
 and progression of individuals in early oncology trials using parametric
 multi-state models and Bayesian inference. 
 This allows the dynamic computation of Probability of Success for a wide 
