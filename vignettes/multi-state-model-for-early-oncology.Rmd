@@ -1,5 +1,5 @@
 ---
-title: "Multi-State Models for Early Oncology"
+title: "Multi-State Models for Oncology"
 author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 vignette: >

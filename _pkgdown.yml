@@ -2,6 +2,14 @@ url: https://boehringer-ingelheim.github.io/oncomsm/
 template:
   bootstrap: 5
 
+development:
+  mode: auto
+
 structure:
-  left:  [intro, articles, reference, tutorials, news]
+  left:  [intro, multistate, articles, reference, news]
   right: [search, github]
+
+components:
+  multistate:
+    text: "Multi-State Models for Oncology"
+    href: articles/multi-state-model-for-early-oncology.html
