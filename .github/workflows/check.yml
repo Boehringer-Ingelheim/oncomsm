@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
 
-name: R-CMD-check
+name: R-CMD-check-linux
 
 jobs:
   R-CMD-check:
@@ -19,8 +19,6 @@ jobs:
       matrix:
         config:
           - {os: ubuntu-latest,   r: 'release'}
-          - {os: windows-latest,   r: 'release'}
-
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
