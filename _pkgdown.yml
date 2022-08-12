@@ -3,7 +3,7 @@ template:
   bootstrap: 5
 
 development:
-  mode: auto
+  mode: release
 
 structure:
   left:  [intro, articles, reference, news]
