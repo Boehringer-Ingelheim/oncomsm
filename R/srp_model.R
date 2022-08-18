@@ -400,11 +400,15 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
     tidyr::pivot_wider(names_from = .data$parameter, values_from = .data$value) %>%
     tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
     mutate(
-      pdf = stats::pweibull(.data$dt, shape = .data$shape, scale = .data$scale)
+      survival = 1 - stats::pweibull(.data$dt, shape = .data$shape, scale = .data$scale)
     ) %>%
     group_by(.data$group_id, .data$transition, .data$dt) %>%
-    summarize(pdf = mean(.data$pdf), .groups = "drop") %>%
-    filter(is.finite(.data$pdf)) %>%
+    summarize(
+      survival = mean(.data$survival), .groups = "drop"
+    ) %>%
+    filter(
+      is.finite(.data$survival)
+    ) %>%
     mutate(
       transition = case_when(
         .data$transition == 1 ~ "stable to response",
@@ -414,14 +418,15 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
       factor(levels = c("stable to response", "stable to progression", "response to progression"))
     ) %>%
     ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(.data$dt, .data$pdf, color = .data$group_id)) +
-      ggplot2::labs(x = "time to next event", y = "CDF") +
+      ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival, color = .data$group_id)) +
+      ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
       ggplot2::scale_color_discrete("") +
+      ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1)) +
       ggplot2::facet_wrap(~.data$transition, nrow = 1) +
-      ggplot2::theme_bw() +
       ggplot2::theme(
         legend.position = "top",
-        panel.grid.minor = ggplot2::element_blank()
+        panel.grid.minor = ggplot2::element_blank(),
+        panel.spacing = ggplot2::unit(1.5, "lines")
       )
   # plot response probability
   p2 <- sample %>%
@@ -429,8 +434,9 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
     ggplot2::ggplot() +
       ggplot2::stat_ecdf(ggplot2::aes(.data$value, color = .data$group_id), geom = "line") +
       ggplot2::coord_cartesian(xlim = c(0, 1)) +
-      ggplot2::labs(x = "response probability", y = "ECDF") +
-      ggplot2::theme_bw() +
+      ggplot2::labs(x = "response probability", y = "CDF") +
+      ggplot2::scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1), expand = c(0, 0)) +
+      ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1)) +
       ggplot2::theme(
         legend.position = "none",
         panel.grid.minor = ggplot2::element_blank()
