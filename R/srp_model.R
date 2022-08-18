@@ -485,8 +485,8 @@ sample_pfs_rate.srp_model <- function(
       pfs = purrr::pmap_dbl(
         list(.data$pr_response, .data$scale_1, .data$scale_2, .data$scale_3, .data$shape_1, .data$shape_2, .data$shape_3, t),
         function(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t) {
-          pr_progression_t <- pr_response * pr_indirect_progression(shape_1, shape_2, scale_1, scale_2, t) +
-            (1 - pr_response) * pr_direct_progression(shape_3, scale_3, t)
+          pr_progression_t <- pr_response * pr_indirect_progression(shape_1, shape_3, scale_1, scale_3, t) +
+            (1 - pr_response) * pr_direct_progression(shape_2, scale_2, t)
           return(1 - pr_progression_t)
         }
       )
