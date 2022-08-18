@@ -139,8 +139,7 @@ tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12, 18), sample = smpl_prior) %>%
 ggplot(tbl_pfs_rates) +
   geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
   scale_color_discrete("") +
-  labs(x = "t", y = "Pr[no death or progression before t]") +
-  theme_bw()
+  labs(x = "t", y = "Pr[no death or progression before t]")
 ```
 
 

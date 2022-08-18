@@ -278,8 +278,7 @@ tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12), sample = smpl_prior) %>%
 ggplot(tbl_pfs_rates) +
   geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
   scale_color_discrete("") +
-  labs(x = "t", y = "Pr[no death or progression before t]") +
-  theme_bw()
+  labs(x = "t", y = "Pr[no death or progression before t]")
 ```
 
 The distribution of the PFS time might also be of interest.
@@ -320,7 +319,6 @@ ggplot(tbl_pfs_times) +
   coord_cartesian(xlim = c(0, 36)) + 
   scale_color_discrete("") + 
   labs(y = "Pr[no progression or death before t]") +
-  theme_bw() +
   theme(
     panel.grid.minor = element_blank()
   )

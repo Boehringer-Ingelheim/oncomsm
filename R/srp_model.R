@@ -374,7 +374,6 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), rela
     ggplot2::labs(x = if (relative_to_sot) "Time since SoT" else "Time since first SoT", y = "Subject ID") +
     ggplot2::scale_color_discrete("") +
     ggplot2::facet_wrap(~.data$`Group ID`, ncol = 1, labeller = ggplot2::label_both, strip.position = "right", scales = "free_y") +
-    ggplot2::theme_bw() +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_text(size = 5),
