@@ -281,47 +281,24 @@ ggplot(tbl_pfs_rates) +
   labs(x = "t", y = "Pr[no death or progression before t]")
 ```
 
-The distribution of the PFS time might also be of interest.
-Currently, the best way to obtain this, is via a prior predictive sample.
-It might make sense to reduce the visit_spacing to get more precise measurements 
-of the transition times though.
+This concept can be extended to the entire survival function of PFS but
+computing the PFS rate at several time steps for a parameter sample and then
+integrating over the parameter distribution.
 
 ```{r}
-# copy model object
-mdl_tmp <- mdl
-# adjust visit spacing
-attr(mdl_tmp, "visit_spacing") <- c(1/30, 1/30)
-
-tbl_prior_predictive_2 <- sample_predictive(
-  mdl_tmp, 
-  sample = smpl_prior,
-  n_per_group = c(1L, 1L), # we only need one per arm here
-  nsim = 1000, 
-  seed = 3423423
-)
-
-rm(mdl_tmp) # clean up
-
-# compute PFS 
-tbl_pfs_times <- tbl_prior_predictive_2 %>% 
-  # interval censoring can be ignored her, average to exact time
-  mutate(
-    t = (t_min + t_max) / 2
+tbl_pfs_survival <- sample_pfs_rate(
+    mdl, 
+    t = seq(0.5, 24, by = 0.5), 
+    sample = smpl_prior
   ) %>% 
-  # no need to group by subject since only one per iteration and group
-  group_by(iter, group_id) %>% 
-  summarize(
-    t = max(t[to == "progression"]), .groups = "drop"
-  )
+  # integrate over prior sample
+  group_by(group_id, t) %>% 
+  summarize(pfs = mean(pfs), .groups = "drop")
 
-ggplot(tbl_pfs_times) +
-  stat_ecdf(aes(t, color = group_id), geom = "line") +
-  coord_cartesian(xlim = c(0, 36)) + 
-  scale_color_discrete("") + 
-  labs(y = "Pr[no progression or death before t]") +
-  theme(
-    panel.grid.minor = element_blank()
-  )
+ggplot(tbl_pfs_survival) +
+  geom_line(aes(x = t, y = pfs, color = group_id)) +
+  scale_color_discrete("") +
+  labs(x = "t", y = "Pr[no death or progression before t]")
 ```
 
 

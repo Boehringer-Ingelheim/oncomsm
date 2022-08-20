@@ -301,15 +301,16 @@ tbl_results_bhmbasket %>%
 
 # Computing dynamic Probability of Success
 
-The Bayesian framework has two distinct advantages when applied in an early
-setting. 
+todo.
 
-```{r, eval=JAGS_FOUND}
+```{r, eval=JAGS_FOUND, warning=FALSE}
 recruitment_rate_overall <- 3
+
+# sample from predictive and then reduce to t = 10
 tbl_interim <- sample_predictive(
     mdl, 
     sample = smpl_prior,
-    n_per_group = c(30L, 30L), 
+    n_per_group = c(30L, 30L, 30L), 
     nsim = 250, 
     seed = 3423423
   ) %>% 
@@ -343,12 +344,14 @@ tbl_interim_sample_sizes <- tbl_interim %>%
   group_by(group_id) %>% 
   summarize(n = n())
 
+# posterior inference based on the interim data
 smpl_posterior <- sample_posterior(
   mdl, 
   tbl_interim, 
   nsim = 2000, warmup = 250, seed = 76947
 )
 
+# need to create initial visits for to-be-recruited individuals
 tbl_to_be_recruited <- tibble(
     group_id = tbl_interim_sample_sizes$group_id,
     n_to_be_recruited = 30 - tbl_interim_sample_sizes$n  
@@ -375,14 +378,36 @@ tbl_to_be_recruited <- tibble(
     t_max = Inf # right censored
   )
 
+# combine data
 tbl_mstate_interim_forward <- bind_rows(tbl_interim, tbl_to_be_recruited)
 
+# MI using interim posterior
 tbl_posterior_predictive <- impute_predictive(
     mdl,
     data = tbl_mstate_interim_forward, 
     sample = smpl_posterior,
-    nsim = 100
-  )
+    nsim = 250
+  ) %>% 
+  group_by(iter) %>% 
+  tidyr::nest()
 
-tbl_posterior_predictive
+tbl_pos <- xfun::cache_rds({ 
+  
+  tbl_posterior_predictive %>%
+    ungroup() %>% 
+    mutate(
+      res = furrr::future_map(
+        data, eval_phi_3,
+        .options = furrr::furrr_options(seed = TRUE)
+      )
+    ) %>% 
+    select(-data) %>% 
+    tidyr::unnest(res) %>% 
+    group_by(group_id) %>% 
+    summarize(pos = mean(phi_3))
+  
+}, dir = ".cache/", file = "sim_pos.rds") # end caching
+
+
+tbl_pos
 ```
