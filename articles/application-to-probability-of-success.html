@@ -309,13 +309,15 @@
 <div class="section level2">
 <h2 id="computing-dynamic-probability-of-success">Computing dynamic Probability of Success<a class="anchor" aria-label="anchor" href="#computing-dynamic-probability-of-success"></a>
 </h2>
-<p>The Bayesian framework has two distinct advantages when applied in an early setting.</p>
+<p>todo.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">recruitment_rate_overall</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
+<span></span>
+<span><span class="co"># sample from predictive and then reduce to t = 10</span></span>
 <span><span class="va">tbl_interim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>, </span>
 <span>    sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
-<span>    n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30L</span>, <span class="fl">30L</span><span class="op">)</span>, </span>
+<span>    n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30L</span>, <span class="fl">30L</span>, <span class="fl">30L</span><span class="op">)</span>, </span>
 <span>    nsim <span class="op">=</span> <span class="fl">250</span>, </span>
 <span>    seed <span class="op">=</span> <span class="fl">3423423</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
@@ -350,12 +352,14 @@
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># posterior inference based on the interim data</span></span>
 <span><span class="va">smpl_posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span></span>
 <span>  <span class="va">mdl</span>, </span>
 <span>  <span class="va">tbl_interim</span>, </span>
 <span>  nsim <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">76947</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># need to create initial visits for to-be-recruited individuals</span></span>
 <span><span class="va">tbl_to_be_recruited</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    group_id <span class="op">=</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">group_id</span>,</span>
 <span>    n_to_be_recruited <span class="op">=</span> <span class="fl">30</span> <span class="op">-</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">n</span>  </span>
@@ -382,31 +386,44 @@
 <span>    t_max <span class="op">=</span> <span class="cn">Inf</span> <span class="co"># right censored</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
+<span><span class="co"># combine data</span></span>
 <span><span class="va">tbl_mstate_interim_forward</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">tbl_interim</span>, <span class="va">tbl_to_be_recruited</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># MI using interim posterior</span></span>
 <span><span class="va">tbl_posterior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/impute_predictive.html">impute_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">tbl_mstate_interim_forward</span>, </span>
 <span>    sample <span class="op">=</span> <span class="va">smpl_posterior</span>,</span>
-<span>    nsim <span class="op">=</span> <span class="fl">100</span></span>
-<span>  <span class="op">)</span></span>
+<span>    nsim <span class="op">=</span> <span class="fl">250</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">iter</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/nest.html" class="external-link">nest</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">tbl_posterior_predictive</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7,807 × 8</span></span></span>
-<span><span class="co">#&gt;    subject_id                       group…¹ from  to     t_min t_max t_sot  iter</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… prog… 14.7   15.9  0.231     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… prog…  0.264  1.46 0.231     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… prog… 11.1   12.3  0.231     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… resp…  1.46   2.66 0.231     4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 2fe5c666-b261-41fb-932f-7077f72… B       resp… prog… 11.1   12.3  0.231     4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… resp…  0.264  1.46 0.231     5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 2fe5c666-b261-41fb-932f-7077f72… B       resp… prog…  7.46   8.66 0.231     5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… prog…  3.86   5.06 0.231     6</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… prog…  5.06   6.26 0.231     7</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 2fe5c666-b261-41fb-932f-7077f72… B       stab… prog… 15.9   17.1  0.231     8</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 7,797 more rows, and abbreviated variable name ¹​group_id</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ Use `print(n = ...)` to see more rows</span></span></span></code></pre></div>
+<span><span class="va">tbl_pos</span> <span class="op">&lt;-</span> <span class="fu">xfun</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/xfun/man/cache_rds.html" class="external-link">cache_rds</a></span><span class="op">(</span><span class="op">{</span> </span>
+<span>  </span>
+<span>  <span class="va">tbl_posterior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>      res <span class="op">=</span> <span class="fu">furrr</span><span class="fu">::</span><span class="fu"><a href="https://furrr.futureverse.org/reference/future_map.html" class="external-link">future_map</a></span><span class="op">(</span></span>
+<span>        <span class="va">data</span>, <span class="va">eval_phi_3</span>,</span>
+<span>        .options <span class="op">=</span> <span class="fu">furrr</span><span class="fu">::</span><span class="fu"><a href="https://furrr.futureverse.org/reference/furrr_options.html" class="external-link">furrr_options</a></span><span class="op">(</span>seed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">data</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/nest.html" class="external-link">unnest</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">phi_3</span><span class="op">)</span><span class="op">)</span></span>
+<span>  </span>
+<span><span class="op">}</span>, dir <span class="op">=</span> <span class="st">".cache/"</span>, file <span class="op">=</span> <span class="st">"sim_pos.rds"</span><span class="op">)</span> <span class="co"># end caching</span></span>
+<span></span>
+<span></span>
+<span><span class="va">tbl_pos</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
+<span><span class="co">#&gt;   group_id   pos</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.356</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.12 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.468</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
