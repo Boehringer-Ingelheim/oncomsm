@@ -1,6 +1,7 @@
 ---
 title: "Multi-State Models for Oncology"
 author: "Kevin Kunzmann"
+bibliography: references.bib
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{multi-state-model-for-early-oncology}
@@ -80,12 +81,13 @@ graph LR
 
 Coming back to the simpler model, there is still a competing event issue when
 starting from 'stable'.
-Often, the convenient hazard-based approach is used to model multistate 
+Often, the convenient hazard-based approach is used to model multi-state 
 situations like this. The hazard-based approach is intuitive, especially when 
-considering non-parametric estimation, and co variate inclusion is well-understood.
-However, a hazard-based approach has several disadvantages:
+considering non-parametric estimation, and co variate inclusion is 
+well-understood. However, a hazard-based approach has several disadvantages:
 
-1. The hazard scale is difficult to interpret since it is a momentary risk, not a probability. 
+1. The hazard scale is difficult to interpret since it is a momentary risk, 
+not a probability. 
 This leads to problems with prior specification in a Bayesian setting.
 The Bayesian approach is, however, particularly useful in the early development 
 process since it allows to augment data with prior opinion or evidence and thus 
@@ -98,11 +100,11 @@ transition probabilities a or of primary interest. Since the (objective) respons
 rate often plays an important role in the analysis of early oncology trials,
 this is a disadvantage. 
 
-An alternative framework to model multi-state data is using mixture models.
-For details, see {ref} [link to flexsurv and covid paper].
+An alternative framework to model multi-state data are mixture models.
+For details, see @jackson_comparison_2022 and @jackson_flexible_2022.
 Here, we describe the concrete application to he simplified "stable", 
 "response", "progression" model.
-The approach is similar to [gaelle paper].
+The approach is similar to @aubel_bayesian_2021.
 
 Assuming that the transition process can be described as a semi-Markov process
 is one way of rendering modeling tractable. 
@@ -114,45 +116,42 @@ This parametric family encompasses the exponential distribution with constant
 transition rates as special cases but also allows increasing or decreasing 
 hazards over time. 
 
-Transition 2 is fully characterized by the corresponding Weibull distribution
-since there is no competing event.
-Let $\tau_i,\ i\in\{1,2,3\}$ be the respective transition times 
-($\tau_i=\infty$ means that the transition does not occur) and $R$ a
-binary random variable with $R=1$ if a response occurs, then the model
-can be specified as:
+Let $\tau_{S}$ be the transition time from the "stable" state and
+$\tau_{R}$ the transition tome from the "response" state (also "sojourn" times).
+Let further $R$ be a binary random variable with $R=1$ if a response occurs, 
+then the model can be specified as:
 
 $$
 \begin{align}
 R &\sim \operatorname{Bernoulli}(p) \\
-\tau_1 \,|\, R = 1 &\sim \operatorname{Weibull}(shape[1], scale[1]) \\
-\tau_1 \,|\, R = 0 &\sim \delta_{\infty} \\
-\tau_2 \,|\, R = 0 &\sim \operatorname{Weibull}(shape[2], scale[2]) \\
-\tau_2 \,|\, R = 1 &\sim \delta_{\infty} \\
-\tau_3 &\sim \operatorname{Weibull}(shape[3], scale[3]) 
+\tau_{S} \,|\, R = 1 &\sim \operatorname{Weibull}(shape[1], scale[1]) \\
+\tau_{S} \,|\, R = 0 &\sim \operatorname{Weibull}(shape[3], scale[3]) \\
+\tau_{R} &\sim \operatorname{Weibull}(shape[2], scale[2]) \ .
 \end{align}
 $$
-where $\delta_{\infty}$ is a point measure at infinity. 
 Let further $f_i(t)$ be the PDF of the Weibull distribution of transition 
 $i\in\{1,2,3\}$ as indicated in the above figure and let $F_i(t)$ the 
 corresponding CDF.
 This model implies that 
 $$
-\operatorname{Pr}\big[\,\tau_1 > t \text{ and } \tau_3 > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_3(t))\\
+\operatorname{Pr}\big[\,\tau_{S} > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_3(t))\\
 $$
 hence, it can be seen as a mixture model. 
 
-Instead of parameterizing the Weibull distributions directly via shape and scale,
-shape and median-time-to-next-event are used.
+The median of a Weibull-distributed random variable is directly related to 
+shape and scale parameters.
+Since the former is more convenient to interpret, the Weibull distributions are
+parameterized directly via their shape and median.
 The scale parameter can then be recovered via the relationship 
 
 $$
-\operatorname{scale} = \frac{\operatorname{median-time-to-next-event}}{\log(2)^{1/\operatorname{shape}}} . 
+\operatorname{scale} = \frac{\operatorname{median}}{\log(2)^{1/\operatorname{shape}}} . 
 $$
 
 The following priors are used:
 
 1. a normal prior for the log-odds of response $\operatorname{logit}(p) \sim \mathcal{N}(\mu_p,\sigma_p^2)$
-2. a truncated normal prior for the median-time-to-next-event of each transition $\operatorname{median-time-to-next-event}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)$
+2. a truncated normal prior for the median of each transition $\operatorname{median}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)$
 3. a flat prior on the shape of each transition $\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i. n_i)$
 4. it is assumed that the observation process (visit spacing) is fixed, e.g. every 6 weeks. This is irrelevant for inference, but important for sampling forward from the model since it cannot be assumed that transition times are observed exactly but only at the regular visits. 
 
@@ -212,6 +211,8 @@ automatically.
 smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
 
 plot(mdl, dt = c(0, 36), sample = smpl_prior)
+
+# TODO: add a plot for progression free survival
 ```
 
 Next, we draw samples from the prior-predictive distribution of the model.
@@ -249,6 +250,8 @@ plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
 
 
 ## Analyzing progression-free-survival
+
+TODO: the plot can go in the standard summary plot
 
 Often, the rate of progression free survival (PFS) at a particular time point 
 is of interest. 
