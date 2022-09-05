@@ -392,9 +392,9 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("the patchwork package is required to plot SRP models")
   }
-  sample <- parameter_sample_to_tibble(x, sample)
+  tbl_sample <- parameter_sample_to_tibble(x, sample)
   # plot transition times
-  p1 <- sample %>%
+  p1 <- tbl_sample %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
     tidyr::pivot_wider(names_from = .data$parameter, values_from = .data$value) %>%
     tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
@@ -428,7 +428,7 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
         panel.spacing = ggplot2::unit(1.5, "lines")
       )
   # plot response probability
-  p2 <- sample %>%
+  p2 <- tbl_sample %>%
     filter(.data$parameter == "p") %>%
     ggplot2::ggplot() +
       ggplot2::stat_ecdf(ggplot2::aes(.data$value, color = .data$group_id), geom = "line") +
@@ -440,11 +440,29 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
         legend.position = "none",
         panel.grid.minor = ggplot2::element_blank()
       )
+  # plot pfs
+  tbl_pfs_survival <- sample_pfs_rate(
+      x,
+      t = seq(0.5, dt[2], length.out = n_grid), # ToDo: make sure this works from 0
+      sample = sample
+    ) %>%
+    # integrate over prior sample
+    group_by(group_id, t) %>%
+    summarize(pfs = mean(pfs), .groups = "drop")
+  p3 <- ggplot2::ggplot(tbl_pfs_survival) +
+    ggplot2::geom_line(aes(x = t, y = pfs, color = group_id)) +
+    ggplot2::labs(x = "time", y = "PFS") +
+    ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1)) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.minor = ggplot2::element_blank()
+    )
   design <- "
   111
-  223
+  234
   "
-  p1 + p2 + patchwork::guide_area() + patchwork::plot_layout(design = design, guides = "collect")
+  p1 + p2 + p3 + patchwork::guide_area() +
+    patchwork::plot_layout(design = design, guides = "collect")
 }
 
 
