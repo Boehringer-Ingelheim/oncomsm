@@ -53,10 +53,17 @@ create_srp_model <- function(
   attr(mdl, "states") <- c("stable", "response", "progression")
   attr(mdl, "visit_spacing") <- as.array(visit_spacing)
   attr(mdl, "stanmodel") <- stanmodels[["srp_model"]]
-  attr(mdl, "parameter_names") <- c("p", "shape", "scale", "median_time_to_next_event")
+  attr(mdl, "parameter_names") <- c("p", "shape", "scale",
+                                    "median_time_to_next_event")
   class(mdl) <- c("srp_model", "Model", class(mdl))
+  is_valid(mdl)
   return(mdl)
 }
+
+is_valid.srp_model <- function(mdl){
+  print("hello world!")
+}
+
 
 
 

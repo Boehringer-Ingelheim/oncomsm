@@ -15,9 +15,15 @@ NULL
 format.Model <- function(x, ...) class(x)[1]
 print.Model <- function(x, ...) cat(format(x, ...), "\n")
 
+# Checks for internal consistency of object "Model"
+# Returns TRUE if consistent, otherwise throws an error
+is_valid <- function(model) {
+  UseMethod("is_valid")
+}
 
-
-
+is_valid.Model <- function(model){
+  stop("Not implemented")
+}
 
 #' Sample model prior parameters
 #'
