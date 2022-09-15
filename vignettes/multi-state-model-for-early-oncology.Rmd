@@ -57,8 +57,8 @@ The respective transition numbers are given in the graph below.
 DiagrammeR::mermaid("
 graph LR
   stable -- 1 --> response
-  response -- 2 --> progression[progression or death]
-  stable -- 3 --> progression[progression or death]
+  response -- 3 --> progression[progression or death]
+  stable -- 2 --> progression[progression or death]
 ", height = 200)
 ```
 
@@ -71,11 +71,11 @@ simplifies analysis greatly over a model like the one below:
 DiagrammeR::mermaid("
 graph LR
   stable -- 1 --> response
-  response -- 2a --> progression
-  response -- 2b --> death
+  response -- 3a --> progression
+  response -- 3b --> death
   progression -- 4 --> death
-  stable -- 3a --> progression
-  stable -- 3b --> death
+  stable -- 2a --> progression
+  stable -- 2b --> death
 ", height = 200)
 ```
 
@@ -124,17 +124,18 @@ then the model can be specified as:
 $$
 \begin{align}
 R &\sim \operatorname{Bernoulli}(p) \\
-\tau_{S} \,|\, R = 1 &\sim \operatorname{Weibull}(shape[1], scale[1]) \\
-\tau_{S} \,|\, R = 0 &\sim \operatorname{Weibull}(shape[3], scale[3]) \\
-\tau_{R} &\sim \operatorname{Weibull}(shape[2], scale[2]) \ .
+\tau_{S} \,|\, R = 1 &\sim \operatorname{Weibull}(k[1], \lambda[1]) \\
+\tau_{S} \,|\, R = 0 &\sim \operatorname{Weibull}(k[2], \lambda[2]) \\
+\tau_{R}             &\sim \operatorname{Weibull}(k[3], \lambda[3])
 \end{align}
 $$
+where $k$ is the vector of shape- and $\lambda$ the vector of scale parameters.
 Let further $f_i(t)$ be the PDF of the Weibull distribution of transition 
 $i\in\{1,2,3\}$ as indicated in the above figure and let $F_i(t)$ the 
 corresponding CDF.
 This model implies that 
 $$
-\operatorname{Pr}\big[\,\tau_{S} > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_3(t))\\
+\operatorname{Pr}\big[\,\tau_{S} > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_2(t))\\
 $$
 hence, it can be seen as a mixture model. 
 
@@ -152,7 +153,7 @@ The following priors are used:
 
 1. a normal prior for the log-odds of response $\operatorname{logit}(p) \sim \mathcal{N}(\mu_p,\sigma_p^2)$
 2. a truncated normal prior for the median of each transition $\operatorname{median}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)$
-3. a flat prior on the shape of each transition $\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i. n_i)$
+3. a flat prior on the shape of each transition $\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i, b_i)$
 4. it is assumed that the observation process (visit spacing) is fixed, e.g. every 6 weeks. This is irrelevant for inference, but important for sampling forward from the model since it cannot be assumed that transition times are observed exactly but only at the regular visits. 
 
 We treat recruitment times as independent of outcome. 
