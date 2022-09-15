@@ -483,15 +483,16 @@ sample_pfs_rate.srp_model <- function(
     )
   }
   sample <- parameter_sample_to_tibble(model, sample)
-  pr_direct_progression <- function(shape_3, scale_3, t) {
-    return(stats::pweibull(t, shape_3, scale_3))
+  pr_direct_progression <- function(shape_2, scale_2, t) {
+    return(stats::pweibull(t, shape_2, scale_2))
   }
-  pr_indirect_progression <- function(shape_1, shape_2, scale_1, scale_2, t) {
+  pr_indirect_progression <- function(shape_1, shape_3, scale_1, scale_3, t) {
     # need to integrate over response time
     integrand <- function(t_response) {
-      stats::dweibull(t_response, shape_1, scale_1) * stats::pweibull(t - t_response, shape_2, scale_2)
+      stats::dweibull(t_response, shape_1, scale_1) *
+        stats::pweibull(t - t_response, shape_3, scale_3)
     }
-    # can reduce absolute tolerance substantially - doesn't matter for probabilities
+    # can reduce absolute tolerance substantially ok for probabilities
     res <- stats::integrate(
       integrand, lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
     )
@@ -499,21 +500,32 @@ sample_pfs_rate.srp_model <- function(
   }
   tbl_pfs <- sample %>%
     # pivot parameters
-    tidyr::pivot_wider(names_from = c(.data$parameter, .data$transition), values_from = .data$value) %>%
+    tidyr::pivot_wider(
+      names_from = c(.data$parameter, .data$transition),
+      values_from = .data$value
+    ) %>%
     rename(pr_response = .data$p_NA) %>%
     # cross with time points
     tidyr::expand_grid(t = t) %>%
     # compute PFS before t
     mutate(
       pfs = purrr::pmap_dbl(
-        list(.data$pr_response, .data$scale_1, .data$scale_2, .data$scale_3, .data$shape_1, .data$shape_2, .data$shape_3, t),
-        function(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t) {
-          pr_progression_t <- pr_response * pr_indirect_progression(shape_1, shape_3, scale_1, scale_3, t) +
+        list(
+          .data$pr_response,
+          .data$scale_1, .data$scale_2, .data$scale_3,
+          .data$shape_1, .data$shape_2, .data$shape_3,
+          t
+        ),
+        function(pr_response, scale_1, scale_2, scale_3, shape_1,
+                 shape_2, shape_3, t) {
+          pr_progression_t <- pr_response *
+            pr_indirect_progression(shape_1, shape_3, scale_1, scale_3, t) +
             (1 - pr_response) * pr_direct_progression(shape_2, scale_2, t)
           return(1 - pr_progression_t)
         }
       )
     ) %>%
-    select(.data$iter, .data$group_id, .data$t, .data$pfs) # only keep interesting stuff
+    # only keep interesting stuff
+    select(.data$iter, .data$group_id, .data$t, .data$pfs)
   return(tbl_pfs)
 }
