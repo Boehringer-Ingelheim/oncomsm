@@ -60,20 +60,28 @@ create_srp_model <- function(
   return(mdl)
 }
 
-is_valid.srp_model <- function(mdl){
-  stopifnot(mdl$logodds_mean[1]<mdl$logodds_max[1] )
-  stopifnot(mdl$logodds_mean[2]<mdl$logodds_max[2] )
-    #stop("Invalid Arguments")
-  assert_vector(mdl$logodds_mean,len=3, any.missing = FALSE, .var.name = 'logodds_mean')
-  assert_vector(mdl$logodds_sd,len=3, any.missing = FALSE, .var.name = 'logodds_mean')
-  assert_array(mdl$median_time_to_next_event_mean,d=2, any.missing = FALSE, .var.name = 'median_time_to_next_event_mean')
-  assert_array(mdl$median_time_to_next_event_sd,d=2, any.missing = FALSE, .var.name = 'median_time_to_next_event_sd')
-  assert_vector(mdl$median_time_to_next_event_sd,len=6, any.missing = FALSE, .var.name = 'median_time_to_next_event_sd')
-  assert_vector(mdl$median_time_to_next_event_mean,len=6, any.missing = FALSE, .var.name = 'median_time_to_next_event_mean')
-  print("hello world!")
+#' @import checkmate
+is_valid.srp_model <- function(mdl) { # nolint
+  # add double qoutes
+  # remove mdl$
+  with(mdl, {
+    stopifnot(logodds_mean[1] < logodds_max[1])
+    stopifnot(logodds_mean[2] < logodds_max[2])
+    checkmate::assert_vector(logodds_mean, len = 2, any.missing = FALSE,
+                             .var.name = "logodds_mean")
+    checkmate::assert_vector(logodds_sd, len = 2, any.missing = FALSE,
+                             .var.name = "logodds_mean")
+    checkmate::assert_array(median_time_to_next_event_mean, d = 2,
+                            any.missing = FALSE, .var.name = "median_time_to_next_event_mean") # nolint
+    checkmate::assert_array(median_time_to_next_event_sd, d = 2,
+                            any.missing = FALSE, .var.name = "median_time_to_next_event_sd") # nolint
+    checkmate::assert_vector(median_time_to_next_event_sd, len = 6,
+                             any.missing = FALSE, .var.name = "median_time_to_next_event_sd") # nolint
+    checkmate::assert_vector(median_time_to_next_event_mean, len = 6,
+                             any.missing = FALSE, .var.name = "median_time_to_next_event_mean") # nolint
+  })
+  return(TRUE)
 }
-
-
 
 
 

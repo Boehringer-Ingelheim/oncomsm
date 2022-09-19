@@ -34,7 +34,8 @@ Imports:
     tidyr (>= 1.1),
     purrr (>= 0.3),
     stringr,
-    ggplot2
+    ggplot2,
+    checkmate
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
