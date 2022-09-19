@@ -90,40 +90,38 @@
 <p><strong>tl;dr:</strong> <em>Tumor response data is often treated as binary endpoint in early oncology trials (objective response or progression free survival at x months). This ignores the fact that these are time-to-event endpoints. Instead, the multi-state characteristics of the data can be exploited to reduce bias at interim analyses and drive event prediction for probability of success calculations.</em></p>
 <p>In early oncology trials, (objective tumor) response based on the RECIST criteria is often used as primary endpoint to establish the activity of a treatment. Response is often treated as binary variable although it is a delayed event endpoint. At the final analysis, this simplification is of little concern since all individuals tend to be followed up long enough to justify the assumption that non-responders are unlikely to still become responders. This approach is often plausible since individuals with tumors not responding to treatment ultimately progress. However, when continuously monitoring such a trial, the assumption of sufficient follow-up is no longer fulfilled and a simple binary analysis may be biased.</p>
 <p>In this vignette, the problem is addressed by extending the statistic binary response model to a three-state model for “stable”, “response”, and “progression or death”. The respective transition numbers are given in the graph below.</p>
-<div id="htmlwidget-63bd5bc7fd149d791c98" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-63bd5bc7fd149d791c98">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 2 --> progression[progression or death]\n  stable -- 3 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Once someone becomes a responder, this model only allows a transition to the combined progression or death state. This means that progression and death are not modeled as competing events and simplifies analysis greatly over a model like the one below:</p>
-<div id="htmlwidget-12d9c354d7ee122c28f4" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-12d9c354d7ee122c28f4">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 2a --> progression\n  response -- 2b --> death\n  progression -- 4 --> death\n  stable -- 3a --> progression\n  stable -- 3b --> death\n"},"evals":[],"jsHooks":[]}</script><p>Coming back to the simpler model, there is still a competing event issue when starting from ‘stable’. Often, the convenient hazard-based approach is used to model multistate situations like this. The hazard-based approach is intuitive, especially when considering non-parametric estimation, and co variate inclusion is well-understood. However, a hazard-based approach has several disadvantages:</p>
+<div id="htmlwidget-4eb854b0fd1dbe61b347" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4eb854b0fd1dbe61b347">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Once someone becomes a responder, this model only allows a transition to the combined progression or death state. This means that progression and death are not modeled as competing events and simplifies analysis greatly over a model like the one below:</p>
+<div id="htmlwidget-fc1066868d84cb274677" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-fc1066868d84cb274677">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3a --> progression\n  response -- 3b --> death\n  progression -- 4 --> death\n  stable -- 2a --> progression\n  stable -- 2b --> death\n"},"evals":[],"jsHooks":[]}</script><p>Coming back to the simpler model, there is still a competing event issue when starting from ‘stable’. Often, the convenient hazard-based approach is used to model multi-state situations like this. The hazard-based approach is intuitive, especially when considering non-parametric estimation, and co variate inclusion is well-understood. However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a momentary risk, not a probability. This leads to problems with prior specification in a Bayesian setting. The Bayesian approach is, however, particularly useful in the early development process since it allows to augment data with prior opinion or evidence and thus improve accuracy.</p></li>
 <li><p>A hazard based, non-Markov multi-state model leads to intractable expressions for the implicitly given transition probabilities. Hence they need to be calculated by simulation which makes the model less convenient to work with if transition probabilities a or of primary interest. Since the (objective) response rate often plays an important role in the analysis of early oncology trials, this is a disadvantage.</p></li>
 </ol>
-<p>An alternative framework to model multi-state data is using mixture models. For details, see {ref} [link to flexsurv and covid paper]. Here, we describe the concrete application to he simplified “stable”, “response”, “progression” model. The approach is similar to [gaelle paper].</p>
+<p>An alternative framework to model multi-state data are mixture models. For details, see <span class="citation">Jackson et al. (2022)</span> and <span class="citation">Jackson (2022)</span>. Here, we describe the concrete application to he simplified “stable”, “response”, “progression” model. The approach is similar to <span class="citation">Aubel et al. (2021)</span>.</p>
 <p>Assuming that the transition process can be described as a semi-Markov process is one way of rendering modeling tractable. This means that the time to the next transition only depends on the time already spent in a state, not on prior jumps. Additionally, it is assumed that the transition times between states conditional on both originating and target state can be described by Weibull distributions. This parametric family encompasses the exponential distribution with constant transition rates as special cases but also allows increasing or decreasing hazards over time.</p>
-<p>Transition 2 is fully characterized by the corresponding Weibull distribution since there is no competing event. Let <span class="math inline">\(\tau_i,\ i\in\{1,2,3\}\)</span> be the respective transition times (<span class="math inline">\(\tau_i=\infty\)</span> means that the transition does not occur) and <span class="math inline">\(R\)</span> a binary random variable with <span class="math inline">\(R=1\)</span> if a response occurs, then the model can be specified as:</p>
+<p>Let <span class="math inline">\(\tau_{S}\)</span> be the transition time from the “stable” state and <span class="math inline">\(\tau_{R}\)</span> the transition tome from the “response” state (also “sojourn” times). Let further <span class="math inline">\(R\)</span> be a binary random variable with <span class="math inline">\(R=1\)</span> if a response occurs, then the model can be specified as:</p>
 <p><span class="math display">\[
 \begin{align}
 R &amp;\sim \operatorname{Bernoulli}(p) \\
-\tau_1 \,|\, R = 1 &amp;\sim \operatorname{Weibull}(shape[1], scale[1]) \\
-\tau_1 \,|\, R = 0 &amp;\sim \delta_{\infty} \\
-\tau_2 \,|\, R = 0 &amp;\sim \operatorname{Weibull}(shape[2], scale[2]) \\
-\tau_2 \,|\, R = 1 &amp;\sim \delta_{\infty} \\
-\tau_3 &amp;\sim \operatorname{Weibull}(shape[3], scale[3]) 
+\tau_{S} \,|\, R = 1 &amp;\sim \operatorname{Weibull}(k[1], \lambda[1]) \\
+\tau_{S} \,|\, R = 0 &amp;\sim \operatorname{Weibull}(k[2], \lambda[2]) \\
+\tau_{R}             &amp;\sim \operatorname{Weibull}(k[3], \lambda[3])
 \end{align}
-\]</span> where <span class="math inline">\(\delta_{\infty}\)</span> is a point measure at infinity. Let further <span class="math inline">\(f_i(t)\)</span> be the PDF of the Weibull distribution of transition <span class="math inline">\(i\in\{1,2,3\}\)</span> as indicated in the above figure and let <span class="math inline">\(F_i(t)\)</span> the corresponding CDF. This model implies that <span class="math display">\[
-\operatorname{Pr}\big[\,\tau_1 &gt; t \text{ and } \tau_3 &gt; t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_3(t))\\
+\]</span> where <span class="math inline">\(k\)</span> is the vector of shape- and <span class="math inline">\(\lambda\)</span> the vector of scale parameters. Let further <span class="math inline">\(f_i(t)\)</span> be the PDF of the Weibull distribution of transition <span class="math inline">\(i\in\{1,2,3\}\)</span> as indicated in the above figure and let <span class="math inline">\(F_i(t)\)</span> the corresponding CDF. This model implies that <span class="math display">\[
+\operatorname{Pr}\big[\,\tau_{S} &gt; t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_2(t))\\
 \]</span> hence, it can be seen as a mixture model.</p>
-<p>Instead of parameterizing the Weibull distributions directly via shape and scale, shape and median-time-to-next-event are used. The scale parameter can then be recovered via the relationship</p>
+<p>The median of a Weibull-distributed random variable is directly related to shape and scale parameters. Since the former is more convenient to interpret, the Weibull distributions are parameterized directly via their shape and median. The scale parameter can then be recovered via the relationship</p>
 <p><span class="math display">\[
-\operatorname{scale} = \frac{\operatorname{median-time-to-next-event}}{\log(2)^{1/\operatorname{shape}}} . 
+\operatorname{scale} = \frac{\operatorname{median}}{\log(2)^{1/\operatorname{shape}}} . 
 \]</span></p>
 <p>The following priors are used:</p>
 <ol style="list-style-type: decimal">
 <li>a normal prior for the log-odds of response <span class="math inline">\(\operatorname{logit}(p) \sim \mathcal{N}(\mu_p,\sigma_p^2)\)</span>
 </li>
-<li>a truncated normal prior for the median-time-to-next-event of each transition <span class="math inline">\(\operatorname{median-time-to-next-event}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)\)</span>
+<li>a truncated normal prior for the median of each transition <span class="math inline">\(\operatorname{median}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)\)</span>
 </li>
-<li>a flat prior on the shape of each transition <span class="math inline">\(\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i. n_i)\)</span>
+<li>a flat prior on the shape of each transition <span class="math inline">\(\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i, b_i)\)</span>
 </li>
 <li>it is assumed that the observation process (visit spacing) is fixed, e.g. every 6 weeks. This is irrelevant for inference, but important for sampling forward from the model since it cannot be assumed that transition times are observed exactly but only at the regular visits.</li>
 </ol>
@@ -174,8 +172,11 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, dt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">36</span><span class="op">)</span>, sample <span class="op">=</span> <span class="va">smpl_prior</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/plotting-the-prior-1.png" width="672" style="display: block; margin: auto;"></p>
-<p>Next, we draw samples from the prior-predictive distribution of the model. We sample 100 trials with 30 individuals per arm. Here, we can re-use the sample prior sample already used for plotting.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># TODO: add a plot for progression free survival</span></span></code></pre></div>
+<p>Next, we draw samples from the prior-predictive distribution of the model. We sample 100 trials with 30 individuals per arm. Here, we can re-use the sample prior sample already used for plotting.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>  <span class="va">mdl</span>, </span>
 <span>  sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
@@ -208,7 +209,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> intervention stable progression           7.8</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> intervention stable response              1.8</span></span></code></pre></div>
 <p>The generated data can also be visualized in swimmer plots</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># TODO: improve sorting</span></span>
 <span><span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">iter</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/plot-preior-predictive-1.png" width="672" style="display: block; margin: auto;"></p>
@@ -216,6 +217,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <div class="section level3">
 <h3 id="analyzing-progression-free-survival">Analyzing progression-free-survival<a class="anchor" aria-label="anchor" href="#analyzing-progression-free-survival"></a>
 </h3>
+<p>TODO: the plot can go in the standard summary plot</p>
 <p>Often, the rate of progression free survival (PFS) at a particular time point is of interest. This quantity is a direct function of the model parameters. Since the simplified model does not distinguish between progression or death, we denote the combined endpoint as “progression”.</p>
 <p><span class="math display">\[
 \begin{align}
@@ -226,7 +228,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
   &amp;= 1 - p\cdot\int_0^t f_1(u) \cdot F_2(t - u) \operatorname{d}u - (1 - p)\cdot F_3(t) \ .
 \end{align}
 \]</span> Here, the integral arises from the need to reflect the uncertainty over the state change from “stable” to “response” on the way to “progression”. Any parameter sample thus also induces a sample of the PFS rate at any given time point. Here, the PFS rates at 3, 6, and 12 months are computed.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_pfs_rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_pfs_rate.html">sample_pfs_rate</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">6</span>, <span class="fl">12</span><span class="op">)</span>, sample <span class="op">=</span> <span class="va">smpl_prior</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">t</span><span class="op">)</span><span class="op">)</span></span>
 <span>  </span>
@@ -236,7 +238,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"t"</span>, y <span class="op">=</span> <span class="st">"Pr[no death or progression before t]"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/unnamed-chunk-1-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>This concept can be extended to the entire survival function of PFS but computing the PFS rate at several time steps for a parameter sample and then integrating over the parameter distribution.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_pfs_survival</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_pfs_rate.html">sample_pfs_rate</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>, </span>
 <span>    t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">24</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, </span>
@@ -260,7 +262,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <h3 id="building-a-visit-data-set">Building a visit data set<a class="anchor" aria-label="anchor" href="#building-a-visit-data-set"></a>
 </h3>
 <p>Usually, data will come in the form of individual visits, not yet in the form of interval censored transitions. We can mimic this for the sake of example by converting one of our prior predictive samples to visit data. Note that the conversion is not exact since the mstate format does not contain information about potential visits between the interval boundaries.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">iter</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="../reference/mstate_to_visits.html">mstate_to_visits</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span><span class="op">)</span></span>
@@ -280,10 +282,9 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 10         control    4.8 stable     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 10         control    6   stable     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 10         control    7.2 stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 495 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ Use `print(n = ...)` to see more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 495 more rows</span></span></span></code></pre></div>
 <p>Next, we add recruitment times.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">recruitment_rate_overall</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
 <span><span class="co"># sample from poisson process</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">31532</span><span class="op">)</span></span>
@@ -314,7 +315,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <h3 id="a-hypothetical-interim-analysis">A hypothetical interim analysis<a class="anchor" aria-label="anchor" href="#a-hypothetical-interim-analysis"></a>
 </h3>
 <p>If we now cut the data at 15 months after the first SoT, we can imitate a hypothetical interim analysis.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_visits_interim</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">15</span><span class="op">)</span> </span>
 <span></span>
@@ -328,7 +329,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_mstate_interim</span>, relative_to_sot <span class="op">=</span> <span class="cn">FALSE</span>, now <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>We can check the observed response rates. Careful, due to the different time-to-event these will be biased.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># estimate of the response rates (biased due to missing!)</span></span>
 <span><span class="va">tbl_mstate_interim</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
@@ -340,7 +341,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control           0.214</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention      0.545</span></span></code></pre></div>
 <p>We can now do inference by drawing sample from the posterior distribution. Clearly, this is a very extreme sample from the prior and a shift of the posterior as compared to the prior is to be expected.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">smpl_posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span></span>
 <span>  <span class="va">mdl</span>, </span>
 <span>  <span class="va">tbl_mstate_interim</span>, </span>
@@ -349,8 +350,8 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'srp_model' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000128 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.28 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000126 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.26 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -367,14 +368,14 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; Chain 1: Iteration: 4750 / 5250 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 5250 / 5250 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 1.3845 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                14.6695 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                16.054 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 1.18592 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                13.048 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                14.2339 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, dt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">36</span><span class="op">)</span>, sample <span class="op">=</span> <span class="va">smpl_posterior</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">smpl_posterior</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="../reference/parameter_sample_to_tibble.html">parameter_sample_to_tibble</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
@@ -392,7 +393,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention            0.529 0.451 0.606</span></span></code></pre></div>
 <p>The Bayesian approach specifies a full generative model. This can be used to draw samples from the posterior predictive distribution for the individuals still at risk and the ones not yet recruited. The process is the same as for sampling from the prior predictive - just with replacing the prior distribution with the posterior distribution obtained from conditioning on any available data.</p>
 <p>At 15 months into the trial, there are still individuals who have not been recruited (the final sample size was set to 30 per group).</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_interim_sample_sizes</span> <span class="op">&lt;-</span> <span class="va">tbl_mstate_interim</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">group_id</span>, <span class="va">subject_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
@@ -406,7 +407,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control         20</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention    20</span></span></code></pre></div>
 <p>We now sample recruitment dates and randomization probabilities for the still-to-be-recruited individuals.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_to_be_recruited</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    group_id <span class="op">=</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">group_id</span>,</span>
 <span>    n_to_be_recruited <span class="op">=</span> <span class="fl">30</span> <span class="op">-</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">n</span>  </span>
@@ -437,28 +438,28 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 20 × 7</span></span></span>
 <span><span class="co">#&gt;    group_id     subject_id                        t_sot from  to     t_min t_max</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> control      232fd606-cd94-463b-a5a5-54ea29a…  0.151 stab… <span style="color: #BB0000;">NA</span>     0.184   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> control      a118e8a9-73ce-4a3f-98b4-b0dcadb…  1.33  stab… <span style="color: #BB0000;">NA</span>     1.36    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> control      a7434c16-a31b-4730-babd-0ca65c3…  2.76  stab… <span style="color: #BB0000;">NA</span>     2.79    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> control      5d2138c9-f68b-4fe1-8530-150491a…  3.88  stab… <span style="color: #BB0000;">NA</span>     3.91    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> control      1e4f4b0e-99c4-4fbd-97f6-14722e5…  4.79  stab… <span style="color: #BB0000;">NA</span>     4.82    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> control      bb203954-0f51-46e4-a226-d4bb1ea…  6.10  stab… <span style="color: #BB0000;">NA</span>     6.13    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> control      27fe1fba-8eb6-4696-ab31-ef917f3…  7.78  stab… <span style="color: #BB0000;">NA</span>     7.82    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> control      78b8922b-c7ae-4476-8a40-1e95c81…  8.16  stab… <span style="color: #BB0000;">NA</span>     8.20    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> control      a1939858-7393-423f-86ad-4c31676… 10.0   stab… <span style="color: #BB0000;">NA</span>    10.1     <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> control      79dbcb72-3eed-483d-ad30-8c7b3d2… 13.9   stab… <span style="color: #BB0000;">NA</span>    13.9     <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> intervention e8e1ea8c-9908-4d8d-a06c-ee9b4be…  0.554 stab… <span style="color: #BB0000;">NA</span>     0.587   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> intervention 3db5f523-f324-4865-9987-47ef737…  0.724 stab… <span style="color: #BB0000;">NA</span>     0.758   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> intervention 9dbd80cc-d389-4d29-9055-2e8922c…  2.31  stab… <span style="color: #BB0000;">NA</span>     2.34    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> intervention 1c91a144-27db-40c9-ba06-e215760…  2.35  stab… <span style="color: #BB0000;">NA</span>     2.38    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> intervention 4b54b5bc-e6a7-4291-a4d7-5cb80ed…  2.88  stab… <span style="color: #BB0000;">NA</span>     2.92    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> intervention 7fa0a546-b67e-408e-a2c3-1dc144e…  3.04  stab… <span style="color: #BB0000;">NA</span>     3.07    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> intervention 6c0a0d17-2065-4a72-bdea-f1e8d99…  4.32  stab… <span style="color: #BB0000;">NA</span>     4.35    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> intervention 62908fde-9e7b-4240-b7aa-e2eaca7…  5.15  stab… <span style="color: #BB0000;">NA</span>     5.18    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> intervention f4fcdb48-06ef-4bd4-96f0-545ec0f…  6.29  stab… <span style="color: #BB0000;">NA</span>     6.33    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> intervention 08695d37-eabb-4d4b-a6f3-0082fa7…  6.52  stab… <span style="color: #BB0000;">NA</span>     6.55    <span style="color: #BB0000;">Inf</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> control      9cf2762d-9de6-4fca-817f-febed15…  0.151 stab… <span style="color: #BB0000;">NA</span>     0.184   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> control      a40ba40c-6b91-4194-83e7-a0d863e…  1.33  stab… <span style="color: #BB0000;">NA</span>     1.36    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> control      d018365c-0f8d-4f6f-86f5-ed11b12…  2.76  stab… <span style="color: #BB0000;">NA</span>     2.79    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> control      e0a073a7-b536-4b54-a7bb-fa1d114…  3.88  stab… <span style="color: #BB0000;">NA</span>     3.91    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> control      9584be37-240d-4cd8-9e78-7b0c332…  4.79  stab… <span style="color: #BB0000;">NA</span>     4.82    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> control      3e5045ec-9804-433a-b1f2-20b5574…  6.10  stab… <span style="color: #BB0000;">NA</span>     6.13    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> control      9b1127f9-7a9c-4759-9dc7-73a3259…  7.78  stab… <span style="color: #BB0000;">NA</span>     7.82    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> control      a460acce-798c-402b-a647-5062a6c…  8.16  stab… <span style="color: #BB0000;">NA</span>     8.20    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> control      05cc7954-75fe-4381-af91-80ab55c… 10.0   stab… <span style="color: #BB0000;">NA</span>    10.1     <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> control      3d03c72a-c4c9-433a-b881-9937eb2… 13.9   stab… <span style="color: #BB0000;">NA</span>    13.9     <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> intervention 895fde44-d3f1-401c-a360-937f184…  0.554 stab… <span style="color: #BB0000;">NA</span>     0.587   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> intervention 622eb1be-2dc3-423b-83b4-215d0f0…  0.724 stab… <span style="color: #BB0000;">NA</span>     0.758   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> intervention 97a89598-fa3f-46f5-b727-38d176e…  2.31  stab… <span style="color: #BB0000;">NA</span>     2.34    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> intervention e4bf1461-de69-4ffb-8899-06ee9f8…  2.35  stab… <span style="color: #BB0000;">NA</span>     2.38    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> intervention 985c3d5b-2d5f-4c77-ad22-4a8d95c…  2.88  stab… <span style="color: #BB0000;">NA</span>     2.92    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> intervention dfc555b4-5969-42f2-910c-557f4e5…  3.04  stab… <span style="color: #BB0000;">NA</span>     3.07    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> intervention dfb01dd5-cf07-4d65-99c3-b25540f…  4.32  stab… <span style="color: #BB0000;">NA</span>     4.35    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> intervention 60e6607e-5571-4a31-b093-90c7332…  5.15  stab… <span style="color: #BB0000;">NA</span>     5.18    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> intervention 3243a6dd-21f0-49ba-92a1-dc62fd4…  6.29  stab… <span style="color: #BB0000;">NA</span>     6.33    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> intervention 3b6e5d49-85d7-4975-a9aa-5f36db8…  6.52  stab… <span style="color: #BB0000;">NA</span>     6.55    <span style="color: #BB0000;">Inf</span></span></span></code></pre></div>
 <p>The hypothetical future first-visits can now be combined with the interim data and the trajectories can be sampled forward using the already fitted posterior distribution.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_mstate_interim_forward</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">tbl_mstate_interim</span>, <span class="va">tbl_to_be_recruited</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl_posterior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/impute_predictive.html">impute_predictive</a></span><span class="op">(</span></span>
@@ -476,11 +477,11 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.2.1 (2022-06-23)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu (64-bit)</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 20.04.4 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 20.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.9.0</span></span>
@@ -496,34 +497,45 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_3.3.6      dplyr_1.0.9        oncomsm_0.1.0.9000</span></span>
+<span><span class="co">#&gt; [1] ggplot2_3.3.6      dplyr_1.0.10       oncomsm_0.1.0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Rcpp_1.0.9           tidyr_1.2.0          prettyunits_1.1.1   </span></span>
+<span><span class="co">#&gt;  [1] Rcpp_1.0.9           tidyr_1.2.1          prettyunits_1.1.1   </span></span>
 <span><span class="co">#&gt;  [4] ps_1.7.1             visNetwork_2.1.0     rprojroot_2.0.3     </span></span>
 <span><span class="co">#&gt;  [7] digest_0.6.29        utf8_1.2.2           R6_2.5.1            </span></span>
 <span><span class="co">#&gt; [10] stats4_4.2.1         evaluate_0.16        highr_0.9           </span></span>
-<span><span class="co">#&gt; [13] pillar_1.8.0         rlang_1.0.4          uuid_1.1-0          </span></span>
-<span><span class="co">#&gt; [16] callr_3.7.1          jquerylib_0.1.4      rmarkdown_2.15      </span></span>
+<span><span class="co">#&gt; [13] pillar_1.8.1         rlang_1.0.5          uuid_1.1-0          </span></span>
+<span><span class="co">#&gt; [16] callr_3.7.2          jquerylib_0.1.4      rmarkdown_2.16      </span></span>
 <span><span class="co">#&gt; [19] DiagrammeR_1.0.9     pkgdown_2.0.6        labeling_0.4.2      </span></span>
-<span><span class="co">#&gt; [22] textshaping_0.3.6    desc_1.4.1           stringr_1.4.0       </span></span>
+<span><span class="co">#&gt; [22] textshaping_0.3.6    desc_1.4.2           stringr_1.4.1       </span></span>
 <span><span class="co">#&gt; [25] htmlwidgets_1.5.4    loo_2.5.1            munsell_0.5.0       </span></span>
-<span><span class="co">#&gt; [28] compiler_4.2.1       xfun_0.32            rstan_2.21.5        </span></span>
+<span><span class="co">#&gt; [28] compiler_4.2.1       xfun_0.33            rstan_2.21.7        </span></span>
 <span><span class="co">#&gt; [31] pkgconfig_2.0.3      systemfonts_1.0.4    pkgbuild_1.3.1      </span></span>
 <span><span class="co">#&gt; [34] htmltools_0.5.3      tidyselect_1.1.2     tibble_3.1.8        </span></span>
 <span><span class="co">#&gt; [37] gridExtra_2.3        codetools_0.2-18     matrixStats_0.62.0  </span></span>
 <span><span class="co">#&gt; [40] fansi_1.0.3          crayon_1.5.1         withr_2.5.0         </span></span>
-<span><span class="co">#&gt; [43] grid_4.2.1           jsonlite_1.8.0       gtable_0.3.0        </span></span>
-<span><span class="co">#&gt; [46] lifecycle_1.0.1      magrittr_2.0.3       StanHeaders_2.21.0-7</span></span>
-<span><span class="co">#&gt; [49] scales_1.2.1         RcppParallel_5.1.5   cli_3.3.0           </span></span>
+<span><span class="co">#&gt; [43] grid_4.2.1           jsonlite_1.8.0       gtable_0.3.1        </span></span>
+<span><span class="co">#&gt; [46] lifecycle_1.0.2      magrittr_2.0.3       StanHeaders_2.21.0-7</span></span>
+<span><span class="co">#&gt; [49] scales_1.2.1         RcppParallel_5.1.5   cli_3.4.0           </span></span>
 <span><span class="co">#&gt; [52] stringi_1.7.8        cachem_1.0.6         farver_2.1.1        </span></span>
 <span><span class="co">#&gt; [55] fs_1.5.2             bslib_0.4.0          ellipsis_0.3.2      </span></span>
 <span><span class="co">#&gt; [58] ragg_1.2.2           generics_0.1.3       vctrs_0.4.1         </span></span>
 <span><span class="co">#&gt; [61] RColorBrewer_1.1-3   tools_4.2.1          glue_1.6.2          </span></span>
 <span><span class="co">#&gt; [64] purrr_0.3.4          processx_3.7.0       parallel_4.2.1      </span></span>
 <span><span class="co">#&gt; [67] fastmap_1.1.0        yaml_2.3.5           inline_0.3.19       </span></span>
-<span><span class="co">#&gt; [70] colorspace_2.0-3     memoise_2.0.1        knitr_1.39          </span></span>
-<span><span class="co">#&gt; [73] patchwork_1.1.1      sass_0.4.2</span></span></code></pre></div>
+<span><span class="co">#&gt; [70] colorspace_2.0-3     memoise_2.0.1        knitr_1.40          </span></span>
+<span><span class="co">#&gt; [73] patchwork_1.1.2      sass_0.4.2</span></span></code></pre></div>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-aubel_bayesian_2021" class="csl-entry">
+Aubel, Paul, Marine Antigny, Ronan Fougeray, Frédéric Dubois, and Gaëlle Saint‐Hilary. 2021. <span>“A Bayesian Approach for Event Predictions in Clinical Trials with Time‐to‐event Outcomes.”</span> <em>Statistics in Medicine</em> 40 (28): 6344–59. <a href="https://doi.org/10.1002/sim.9186" class="external-link">https://doi.org/10.1002/sim.9186</a>.
+</div>
+<div id="ref-jackson_flexible_2022" class="csl-entry">
+Jackson, Christopher. 2022. <span>“Flexible Parametric Multi-State Modelling with Flexsurv.”</span> <a href="https://cran.r-project.org/web/packages/flexsurv/" class="external-link">https://cran.r-project.org/web/packages/flexsurv/</a>.
+</div>
+<div id="ref-jackson_comparison_2022" class="csl-entry">
+Jackson, Christopher, Brian Tom, Peter Kirwan, Sema Mandal, Shaun R Seaman, Kevin Kunzmann, Anne Presanis, and Daniela De Angelis. 2022. <span>“A Comparison of Two Frameworks for Multi-State Modelling, Applied to Outcomes After Hospital Admissions with <span>COVID</span>-19.”</span> <em>Statistical Methods in Medical Research</em>, July, 09622802221106720. <a href="https://doi.org/10.1177/09622802221106720" class="external-link">https://doi.org/10.1177/09622802221106720</a>.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
