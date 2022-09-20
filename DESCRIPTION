@@ -25,7 +25,6 @@ Depends:
 Imports: 
     methods,
     Rcpp,
-    assertthat (>= 0.2),
     rstan (>= 2.18),
     rlang (>= 0.4),
     tibble (>= 3.1),
