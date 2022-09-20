@@ -392,9 +392,9 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("the patchwork package is required to plot SRP models")
   }
-  sample <- parameter_sample_to_tibble(x, sample)
+  tbl_sample <- parameter_sample_to_tibble(x, sample)
   # plot transition times
-  p1 <- sample %>%
+  p1 <- tbl_sample %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
     tidyr::pivot_wider(names_from = .data$parameter, values_from = .data$value) %>%
     tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
@@ -428,7 +428,7 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
         panel.spacing = ggplot2::unit(1.5, "lines")
       )
   # plot response probability
-  p2 <- sample %>%
+  p2 <- tbl_sample %>%
     filter(.data$parameter == "p") %>%
     ggplot2::ggplot() +
       ggplot2::stat_ecdf(ggplot2::aes(.data$value, color = .data$group_id), geom = "line") +
@@ -440,11 +440,29 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
         legend.position = "none",
         panel.grid.minor = ggplot2::element_blank()
       )
+  # plot pfs
+  tbl_pfs_survival <- sample_pfs_rate(
+      x,
+      t = seq(0.5, dt[2], length.out = n_grid), # ToDo: make sure this works from 0
+      sample = sample
+    ) %>%
+    # integrate over prior sample
+    group_by(.data$group_id, .data$t) %>%
+    summarize(pfs = mean(.data$pfs), .groups = "drop")
+  p3 <- ggplot2::ggplot(tbl_pfs_survival) +
+    ggplot2::geom_line(ggplot2::aes(x = .data$t, y = .data$pfs, color = .data$group_id)) +
+    ggplot2::labs(x = "time", y = "PFS") +
+    ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1)) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.minor = ggplot2::element_blank()
+    )
   design <- "
   111
-  223
+  234
   "
-  p1 + p2 + patchwork::guide_area() + patchwork::plot_layout(design = design, guides = "collect")
+  p1 + p2 + p3 + patchwork::guide_area() +
+    patchwork::plot_layout(design = design, guides = "collect")
 }
 
 
@@ -465,15 +483,16 @@ sample_pfs_rate.srp_model <- function(
     )
   }
   sample <- parameter_sample_to_tibble(model, sample)
-  pr_direct_progression <- function(shape_3, scale_3, t) {
-    return(stats::pweibull(t, shape_3, scale_3))
+  pr_direct_progression <- function(shape_2, scale_2, t) {
+    return(stats::pweibull(t, shape_2, scale_2))
   }
-  pr_indirect_progression <- function(shape_1, shape_2, scale_1, scale_2, t) {
+  pr_indirect_progression <- function(shape_1, shape_3, scale_1, scale_3, t) {
     # need to integrate over response time
     integrand <- function(t_response) {
-      stats::dweibull(t_response, shape_1, scale_1) * stats::pweibull(t - t_response, shape_2, scale_2)
+      stats::dweibull(t_response, shape_1, scale_1) *
+        stats::pweibull(t - t_response, shape_3, scale_3)
     }
-    # can reduce absolute tolerance substantially - doesn't matter for probabilities
+    # can reduce absolute tolerance substantially ok for probabilities
     res <- stats::integrate(
       integrand, lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
     )
@@ -481,21 +500,32 @@ sample_pfs_rate.srp_model <- function(
   }
   tbl_pfs <- sample %>%
     # pivot parameters
-    tidyr::pivot_wider(names_from = c(.data$parameter, .data$transition), values_from = .data$value) %>%
+    tidyr::pivot_wider(
+      names_from = c(.data$parameter, .data$transition),
+      values_from = .data$value
+    ) %>%
     rename(pr_response = .data$p_NA) %>%
     # cross with time points
     tidyr::expand_grid(t = t) %>%
     # compute PFS before t
     mutate(
       pfs = purrr::pmap_dbl(
-        list(.data$pr_response, .data$scale_1, .data$scale_2, .data$scale_3, .data$shape_1, .data$shape_2, .data$shape_3, t),
-        function(pr_response, scale_1, scale_2, scale_3, shape_1, shape_2, shape_3, t) {
-          pr_progression_t <- pr_response * pr_indirect_progression(shape_1, shape_3, scale_1, scale_3, t) +
+        list(
+          .data$pr_response,
+          .data$scale_1, .data$scale_2, .data$scale_3,
+          .data$shape_1, .data$shape_2, .data$shape_3,
+          t
+        ),
+        function(pr_response, scale_1, scale_2, scale_3, shape_1,
+                 shape_2, shape_3, t) {
+          pr_progression_t <- pr_response *
+            pr_indirect_progression(shape_1, shape_3, scale_1, scale_3, t) +
             (1 - pr_response) * pr_direct_progression(shape_2, scale_2, t)
           return(1 - pr_progression_t)
         }
       )
     ) %>%
-    select(.data$iter, .data$group_id, .data$t, .data$pfs) # only keep interesting stuff
+    # only keep interesting stuff
+    select(.data$iter, .data$group_id, .data$t, .data$pfs)
   return(tbl_pfs)
 }

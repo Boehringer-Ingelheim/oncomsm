@@ -199,8 +199,8 @@ mdl <- create_srp_model(
 
 ## Prior checks
 
-First we plot the cumulative distribution functions (CDF) of the 
-time-to-next-event over the first 36 (months) and the (empirical) CDF of the 
+First, we plot the cumulative distribution functions (CDF) of the 
+time-to-next-event over the first 36 (months) and the CDF of the 
 response probabilities per group.
 These are based on a sample drawn from the prior distribution of the model.
 We can re-use the same parameter sample for sampling from the prior-predictive
@@ -208,13 +208,34 @@ distribution by separating the sampling from the plotting steps.
 If no parameter sample is provided to the plotting function it samples 
 automatically.
 
+Often, the rate of progression free survival (PFS) at a particular time point 
+is of interest.
+This quantity is a direct function of the model parameters.
+Since the simplified model does not distinguish between progression or 
+death, we denote the combined endpoint as "progression".
+$$
+\begin{align}
+\operatorname{PFS}(t) :&= \operatorname{Pr}\big[\,\text{no progression before } t\,\big] \\
+  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,] \\
+  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,] \\
+  &\qquad- \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,] \\
+  &= 1 - p\cdot\int_0^t f_1(u) \cdot F_2(t - u) \operatorname{d}u - (1 - p)\cdot F_3(t) \ .
+\end{align}
+$$
+The integral arises from the need to reflect the uncertainty over the 
+state change from "stable" to "response" on the way to "progression".
+Any parameter sample thus also induces a sample of the PFS rate at any given 
+time point and the curve of PFS rate over time corresponds to the survival
+function of the "progression or death" event.
+
 ```{r plotting-the-prior}
 smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
 
 plot(mdl, dt = c(0, 36), sample = smpl_prior)
-
-# TODO: add a plot for progression free survival
 ```
+
+
+### Sampling from the prior-predictive distribution
 
 Next, we draw samples from the prior-predictive distribution of the model.
 We sample 100 trials with 30 individuals per arm.
@@ -247,62 +268,6 @@ The generated data can also be visualized in swimmer plots
 ```{r plot-preior-predictive, fig.height=6}
 # TODO: improve sorting
 plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
-```
-
-
-## Analyzing progression-free-survival
-
-TODO: the plot can go in the standard summary plot
-
-Often, the rate of progression free survival (PFS) at a particular time point 
-is of interest. 
-This quantity is a direct function of the model parameters.
-Since the simplified model does not distinguish between progression or 
-death, we denote the combined endpoint as "progression".
-
-$$
-\begin{align}
-\operatorname{PFS}(t) :&= \operatorname{Pr}\big[\,\text{no progression before } t\,\big] \\
-  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,] \\
-  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,] \\
-  &\qquad- \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,] \\
-  &= 1 - p\cdot\int_0^t f_1(u) \cdot F_2(t - u) \operatorname{d}u - (1 - p)\cdot F_3(t) \ .
-\end{align}
-$$
-Here, the integral arises from the need to reflect the uncertainty over the 
-state change from "stable" to "response" on the way to "progression".
-Any parameter sample thus also induces a sample of the PFS rate at any given 
-time point. 
-Here, the PFS rates at 3, 6, and 12 months are computed.
-
-```{r}
-tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12), sample = smpl_prior) %>% 
-  mutate(t = factor(t))
-  
-ggplot(tbl_pfs_rates) +
-  geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
-  scale_color_discrete("") +
-  labs(x = "t", y = "Pr[no death or progression before t]")
-```
-
-This concept can be extended to the entire survival function of PFS but
-computing the PFS rate at several time steps for a parameter sample and then
-integrating over the parameter distribution.
-
-```{r}
-tbl_pfs_survival <- sample_pfs_rate(
-    mdl, 
-    t = seq(0.5, 24, by = 0.5), 
-    sample = smpl_prior
-  ) %>% 
-  # integrate over prior sample
-  group_by(group_id, t) %>% 
-  summarize(pfs = mean(pfs), .groups = "drop")
-
-ggplot(tbl_pfs_survival) +
-  geom_line(aes(x = t, y = pfs, color = group_id)) +
-  scale_color_discrete("") +
-  labs(x = "t", y = "Pr[no death or progression before t]")
 ```
 
 
