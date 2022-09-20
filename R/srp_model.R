@@ -447,10 +447,10 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL, n_grid = 50, ...) 
       sample = sample
     ) %>%
     # integrate over prior sample
-    group_by(group_id, t) %>%
-    summarize(pfs = mean(pfs), .groups = "drop")
+    group_by(.data$group_id, .data$t) %>%
+    summarize(pfs = mean(.data$pfs), .groups = "drop")
   p3 <- ggplot2::ggplot(tbl_pfs_survival) +
-    ggplot2::geom_line(aes(x = t, y = pfs, color = group_id)) +
+    ggplot2::geom_line(ggplot2::aes(x = .data$t, y = .data$pfs, color = .data$group_id)) +
     ggplot2::labs(x = "time", y = "PFS") +
     ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1)) +
     ggplot2::theme(
