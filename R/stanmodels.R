@@ -27,3 +27,4 @@ stanmodels <- sapply(stanmodels, function(model_name) {
 })
 
 , type = "message") # end capture.output
+
