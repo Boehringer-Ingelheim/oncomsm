@@ -60,25 +60,42 @@ create_srp_model <- function(
   return(mdl)
 }
 
-#' @import checkmate
+
+#' Title
+#'
+#' @param mdl
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' @importFrom checkmate assert_vector
 is_valid.srp_model <- function(mdl) { # nolint
-  # add double qoutes
-  # remove mdl$
   with(mdl, {
     stopifnot(logodds_mean[1] < logodds_max[1])
     stopifnot(logodds_mean[2] < logodds_max[2])
-    checkmate::assert_vector(logodds_mean, len = length(attr(mdl,"group_id")), any.missing = FALSE,
-                             .var.name = "logodds_mean")
-    checkmate::assert_vector(logodds_sd, len = length(attr(mdl,"group_id")), any.missing = FALSE,
-                             .var.name = "logodds_mean")
+    checkmate::assert_vector(logodds_mean, len = length(attr(mdl, "group_id")),
+                             any.missing = FALSE, .var.name = "logodds_mean")
+    checkmate::assert_vector(logodds_sd, len = length(attr(mdl, "group_id")),
+                             any.missing = FALSE, .var.name = "logodds_mean")
     checkmate::assert_array(median_time_to_next_event_mean, d = 2,
-                             any.missing = FALSE, .var.name = "median_time_to_next_event_mean") # nolint
+                             any.missing = FALSE,
+                            .var.name = "median_time_to_next_event_mean")
     checkmate::assert_array(median_time_to_next_event_sd, d = 2,
-                             any.missing = FALSE, .var.name = "median_time_to_next_event_sd") # nolint
-    checkmate::assert_vector(median_time_to_next_event_sd, len = length(attr(mdl,"group_id"))*length(attr(mdl,"states")),
-                             any.missing = FALSE, .var.name = "median_time_to_next_event_sd") # nolint
-    checkmate::assert_vector(median_time_to_next_event_mean, len = length(attr(mdl,"group_id"))*length(attr(mdl,"states")),
-                             any.missing = FALSE, .var.name = "median_time_to_next_event_mean") # nolint
+                             any.missing = FALSE,
+                            .var.name = "median_time_to_next_event_sd")
+    checkmate::assert_vector(median_time_to_next_event_sd,
+                             len = length(attr(mdl, "group_id")) *
+                               length(attr(mdl, "states")), any.missing = FALSE,
+                             .var.name = "median_time_to_next_event_sd")
+    checkmate::assert_vector(median_time_to_next_event_mean,
+                             len = length(attr(mdl, "group_id")) *
+                               length(attr(mdl, "states")), any.missing = FALSE,
+                             .var.name = "median_time_to_next_event_mean")
+    checkmate::assert_numeric(mdl$median_time_to_next_event_mean[mdl$median_time_to_next_event_mean < 0], # nolint
+                              lower = 0, upper = 0,
+                              .var.name = "median_time_to_next_event_mean")
+
   })
   return(TRUE)
 }
