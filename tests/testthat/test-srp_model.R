@@ -15,19 +15,21 @@ test_that("can create SRP model", {
 
 }) # "can create SRP model"
 
-test_that("can validate SRP error", {
+test_that("private function is_valid throws correct errors", {
   expect_error(
     create_srp_model(
       group_id = 1:2,
       logodds_mean =  c(logodds(0.7), logodds(.5), logodds(.6)),
       logodds_sd = c(.5, .5),
       visit_spacing = c(1.2, 1.2),
-      median_time_to_next_event = matrix(c(
-        3, 3, 6,
-        3, 3, 6
-      ), byrow = TRUE,  nrow = 2, ncol = 3),
-      median_time_to_next_event_sd = matrix(1,
-                                            byrow = TRUE,  nrow = 2, ncol = 3)
+        median_time_to_next_event = matrix(c(
+          3, 3, 6,
+          3, 3, 6
+        ), byrow = TRUE,  nrow = 2, ncol = 3),
+      median_time_to_next_event_sd = matrix(
+          1,
+          byrow = TRUE,  nrow = 2, ncol = 3
+        )
     ),
     regexp = "Assertion on 'logodds_mean' failed: Must have length 2, but has length 3" # nolint
   )
@@ -35,17 +37,19 @@ test_that("can validate SRP error", {
   expect_error(
     create_srp_model(
       group_id = 1:2,
-      logodds_mean =  c(12, logodds(.5)),
+      logodds_mean =  c(logodds(.9), logodds(.5)),
+      logodds_max = c(logodds(.75), logodds(.75)),
       logodds_sd = c(.5, .5),
       visit_spacing = c(1.2, 1.2),
       median_time_to_next_event = matrix(c(
-        3, 3, 6,
-        3, 3, 6
-      ), byrow = TRUE,  nrow = 2, ncol = 3),
-      median_time_to_next_event_sd = matrix(1,
-                                            byrow = TRUE,  nrow = 2, ncol = 3)
+          3, 3, 6,
+          3, 3, 6
+        ), byrow = TRUE,  nrow = 2, ncol = 3),
+      median_time_to_next_event_sd = matrix(
+          1, byrow = TRUE,  nrow = 2, ncol = 3
+        )
     ),
-    regexp = "logodds_mean[1] < logodds_max[1] is not TRUE"
+    regexp = "logodds_mean\\[1\\] < logodds_max\\[1\\] is not TRUE"
   )
 
   expect_error(
@@ -55,11 +59,13 @@ test_that("can validate SRP error", {
       logodds_sd = c(.5, .5),
       visit_spacing = c(1.2, 1.2),
       median_time_to_next_event = matrix(c(
-        3, -3, 6,
-        3, 3, 6
-      ), byrow = TRUE,  nrow = 2, ncol = 3),
-      median_time_to_next_event_sd = matrix(1,
-                                            byrow = TRUE,  nrow = 2, ncol = 3)
+          3, -3, 6,
+          3, 3, 6
+        ), byrow = TRUE,  nrow = 2, ncol = 3),
+      median_time_to_next_event_sd = matrix(
+          1,
+          byrow = TRUE,  nrow = 2, ncol = 3
+        )
     ),
     regexp = "Assertion on 'median_time_to_next_event_mean' failed: Element 1 is not >= 0"
   )
