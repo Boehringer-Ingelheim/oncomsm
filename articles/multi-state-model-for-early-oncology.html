@@ -90,10 +90,10 @@
 <p><strong>tl;dr:</strong> <em>Tumor response data is often treated as binary endpoint in early oncology trials (objective response or progression free survival at x months). This ignores the fact that these are time-to-event endpoints. Instead, the multi-state characteristics of the data can be exploited to reduce bias at interim analyses and drive event prediction for probability of success calculations.</em></p>
 <p>In early oncology trials, (objective tumor) response based on the RECIST criteria is often used as primary endpoint to establish the activity of a treatment. Response is often treated as binary variable although it is a delayed event endpoint. At the final analysis, this simplification is of little concern since all individuals tend to be followed up long enough to justify the assumption that non-responders are unlikely to still become responders. This approach is often plausible since individuals with tumors not responding to treatment ultimately progress. However, when continuously monitoring such a trial, the assumption of sufficient follow-up is no longer fulfilled and a simple binary analysis may be biased.</p>
 <p>In this vignette, the problem is addressed by extending the statistic binary response model to a three-state model for “stable”, “response”, and “progression or death”. The respective transition numbers are given in the graph below.</p>
-<div id="htmlwidget-ea1e7b21b2292ab8e1c5" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-ea1e7b21b2292ab8e1c5">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Once someone becomes a responder, this model only allows a transition to the combined progression or death state. This means that progression and death are not modeled as competing events and simplifies analysis greatly over a model like the one below:</p>
-<div id="htmlwidget-f13f838c80cac54e08eb" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-f13f838c80cac54e08eb">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3a --> progression\n  response -- 3b --> death\n  progression -- 4 --> death\n  stable -- 2a --> progression\n  stable -- 2b --> death\n"},"evals":[],"jsHooks":[]}</script><p>Coming back to the simpler model, there is still a competing event issue when starting from ‘stable’. Often, the convenient hazard-based approach is used to model multi-state situations like this. The hazard-based approach is intuitive, especially when considering non-parametric estimation, and co variate inclusion is well-understood. However, a hazard-based approach has several disadvantages:</p>
+<div id="htmlwidget-1fd642e993e0b9d848d7" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1fd642e993e0b9d848d7">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Once someone becomes a responder, this model only allows a transition to the combined progression or death state. This means that progression and death are not modeled as competing events and simplifies analysis greatly over a model like the one below:</p>
+<div id="htmlwidget-15e9ab6027080f1fc7b6" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-15e9ab6027080f1fc7b6">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3a --> progression\n  response -- 3b --> death\n  progression -- 4 --> death\n  stable -- 2a --> progression\n  stable -- 2b --> death\n"},"evals":[],"jsHooks":[]}</script><p>Coming back to the simpler model, there is still a competing event issue when starting from ‘stable’. Often, the convenient hazard-based approach is used to model multi-state situations like this. The hazard-based approach is intuitive, especially when considering non-parametric estimation, and co variate inclusion is well-understood. However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a momentary risk, not a probability. This leads to problems with prior specification in a Bayesian setting. The Bayesian approach is, however, particularly useful in the early development process since it allows to augment data with prior opinion or evidence and thus improve accuracy.</p></li>
 <li><p>A hazard based, non-Markov multi-state model leads to intractable expressions for the implicitly given transition probabilities. Hence they need to be calculated by simulation which makes the model less convenient to work with if transition probabilities a or of primary interest. Since the (objective) response rate often plays an important role in the analysis of early oncology trials, this is a disadvantage.</p></li>
@@ -320,8 +320,8 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'srp_model' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000124 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.24 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 7e-05 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.7 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -338,9 +338,9 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; Chain 1: Iteration: 4750 / 5250 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 5250 / 5250 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 1.27672 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                13.9097 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                15.1864 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 0.665952 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                7.29253 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                7.95848 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, dt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">36</span><span class="op">)</span>, sample <span class="op">=</span> <span class="va">smpl_posterior</span><span class="op">)</span></span></code></pre></div>
@@ -408,26 +408,26 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 20 × 7</span></span></span>
 <span><span class="co">#&gt;    group_id     subject_id                        t_sot from  to     t_min t_max</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> control      b06fe106-f61f-422a-8ff2-891e948…  0.151 stab… <span style="color: #BB0000;">NA</span>     0.184   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> control      b4084835-781c-4af6-9b30-c6e2f94…  1.33  stab… <span style="color: #BB0000;">NA</span>     1.36    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> control      6214d272-60ee-464e-a7ea-99e6ff8…  2.76  stab… <span style="color: #BB0000;">NA</span>     2.79    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> control      10420df2-c601-4cfe-84c4-d0d4ce5…  3.88  stab… <span style="color: #BB0000;">NA</span>     3.91    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> control      eba1edbe-b6ff-4d1c-8af9-7731067…  4.79  stab… <span style="color: #BB0000;">NA</span>     4.82    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> control      fb834898-c9b4-4585-b645-43b8067…  6.10  stab… <span style="color: #BB0000;">NA</span>     6.13    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> control      991c9e72-016f-404e-adad-3a650fc…  7.78  stab… <span style="color: #BB0000;">NA</span>     7.82    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> control      c7f15f90-2f4d-44f7-bb87-84dc0ba…  8.16  stab… <span style="color: #BB0000;">NA</span>     8.20    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> control      fce426ee-f20b-419c-ad4f-d20ed9f… 10.0   stab… <span style="color: #BB0000;">NA</span>    10.1     <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> control      c47f97bc-6ced-43a5-b0a3-2579f90… 13.9   stab… <span style="color: #BB0000;">NA</span>    13.9     <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> intervention 7da56de8-f980-47f0-8748-6ae354f…  0.554 stab… <span style="color: #BB0000;">NA</span>     0.587   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> intervention 1a5a4bca-44a0-466e-86bd-8ac51ee…  0.724 stab… <span style="color: #BB0000;">NA</span>     0.758   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> intervention ad8f3521-8ba2-484e-ae75-5948307…  2.31  stab… <span style="color: #BB0000;">NA</span>     2.34    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> intervention 8deb286c-e69d-4f13-9f7d-06e4ac3…  2.35  stab… <span style="color: #BB0000;">NA</span>     2.38    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> intervention c7a063ce-9a15-487a-a903-9092bf2…  2.88  stab… <span style="color: #BB0000;">NA</span>     2.92    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> intervention 0709d3ce-a937-49ed-b096-6f7217f…  3.04  stab… <span style="color: #BB0000;">NA</span>     3.07    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> intervention 0b88cbff-8ab5-403e-b28b-3740224…  4.32  stab… <span style="color: #BB0000;">NA</span>     4.35    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> intervention 85459f8b-62ee-408d-9322-fe8b221…  5.15  stab… <span style="color: #BB0000;">NA</span>     5.18    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> intervention 7d16c3a6-909f-4a32-b0d3-a8ab1c7…  6.29  stab… <span style="color: #BB0000;">NA</span>     6.33    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> intervention 5e133932-9475-4c8c-8209-d538b5d…  6.52  stab… <span style="color: #BB0000;">NA</span>     6.55    <span style="color: #BB0000;">Inf</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> control      9cb4cc03-edef-4946-a21e-03fdc54…  0.151 stab… <span style="color: #BB0000;">NA</span>     0.184   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> control      f9ff8e1c-8d7e-42ca-83d3-72ce3c5…  1.33  stab… <span style="color: #BB0000;">NA</span>     1.36    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> control      acc30ba5-d23c-4a70-ba1d-8382c3d…  2.76  stab… <span style="color: #BB0000;">NA</span>     2.79    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> control      9eb31e65-e06c-43e4-b587-5bbd971…  3.88  stab… <span style="color: #BB0000;">NA</span>     3.91    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> control      4caaef06-1932-4a5b-a4e8-524d7cb…  4.79  stab… <span style="color: #BB0000;">NA</span>     4.82    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> control      d5ede68f-7836-44ad-ae5b-c252c12…  6.10  stab… <span style="color: #BB0000;">NA</span>     6.13    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> control      0346df70-7dfd-4673-a966-ec02e8f…  7.78  stab… <span style="color: #BB0000;">NA</span>     7.82    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> control      0d1f7f2f-2f87-43d5-bf8f-d29bb5c…  8.16  stab… <span style="color: #BB0000;">NA</span>     8.20    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> control      b942ee45-7b0c-4357-9322-fb86856… 10.0   stab… <span style="color: #BB0000;">NA</span>    10.1     <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> control      f8ce4a61-41ee-4743-b12e-60bae9f… 13.9   stab… <span style="color: #BB0000;">NA</span>    13.9     <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> intervention d92d4e16-6608-4d16-86cc-00448df…  0.554 stab… <span style="color: #BB0000;">NA</span>     0.587   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> intervention 9f482e6e-da09-4c1a-b0ad-e4e8fca…  0.724 stab… <span style="color: #BB0000;">NA</span>     0.758   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> intervention 2884f67d-597a-48cf-ba9b-df7aece…  2.31  stab… <span style="color: #BB0000;">NA</span>     2.34    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> intervention 30c394c8-d4a7-4c31-8bfd-c4c81c6…  2.35  stab… <span style="color: #BB0000;">NA</span>     2.38    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> intervention b5a7e3e9-4add-4449-8a5a-9457213…  2.88  stab… <span style="color: #BB0000;">NA</span>     2.92    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> intervention 46de6901-e638-42c9-8324-cc7dd52…  3.04  stab… <span style="color: #BB0000;">NA</span>     3.07    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> intervention 65ba1246-af8c-4972-9fcc-4e2b2bc…  4.32  stab… <span style="color: #BB0000;">NA</span>     4.35    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> intervention 6e55b8d0-e202-4e8f-9fc5-d209034…  5.15  stab… <span style="color: #BB0000;">NA</span>     5.18    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> intervention 361a410f-b92f-4b13-948f-ff8b6f7…  6.29  stab… <span style="color: #BB0000;">NA</span>     6.33    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> intervention b00ed769-e724-4a94-956a-682e6b2…  6.52  stab… <span style="color: #BB0000;">NA</span>     6.55    <span style="color: #BB0000;">Inf</span></span></span></code></pre></div>
 <p>The hypothetical future first-visits can now be combined with the interim data and the trajectories can be sampled forward using the already fitted posterior distribution.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_mstate_interim_forward</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">tbl_mstate_interim</span>, <span class="va">tbl_to_be_recruited</span><span class="op">)</span></span>
@@ -474,7 +474,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt;  [4] prettyunits_1.1.1    ps_1.7.1             rprojroot_2.0.3     </span></span>
 <span><span class="co">#&gt;  [7] digest_0.6.29        utf8_1.2.2           R6_2.5.1            </span></span>
 <span><span class="co">#&gt; [10] backports_1.4.1      stats4_4.2.1         evaluate_0.16       </span></span>
-<span><span class="co">#&gt; [13] highr_0.9            pillar_1.8.1         rlang_1.0.5         </span></span>
+<span><span class="co">#&gt; [13] highr_0.9            pillar_1.8.1         rlang_1.0.6         </span></span>
 <span><span class="co">#&gt; [16] uuid_1.1-0           callr_3.7.2          jquerylib_0.1.4     </span></span>
 <span><span class="co">#&gt; [19] checkmate_2.1.0      rmarkdown_2.16       DiagrammeR_1.0.9    </span></span>
 <span><span class="co">#&gt; [22] pkgdown_2.0.6        labeling_0.4.2       textshaping_0.3.6   </span></span>
@@ -487,7 +487,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; [43] crayon_1.5.1         withr_2.5.0          grid_4.2.1          </span></span>
 <span><span class="co">#&gt; [46] jsonlite_1.8.0       gtable_0.3.1         lifecycle_1.0.2     </span></span>
 <span><span class="co">#&gt; [49] magrittr_2.0.3       StanHeaders_2.21.0-7 scales_1.2.1        </span></span>
-<span><span class="co">#&gt; [52] RcppParallel_5.1.5   cli_3.4.0            stringi_1.7.8       </span></span>
+<span><span class="co">#&gt; [52] RcppParallel_5.1.5   cli_3.4.1            stringi_1.7.8       </span></span>
 <span><span class="co">#&gt; [55] cachem_1.0.6         farver_2.1.1         fs_1.5.2            </span></span>
 <span><span class="co">#&gt; [58] bslib_0.4.0          ellipsis_0.3.2       ragg_1.2.2          </span></span>
 <span><span class="co">#&gt; [61] generics_0.1.3       vctrs_0.4.1          RColorBrewer_1.1-3  </span></span>
