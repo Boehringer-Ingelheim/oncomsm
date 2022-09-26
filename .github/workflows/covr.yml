@@ -28,19 +28,16 @@ jobs:
         run: |
           install.packages(".", repos=NULL, type="source")
         shell: Rscript {0}
-        working-directory: ${{ github.event.repository.name }}
         
       - name: Install covr
         run: |
           if (!require("covr")) install.packages("covr")
         shell: Rscript {0}
-        working-directory: ${{ github.event.repository.name }}
 
       - name: Run coverage
         run: |
           covr::to_cobertura(covr::package_coverage(), filename = "coverage.xml")
         shell: Rscript {0}
-        working-directory: ${{ github.event.repository.name }}
         
       - uses: 5monkeys/cobertura-action@v13
         with:
