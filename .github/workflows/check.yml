@@ -47,3 +47,9 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+      
+      - uses: insightsengineering/covtracer-action@v1
+        with:
+          post-result-as-comment: true
+        env:
+          GITHUB_PAT: ${{ secrets.MY_PUBLIC_GITHUB_TOKEN }}
