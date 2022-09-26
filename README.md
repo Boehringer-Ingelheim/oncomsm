@@ -18,7 +18,7 @@ and progression of individuals in early oncology trials using parametric
 This allows the dynamic computation of "probability of success" for a wide 
 range of success criteria. 
 
-
+a
 ## Installation
 
 ```{r}
