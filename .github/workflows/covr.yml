@@ -48,3 +48,4 @@ jobs:
           fail_below_threshold: true
           show_line: true
           show_missing: true
+          link_missing_lines: true
