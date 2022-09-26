@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   application-to-probability-of-success: application-to-probability-of-success.html
   multi-state-model-for-early-oncology: multi-state-model-for-early-oncology.html
-last_built: 2022-09-26T17:30Z
+last_built: 2022-09-26T17:46Z
 urls:
   reference: https://boehringer-ingelheim.github.io/oncomsm/reference
   article: https://boehringer-ingelheim.github.io/oncomsm/articles
