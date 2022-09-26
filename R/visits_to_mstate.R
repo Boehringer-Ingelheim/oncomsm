@@ -3,8 +3,8 @@
 #' @param tbl_visits visit data in long format
 #' @param start_state staring state
 #' @param absorbing_states character vector of absorbing states
-#' @param now time point since start of trial (might be later than last recorded visit)
-#' @param eof_indicator state name indicating (exactly observed) eond of follow up.
+#' @param now time point since start of trial (might be later than last recorded visit) # nolint
+#' @param eof_indicator state name indicating (exactly observed) eond of follow up. # nolint
 #'
 #' @return A data frame
 #'
@@ -16,7 +16,7 @@
 visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
                              now = max(tbl_visits$t), eof_indicator = "EOF") {
 
-  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t) # make sure everything is sorted
+  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t) # make sure everything is sorted # nolint
 
   tbl_mstate <- list()
 

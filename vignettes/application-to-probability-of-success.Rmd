@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
-  fig.height = 7/1.61,
+  fig.height = 7 / 1.61,
   fig.align = "center"
 )
 
@@ -22,8 +22,7 @@ knitr::opts_chunk$set(
 JAGS_FOUND <- tryCatch({
     rjags::jags.version()
     TRUE
-  }, 
-  error = function(e) FALSE
+  }, error = function(e) FALSE
 )
 ```
 
@@ -154,7 +153,8 @@ Let us consider two success criteria per arm:
 # the simulation number is only chosen so small for demonstration purposes
 # we compute both phi_1 and phi_2 jointly to reuse the same posterior sample
 eval_phi <- function(data, prob = 0.25, nsim = 250) {
-  smpl <- sample_posterior(mdl, data = data, seed = 38497, warmup = 150L, nsim = nsim)
+  smpl <- sample_posterior(mdl, data = data, seed = 38497, warmup = 150L, 
+                           nsim = nsim)
   mtx_p <- rstan::extract(smpl, "p")$p
   p <- apply(mtx_p, 2, function(x) quantile(x, .25))
   res <- sample_pfs_rate(mdl, 12, smpl) %>% 
@@ -238,7 +238,9 @@ data_to_bhmbasket_trial <- function(data) {
     group_by(group_id, subject_id) %>% 
     summarize(responder = any(to == "response")) %>% 
     summarize(r = sum(responder), n = n()) %>% 
-    {bhmbasket::createTrial(.$n, .$r)} %>% 
+    {
+      bhmbasket::createTrial(.$n, .$r)
+    } %>% 
     return()
 }
 

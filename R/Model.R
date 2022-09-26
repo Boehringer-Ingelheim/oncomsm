@@ -21,7 +21,7 @@ is_valid <- function(model) {
   UseMethod("is_valid")
 }
 
-is_valid.Model <- function(model){
+is_valid.Model <- function(model) {
   stop("Not implemented")
 }
 
@@ -90,7 +90,8 @@ sample_prior.Model <- function(
 #' format or (if rstan_output == TRUE) a rstanfit object.
 #'
 #' @export
-sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output, pars, ...) {
+sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output,
+                             pars, ...) {
   UseMethod("sample_posterior")
 }
 
@@ -158,7 +159,8 @@ sample_predictive.Model <- function(
       warmup = warmup_parameters, nsim = nsim_parameters
     )
   }
-  .impute(model = model, data = .emptydata(model, n_per_group), parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
+  .impute(model = model, data = .emptydata(model, n_per_group),
+          parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
 }
 
 
@@ -202,13 +204,14 @@ impute_predictive.Model <- function(
   seed = NULL,
   ...
 ) {
-  if (is.null(sample)) { # the default is to sample from the posterior predictive
+  if (is.null(sample)) { # the default is to sample from the posterior predictive # nolint
     sample <- sample_posterior(
       model, data = data, rstan_output = TRUE, seed = seed,
       warmup = warmup_parameters, nsim = nsim_parameters, ...
     )
   }
-  .impute(model = model, data = data, parameter_sample = sample, nsim = nsim, seed = seed)
+  .impute(model = model, data = data, parameter_sample = sample, nsim = nsim,
+          seed = seed)
 }
 
 
@@ -220,7 +223,7 @@ impute_predictive.Model <- function(
 }
 
 # sample from stan model (hidden)
-.sample.Model <- function(
+.sample.Model <- function( # nolint
   model,
   data = NULL,
   warmup = 250L,
@@ -235,9 +238,14 @@ impute_predictive.Model <- function(
   # combine prior information with data for stan
   stan_data <- c(
     as.list(model), # hyperparameters
-    data2standata(model, if (is.null(data)) { .nodata(model) } else { data }) # data
+    data2standata(model, if (is.null(data)) {
+      .nodata(model)
+      }else {
+        data
+        }
+    ) # data
   )
-  set.seed(seed) # global seed affects permutation of extracted parameters if not set
+  set.seed(seed) # global seed affects permutation of extracted parameters if not set # nolint
   # sample
   res <- rstan::sampling(
     attr(model, "stanmodel"),
@@ -292,7 +300,7 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 }
 
 # helper to create empty standata for model
-.nodata.Model <- function(model) {
+.nodata.Model <- function(model) { # nolint
   stop("not implemented")
 }
 
@@ -306,7 +314,7 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 }
 
 # helper to create all-missing standata for model
-.emptydata.Model <- function(model, n_per_group) {
+.emptydata.Model <- function(model, n_per_group) { #nolint
   stop("not implemented")
 }
 

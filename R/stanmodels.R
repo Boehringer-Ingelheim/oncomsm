@@ -11,7 +11,7 @@ capture.output( # silence parser warnings
 
 stanmodels <- sapply(stanmodels, function(model_name) {
   # create C++ code for stan model
-  stan_file <- if(dir.exists("stan")) "stan" else file.path("inst", "stan")
+  stan_file <- if (dir.exists("stan")) "stan" else file.path("inst", "stan")
   stan_file <- file.path(stan_file, paste0(model_name, ".stan"))
   stanfit <- rstan::stanc_builder(stan_file,
                                   allow_undefined = TRUE,
@@ -23,8 +23,6 @@ stanmodels <- sapply(stanmodels, function(model_name) {
                model_name = stanfit$model_name,
                model_code = stanfit$model_code,
                model_cpp = stanfit$model_cpp,
-               mk_cppmodule = function(x) get(paste0("rstantools_model_", model_name)))
-})
-
-, type = "message") # end capture.output
-
+               mk_cppmodule = function(x) get(paste0("rstantools_model_",
+                                                     model_name)))
+}), type = "message") # end capture.output

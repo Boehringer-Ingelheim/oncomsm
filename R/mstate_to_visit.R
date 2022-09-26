@@ -73,7 +73,8 @@ mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
             res <- tibble(t = ..3, state = ..1)
           } else {
             res <- tibble(
-              t = seq(..3, max(..3, ..4), length.out = max(2, (..4 - ..3)/visit_spacing)),
+              t = seq(..3, max(..3, ..4),
+                       length.out = max(2, (..4 - ..3) / visit_spacing)),
               state = rep(..1, length(t))
             )
             res$state[nrow(res)] <- ..2
