@@ -67,8 +67,7 @@ test_that("private function is_valid throws correct errors", {
           byrow = TRUE,  nrow = 2, ncol = 3
         )
     ),
-    regexp = "Assertion on 'median_time_to_next_event_mean'
-    failed: Element 1 is not >= 0"
+    regexp = "Assertion on 'median_time_to_next_event_mean' failed: Element 1 is not >= 0" # nolint
   )
 
 })
