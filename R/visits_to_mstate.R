@@ -23,7 +23,7 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
   subject_id_lagged <- 0L
   state_lagged <- 0L
   t_sot <- 0 # start of treatment
-  for (i in 1:nrow(tbl_visits)) {
+  for (i in seq_len(nrow(tbl_visits))) {
     if (tbl_visits$subject_id[i] != subject_id_lagged || i == 1) {
       # switch to new subject
       subject_id_lagged <- tbl_visits$subject_id[i]
@@ -47,7 +47,7 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
           from = state_lagged,
           to = NA,
           t_min = tbl_visits$t[i],
-          t_max = -Inf, # - Inf indicates censoring and end of follow up (event can no longer be observed)
+          t_max = -Inf, # - Inf indicates censoring and end of follow up (event can no longer be observed) # nolint
           t_sot = t_sot
         ))
         state_lagged <- tbl_visits$state[i]
@@ -83,7 +83,7 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
         from = tbl_visits$state[i],
         to = NA,
         t_min = now,
-        t_max = Inf, # Inf indicates censoring while still at risk (event can still be observed)
+        t_max = Inf, # Inf indicates censoring while still at risk (event can still be observed) # nolint
         t_sot = t_sot
       ))
     }
