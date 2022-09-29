@@ -7,7 +7,7 @@
 #' @return log(p/(1-p))
 #'
 #' @export
-logodds <- function(p) log( p / (1 - p) )
+logodds <- function(p) log(p / (1 - p))
 
 
 # helper function to broadcast paramters
