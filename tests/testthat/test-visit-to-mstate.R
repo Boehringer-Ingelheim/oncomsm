@@ -112,7 +112,7 @@ test_that("visits to mstate conversion works", {
       start_state = "stable",
       absorbing_states = c("progression")
     ),
-    regexp = "first visit must be in starting state; subject_id=2, state=response"
+    regexp = "first visit must be in starting state; subject_id=2, state=response" # nolint
   )
 
 })

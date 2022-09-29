@@ -336,7 +336,8 @@ tbl_interim <- sample_predictive(
         distinct() %>%
         arrange(runif(n())) %>% # permute groups
         mutate(
-          t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)), # poisson recruitment process
+          # poisson recruitment process
+          t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)),
         ),
       by = c("subject_id", "group_id")
     )

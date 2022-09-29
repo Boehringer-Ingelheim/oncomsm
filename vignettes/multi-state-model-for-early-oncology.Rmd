@@ -308,7 +308,8 @@ tbl_sot <- tbl_visits %>%
   distinct() %>%
   arrange(runif(n())) %>% # permute groups
   mutate(
-    t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)) # poisson recruitment process
+    # poisson recruitment process
+    t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall))
   )
 
 # add to visit times
