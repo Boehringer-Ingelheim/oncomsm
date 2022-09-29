@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 # see whether jags can be found, if not deactivate last part of vignette
 # we don't want to depend on jags for one example
-JAGS_FOUND <- tryCatch(
+jags_found <- tryCatch(
   {
     rjags::jags.version()
     TRUE
@@ -272,7 +272,7 @@ eval_phi_3 <- function(data, nsim = 250) {
 }
 ```
 
-```{r, eval=JAGS_FOUND, warning=FALSE}
+```{r, eval=jags_found, warning=FALSE}
 # it is a good idea to cache long running simulation ;)
 tbl_results_bhmbasket <- xfun::cache_rds(
   {
@@ -291,7 +291,7 @@ tbl_results_bhmbasket <- xfun::cache_rds(
 ) # end caching
 ```
 
-```{r, eval=JAGS_FOUND}
+```{r, eval=jags_found}
 tbl_results_bhmbasket %>%
   tidyr::unnest(res) %>%
   group_by(group_id) %>%
@@ -316,7 +316,7 @@ tbl_results_bhmbasket %>%
 
 todo.
 
-```{r, eval=JAGS_FOUND, warning=FALSE}
+```{r, eval=jags_found, warning=FALSE}
 recruitment_rate_overall <- 3
 
 # sample from predictive and then reduce to t = 10

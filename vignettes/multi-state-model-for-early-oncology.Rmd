@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
-  fig.height = 7/1.61,
+  fig.height = 7 / 1.61,
   fig.align = "center"
 )
 ```
@@ -168,31 +168,34 @@ We assume a time-scale of months.
 
 ```{r specify-model}
 mdl <- create_srp_model(
-    # names of the arms/groups
-    group_id = c("control", "intervention"),
-    # per-group logodds of response|stable
-    logodds_mean =  c(logodds(.25), logodds(.5)),
-    logodds_sd = c(.75, .75),
-    # m[i,j] is the median time to next event for group i and transition j
-    median_time_to_next_event = matrix(c(
-      3, 2, 6,
-      2, 8, 12
-    ), byrow = TRUE,  nrow = 2, ncol = 3),
-    # fixed standard deviation of the prior for all median times
-    median_time_to_next_event_sd = matrix( 
-      1, byrow = TRUE,  nrow = 2, ncol = 3
-    ),
-    # uniform prior over the shape parameter, difficult to identify, 
-    # better keep it tight to avoid issues with the sampler
-    shape_min = matrix( 
-      .75, byrow = TRUE,  nrow = 2, ncol = 3
-    ),
-    shape_max = matrix( 
-      2, byrow = TRUE,  nrow = 2, ncol = 3
-    ),
-    # the visit interval
-    visit_spacing = c(1.2, 1.2)
-  )
+  # names of the arms/groups
+  group_id = c("control", "intervention"),
+  # per-group logodds of response|stable
+  logodds_mean = c(logodds(.25), logodds(.5)),
+  logodds_sd = c(.75, .75),
+  # m[i,j] is the median time to next event for group i and transition j
+  median_time_to_next_event = matrix(c(
+    3, 2, 6,
+    2, 8, 12
+  ), byrow = TRUE, nrow = 2, ncol = 3),
+  # fixed standard deviation of the prior for all median times
+  median_time_to_next_event_sd = matrix(
+    1,
+    byrow = TRUE, nrow = 2, ncol = 3
+  ),
+  # uniform prior over the shape parameter, difficult to identify,
+  # better keep it tight to avoid issues with the sampler
+  shape_min = matrix(
+    .75,
+    byrow = TRUE, nrow = 2, ncol = 3
+  ),
+  shape_max = matrix(
+    2,
+    byrow = TRUE, nrow = 2, ncol = 3
+  ),
+  # the visit interval
+  visit_spacing = c(1.2, 1.2)
+)
 # TODO: implement a nice summary / print function here
 ```
 
@@ -243,24 +246,24 @@ Here, we can re-use the sample prior sample already used for plotting.
 
 ```{r prior-predictive}
 tbl_prior_predictive <- sample_predictive(
-  mdl, 
+  mdl,
   sample = smpl_prior,
-  n_per_group = c(30L, 30L), 
-  nsim = 100, 
+  n_per_group = c(30L, 30L),
+  nsim = 100,
   seed = 3423423
-) 
+)
 
 # estimate of the response rates
-tbl_prior_predictive %>% 
-  filter(from == "stable") %>% 
-  group_by(group_id) %>% 
-  summarize(p_response = sum(to == "response")/n())
+tbl_prior_predictive %>%
+  filter(from == "stable") %>%
+  group_by(group_id) %>%
+  summarize(p_response = sum(to == "response") / n())
 
 # crude approximation of the median jump times from "stable"
-tbl_prior_predictive %>%  
-  filter(from == "stable") %>% 
-  group_by(group_id, from, to) %>% 
-  summarize(t_jump_approx = median(t_min + t_max)/2, .groups = "drop") 
+tbl_prior_predictive %>%
+  filter(from == "stable") %>%
+  group_by(group_id, from, to) %>%
+  summarize(t_jump_approx = median(t_min + t_max) / 2, .groups = "drop")
 ```
 
 The generated data can also be visualized in swimmer plots
@@ -284,8 +287,8 @@ Note that the conversion is not exact since the mstate format does not contain
 information about potential visits between the interval boundaries.
 
 ```{r}
-tbl_visits <- tbl_prior_predictive %>% 
-  filter(iter == 1) %>% 
+tbl_visits <- tbl_prior_predictive %>%
+  filter(iter == 1) %>%
   mstate_to_visits(mdl, .)
 
 print(tbl_visits)
@@ -297,26 +300,26 @@ Next, we add recruitment times.
 recruitment_rate_overall <- 3
 # sample from poisson process
 set.seed(31532)
-tbl_sot <- tbl_visits %>% 
+tbl_sot <- tbl_visits %>%
   select(
-    subject_id, 
+    subject_id,
     group_id
-  ) %>% 
-  distinct() %>% 
+  ) %>%
+  distinct() %>%
   arrange(runif(n())) %>% # permute groups
   mutate(
     t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)) # poisson recruitment process
   )
 
 # add to visit times
-tbl_visits <- tbl_visits %>% 
-  left_join(tbl_sot, by = c("subject_id", "group_id")) %>% 
-  mutate(t = t + t_sot) %>% 
+tbl_visits <- tbl_visits %>%
+  left_join(tbl_sot, by = c("subject_id", "group_id")) %>%
+  mutate(t = t + t_sot) %>%
   select(-t_sot)
 
 # convert back to mstate format and plot
-tbl_visits %>% 
-  visits_to_mstate(start_state = "stable", absorbing_states = "progression") %>% 
+tbl_visits %>%
+  visits_to_mstate(start_state = "stable", absorbing_states = "progression") %>%
   plot_mstate(mdl, ., relative_to_sot = FALSE)
 ```
 
@@ -328,14 +331,14 @@ If we now cut the data at 15 months after the first SoT, we can imitate a
 hypothetical interim analysis.
 
 ```{r, fig.height=6}
-tbl_visits_interim <- tbl_visits %>% 
-  filter(t <= 15) 
+tbl_visits_interim <- tbl_visits %>%
+  filter(t <= 15)
 
 # convert to mstate plot
 tbl_mstate_interim <- visits_to_mstate(
-  tbl_visits_interim, 
-  start_state = "stable", 
-  absorbing_states = "progression", 
+  tbl_visits_interim,
+  start_state = "stable",
+  absorbing_states = "progression",
   now = 15
 )
 plot_mstate(mdl, tbl_mstate_interim, relative_to_sot = FALSE, now = 15)
@@ -346,10 +349,10 @@ Careful, due to the different time-to-event these will be biased.
 
 ```{r}
 # estimate of the response rates (biased due to missing!)
-tbl_mstate_interim %>% 
-  filter(from == "stable", !is.na(to)) %>% 
-  group_by(group_id) %>% 
-  summarize(p_response = sum(to == "response")/n())
+tbl_mstate_interim %>%
+  filter(from == "stable", !is.na(to)) %>%
+  group_by(group_id) %>%
+  summarize(p_response = sum(to == "response") / n())
 ```
 
 We can now do inference by drawing sample from the posterior distribution.
@@ -358,20 +361,20 @@ posterior as compared to the prior is to be expected.
 
 ```{r}
 smpl_posterior <- sample_posterior(
-  mdl, 
-  tbl_mstate_interim, 
+  mdl,
+  tbl_mstate_interim,
   refresh = 500, nsim = 5000, warmup = 250, seed = 76947
 )
 
 plot(mdl, dt = c(0, 36), sample = smpl_posterior)
 
-smpl_posterior %>% 
-  parameter_sample_to_tibble(mdl, .) %>% 
-  filter(parameter == "p") %>% 
-  group_by(group_id) %>% 
+smpl_posterior %>%
+  parameter_sample_to_tibble(mdl, .) %>%
+  filter(parameter == "p") %>%
+  group_by(group_id) %>%
   summarize(
-    p_posterior_mean = median(value), 
-    q25 = quantile(value, probs = .25), 
+    p_posterior_mean = median(value),
+    q25 = quantile(value, probs = .25),
     q75 = quantile(value, probs = .75)
   )
 ```
@@ -388,10 +391,10 @@ At 15 months into the trial, there are still individuals who have not been
 recruited (the final sample size was set to 30 per group). 
 
 ```{r}
-tbl_interim_sample_sizes <- tbl_mstate_interim %>% 
-  select(group_id, subject_id) %>% 
-  distinct() %>% 
-  group_by(group_id) %>% 
+tbl_interim_sample_sizes <- tbl_mstate_interim %>%
+  select(group_id, subject_id) %>%
+  distinct() %>%
+  group_by(group_id) %>%
   summarize(n = n())
 
 print(tbl_interim_sample_sizes)
@@ -402,28 +405,28 @@ still-to-be-recruited individuals.
 
 ```{r}
 tbl_to_be_recruited <- tibble(
-    group_id = tbl_interim_sample_sizes$group_id,
-    n_to_be_recruited = 30 - tbl_interim_sample_sizes$n  
-  ) %>% 
+  group_id = tbl_interim_sample_sizes$group_id,
+  n_to_be_recruited = 30 - tbl_interim_sample_sizes$n
+) %>%
   mutate(
     tmp = purrr::map(
-      n_to_be_recruited, 
-      ~tibble(
+      n_to_be_recruited,
+      ~ tibble(
         # use unique identifiers to avoid clashing between groups
         subject_id = uuid::UUIDgenerate(n = .),
-        # sample recruitment times per group using half the overall 
+        # sample recruitment times per group using half the overall
         # recruitment rate
-        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall/2))
+        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall / 2))
       )
     )
-  ) %>% 
-  select(-n_to_be_recruited) %>% 
-  tidyr::unnest(tmp) %>% 
+  ) %>%
+  select(-n_to_be_recruited) %>%
+  tidyr::unnest(tmp) %>%
   # add information on starting state etc to expand to full mstate table
   mutate(
     from = "stable",
     to = NA_character_,
-    t_min = t_sot + 1/30, # preclude events on the day of recruitment
+    t_min = t_sot + 1 / 30, # preclude events on the day of recruitment
     t_max = Inf # right censored
   )
 
@@ -438,11 +441,11 @@ posterior distribution.
 tbl_mstate_interim_forward <- bind_rows(tbl_mstate_interim, tbl_to_be_recruited)
 
 tbl_posterior_predictive <- impute_predictive(
-    mdl,
-    data = tbl_mstate_interim_forward, 
-    sample = smpl_posterior,
-    nsim = 1
-  )
+  mdl,
+  data = tbl_mstate_interim_forward,
+  sample = smpl_posterior,
+  nsim = 1
+)
 
 plot_mstate(mdl, tbl_posterior_predictive, relative_to_sot = FALSE)
 ```
