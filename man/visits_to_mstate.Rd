@@ -19,9 +19,11 @@ visits_to_mstate(
 
 \item{absorbing_states}{character vector of absorbing states}
 
-\item{now}{time point since start of trial (might be later than last recorded visit) # nolint}
+\item{now}{time point since start of trial (might be later than last
+recorded visit)}
 
-\item{eof_indicator}{state name indicating (exactly observed) eond of follow up. # nolint}
+\item{eof_indicator}{state name indicating (exactly observed) eond of
+follow up.}
 }
 \value{
 A data frame
