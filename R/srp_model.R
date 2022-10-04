@@ -91,9 +91,13 @@ is_valid.srp_model <- function(mdl) { # nolint
                              len = length(attr(mdl, "group_id")) *
                                length(attr(mdl, "states")), any.missing = FALSE,
                              .var.name = "median_time_to_next_event_mean")
-    checkmate::assert_numeric(mdl$median_time_to_next_event_mean[mdl$median_time_to_next_event_mean < 0], # nolint
-                              lower = 0, upper = 0,
-                              .var.name = "median_time_to_next_event_mean")
+    with(mdl,
+      checkmate::assert_numeric(
+        median_time_to_next_event_mean[median_time_to_next_event_mean < 0],
+        lower = 0, upper = 0,
+        .var.name = "median_time_to_next_event_mean"
+      )
+    )
 
   })
   return(TRUE)
@@ -163,7 +167,8 @@ is_valid.srp_model <- function(mdl) { # nolint
           # sample exact response time
           t_response <- rtruncweibull(
             sshape[1],
-            scale = sscale[1], data$t_min[i], Inf # t_min since time of SoT is known # nolint
+            # t_min since time of SoT is known
+            scale = sscale[1], data$t_min[i], Inf
           )
           # apply visit scheme
           n_visits_response <- t_response %/% visit_spacing[g]
@@ -182,9 +187,12 @@ is_valid.srp_model <- function(mdl) { # nolint
             visit_spacing[g] * (n_visits_progression + 1)
           res <- bind_rows(
             res, tribble(
-              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter, # nolint
-              data$subject_id[i], g, "stable", "response", tmin_response, tmax_response, data$t_sot[i], j, # nolint
-              data$subject_id[i], g, "response", "progression", tmin_progression, tmax_progression, data$t_sot[i], j # nolint
+              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
+                ~iter,
+              data$subject_id[i], g, "stable", "response", tmin_response,
+                tmax_response, data$t_sot[i], j,
+              data$subject_id[i], g, "response", "progression",
+                tmin_progression, tmax_progression, data$t_sot[i], j
             )
           )
         } else { # sample progression directly
@@ -201,8 +209,9 @@ is_valid.srp_model <- function(mdl) { # nolint
             visit_spacing[g] * (n_visits_progression + 1)
           res <- bind_rows(
             res, tribble(
-              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter, # nolint
-              data$subject_id[i], g, "stable", "progression", tmin_progression, tmax_progression, data$t_sot[i], j # nolint
+              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter,
+              data$subject_id[i], g, "stable", "progression", tmin_progression,
+                tmax_progression, data$t_sot[i], j
             )
           )
         } # end stable -> progression
@@ -230,8 +239,9 @@ is_valid.srp_model <- function(mdl) { # nolint
           visit_spacing[g] * (n_visits_progression + 1)
         res <- bind_rows(
           res, tribble(
-            ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter, # nolint
-            data$subject_id[i], g, "response", "progression", tmin_progression, tmax_progression, data$t_sot[i], j # nolint
+            ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter,
+            data$subject_id[i], g, "response", "progression", tmin_progression,
+              tmax_progression, data$t_sot[i], j
           )
         )
       } # end from == 2
@@ -307,7 +317,7 @@ data2standata.srp_model <- function(model, data) { # nolint
       t_min = .data$t_min - .data$t_sot,
       t_max = .data$t_max - .data$t_sot
     ) %>%
-    arrange(.data$subject_id, .data$from) %>% # make sure everything is sorted properly # nolint
+    arrange(.data$subject_id, .data$from) %>%
     as.list()
 
   # make sure everything is an array
@@ -536,7 +546,8 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
   # plot pfs
   tbl_pfs_survival <- sample_pfs_rate(
       x,
-      t = seq(0.5, dt[2], length.out = n_grid), # ToDo: make sure this works from 0 # nolint
+      # ToDo: make sure this works from 0
+      t = seq(0.5, dt[2], length.out = n_grid),
       sample = sample
     ) %>%
     # integrate over prior sample

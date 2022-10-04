@@ -204,7 +204,8 @@ impute_predictive.Model <- function(
   seed = NULL,
   ...
 ) {
-  if (is.null(sample)) { # the default is to sample from the posterior predictive # nolint
+  if (is.null(sample)) {
+    # the default is to sample from the posterior predictive
     sample <- sample_posterior(
       model, data = data, rstan_output = TRUE, seed = seed,
       warmup = warmup_parameters, nsim = nsim_parameters, ...
@@ -245,7 +246,8 @@ impute_predictive.Model <- function(
         }
     ) # data
   )
-  set.seed(seed) # global seed affects permutation of extracted parameters if not set # nolint
+  # global seed affects permutation of extracted parameters if not set
+  set.seed(seed)
   # sample
   res <- rstan::sampling(
     attr(model, "stanmodel"),

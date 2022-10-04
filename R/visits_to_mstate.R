@@ -3,8 +3,10 @@
 #' @param tbl_visits visit data in long format
 #' @param start_state staring state
 #' @param absorbing_states character vector of absorbing states
-#' @param now time point since start of trial (might be later than last recorded visit) # nolint
-#' @param eof_indicator state name indicating (exactly observed) eond of follow up. # nolint
+#' @param now time point since start of trial (might be later than last
+#'   recorded visit)
+#' @param eof_indicator state name indicating (exactly observed) eond of
+#'   follow up.
 #'
 #' @return A data frame
 #'
@@ -16,7 +18,8 @@
 visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
                              now = max(tbl_visits$t), eof_indicator = "EOF") {
 
-  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t) # make sure everything is sorted # nolint
+  # make sure everything is sorted
+  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t)
 
   tbl_mstate <- list()
 
@@ -47,7 +50,9 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
           from = state_lagged,
           to = NA,
           t_min = tbl_visits$t[i],
-          t_max = -Inf, # - Inf indicates censoring and end of follow up (event can no longer be observed) # nolint
+          # - Inf indicates censoring and end of follow up
+          # (event can no longer be observed)
+          t_max = -Inf,
           t_sot = t_sot
         ))
         state_lagged <- tbl_visits$state[i]
@@ -83,7 +88,7 @@ visits_to_mstate <- function(tbl_visits, start_state, absorbing_states,
         from = tbl_visits$state[i],
         to = NA,
         t_min = now,
-        t_max = Inf, # Inf indicates censoring while still at risk (event can still be observed) # nolint
+        t_max = Inf,
         t_sot = t_sot
       ))
     }
