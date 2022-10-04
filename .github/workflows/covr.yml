@@ -1,0 +1,51 @@
+name: coverage
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: r-lib/actions/setup-pandoc@v2
+      
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'latest'
+          use-public-rspm: true
+          
+      - name: Install JAGS
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jags
+          
+      - uses: r-lib/actions/setup-r-dependencies@v2
+      
+      - name: Install R package
+        run: |
+          install.packages(".", repos=NULL, type="source")
+        shell: Rscript {0}
+        
+      - name: Install covr
+        run: |
+          if (!require("covr")) install.packages("covr")
+        shell: Rscript {0}
+
+      - name: Run coverage
+        run: |
+          covr::to_cobertura(covr::package_coverage(), filename = "coverage.xml")
+        shell: Rscript {0}
+        
+      - uses: 5monkeys/cobertura-action@v13
+        with:
+          path: coverage.xml
+          skip_covered: false
+          minimum_coverage: 80
+          fail_below_threshold: true
+          show_line: true
+          show_missing: true
+          link_missing_lines: true
