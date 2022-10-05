@@ -67,7 +67,7 @@ test_that("private function is_valid throws correct errors", {
           byrow = TRUE,  nrow = 2, ncol = 3
         )
     ),
-    regexp = "Assertion on 'median_time_to_next_event_mean' failed: Element 1 is not >= 0"
+    regexp = "Assertion on 'median_time_to_next_event_mean' failed: Element 1 is not >= 0" # nolint
   )
 
 })
@@ -115,7 +115,9 @@ test_that("can convert data to standata for SRP model", {
 
 test_that("can plot mstate data for SRP model", {
 
-  create_plot <- function() plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
+  create_plot <- function() {
+    plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
+    }
 
   vdiffr::expect_doppelganger("plot_mstate.srp_model", create_plot)
 
@@ -153,11 +155,13 @@ test_that("can generate data from SRP model", {
       group_by(group_id) %>%
       summarize(n = length(unique(subject_id))) %>%
       pull(n) %>%
-      {. == c(20, 20)} %>%
+      {
+        . == c(20, 20)
+      } %>%
       all()
   )
 
-  p <- tbl_prior_predictive1 %>% # we throw together iterations to get better estimate
+  p <- tbl_prior_predictive1 %>% # we throw together iterations to get better estimate # nolint
     filter(from == "stable") %>%
     group_by(group_id, to) %>%
     summarize(n = length(unique(subject_id)), .groups = "drop_last") %>%
@@ -174,7 +178,7 @@ test_that("can generate data from SRP model", {
 
 test_that("prior predictive seed works", {
 
-  tbl_prior_predictive2 <-sample_predictive(
+  tbl_prior_predictive2 <- sample_predictive(
     mdl,
     n_per_group = c(20, 20),
     nsim = 25,

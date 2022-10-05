@@ -13,16 +13,17 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
-  fig.height = 7/1.61,
+  fig.height = 7 / 1.61,
   fig.align = "center"
 )
 
 # see whether jags can be found, if not deactivate last part of vignette
 # we don't want to depend on jags for one example
-JAGS_FOUND <- tryCatch({
+jags_found <- tryCatch(
+  {
     rjags::jags.version()
     TRUE
-  }, 
+  },
   error = function(e) FALSE
 )
 ```
@@ -94,32 +95,35 @@ Assume the following prior for the multi-state model .
 
 ```{r prior-specification}
 mdl <- create_srp_model(
-    # names of the arms/groups
-    group_id = c("A", "B", "C"),
-    # per-group logodds of response|stable
-    logodds_mean =  c(logodds(.20), logodds(.3), logodds(.3)),
-    logodds_sd = c(.5, .5, .5),
-    # m[i,j] is the median time to next event for group i and transition j
-    median_time_to_next_event = matrix(c(
-      3, 2, 6,
-      2, 8, 9,
-      2, 6, 24 
-    ), byrow = TRUE,  nrow = 3, ncol = 3),
-    # fixed standard deviation of the prior for all median times
-    median_time_to_next_event_sd = matrix( 
-      1, byrow = TRUE,  nrow = 3, ncol = 3
-    ),
-    # uniform prior over the shape parameter, difficult to identify, 
-    # better keep it tight to avoid issues with the sampler
-    shape_min = matrix( 
-      .75, byrow = TRUE,  nrow = 3, ncol = 3
-    ),
-    shape_max = matrix( 
-      2, byrow = TRUE,  nrow = 3, ncol = 3
-    ),
-    # the visit interval
-    visit_spacing = c(1.2, 1.2, 1.2)
-  )
+  # names of the arms/groups
+  group_id = c("A", "B", "C"),
+  # per-group logodds of response|stable
+  logodds_mean = c(logodds(.20), logodds(.3), logodds(.3)),
+  logodds_sd = c(.5, .5, .5),
+  # m[i,j] is the median time to next event for group i and transition j
+  median_time_to_next_event = matrix(c(
+    3, 2, 6,
+    2, 8, 9,
+    2, 6, 24
+  ), byrow = TRUE, nrow = 3, ncol = 3),
+  # fixed standard deviation of the prior for all median times
+  median_time_to_next_event_sd = matrix(
+    1,
+    byrow = TRUE, nrow = 3, ncol = 3
+  ),
+  # uniform prior over the shape parameter, difficult to identify,
+  # better keep it tight to avoid issues with the sampler
+  shape_min = matrix(
+    .75,
+    byrow = TRUE, nrow = 3, ncol = 3
+  ),
+  shape_max = matrix(
+    2,
+    byrow = TRUE, nrow = 3, ncol = 3
+  ),
+  # the visit interval
+  visit_spacing = c(1.2, 1.2, 1.2)
+)
 ```
 
 We can now sample from the prior and visualize it.
@@ -133,9 +137,9 @@ plot(mdl, dt = c(0, 36), sample = smpl_prior)
 The induced prior over PFS rates at 3, 6, 12, and 18 months is 
 
 ```{r pfsx-rates}
-tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12, 18), sample = smpl_prior) %>% 
+tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12, 18), sample = smpl_prior) %>%
   mutate(t = factor(t))
-  
+
 ggplot(tbl_pfs_rates) +
   geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
   scale_color_discrete("") +
@@ -154,17 +158,20 @@ Let us consider two success criteria per arm:
 # the simulation number is only chosen so small for demonstration purposes
 # we compute both phi_1 and phi_2 jointly to reuse the same posterior sample
 eval_phi <- function(data, prob = 0.25, nsim = 250) {
-  smpl <- sample_posterior(mdl, data = data, seed = 38497, warmup = 150L, nsim = nsim)
+  smpl <- sample_posterior(mdl,
+    data = data, seed = 38497, warmup = 150L,
+    nsim = nsim
+  )
   mtx_p <- rstan::extract(smpl, "p")$p
   p <- apply(mtx_p, 2, function(x) quantile(x, .25))
-  res <- sample_pfs_rate(mdl, 12, smpl) %>% 
-    group_by(group_id) %>% 
-    summarize(pfs12 = quantile(pfs, .25)) %>% 
+  res <- sample_pfs_rate(mdl, 12, smpl) %>%
+    group_by(group_id) %>%
+    summarize(pfs12 = quantile(pfs, .25)) %>%
     mutate(
       p = p,
       phi_1 = p >= 0.3,
       phi_2 = pfs12 >= 0.5
-    ) %>% 
+    ) %>%
     select(group_id, phi_1, phi_2)
   return(res)
 }
@@ -174,13 +181,13 @@ eval_phi <- function(data, prob = 0.25, nsim = 250) {
 
 ```{r sample-prior-predictive}
 tbl_prior_predictive <- sample_predictive(
-    mdl,
-    n_per_group = rep(30L, 3),
-    sample = smpl_prior,
-    nsim = 100L, # same, here, only for demonstration purposes
-    seed = 34930L
-  ) %>% 
-  group_by(iter) %>% 
+  mdl,
+  n_per_group = rep(30L, 3),
+  sample = smpl_prior,
+  nsim = 100L, # same, here, only for demonstration purposes
+  seed = 34930L
+) %>%
+  group_by(iter) %>%
   tidyr::nest()
 ```
 
@@ -188,25 +195,27 @@ tbl_prior_predictive <- sample_predictive(
 plan(multisession) # instruct future how to run in parallel
 
 # it is a good idea to cache long running simulation ;)
-tbl_results <- xfun::cache_rds({ 
-  
-  tbl_prior_predictive %>%
-    ungroup() %>% 
-    mutate(
-      res = furrr::future_map(
-        data, eval_phi,
-        .options = furrr::furrr_options(seed = TRUE, scheduling = 5L)
-      )
-    ) %>% 
-    select(-data)
-  
-}, dir = ".cache/", file = "sim_results.rds") # end caching
+tbl_results <- xfun::cache_rds(
+  {
+    tbl_prior_predictive %>%
+      ungroup() %>%
+      mutate(
+        res = furrr::future_map(
+          data, eval_phi,
+          .options = furrr::furrr_options(seed = TRUE, scheduling = 5L)
+        )
+      ) %>%
+      select(-data)
+  },
+  dir = ".cache/",
+  file = "sim_results.rds"
+) # end caching
 ```
 
 ```{r}
-tbl_results %>% 
-  tidyr::unnest(res) %>% 
-  group_by(group_id) %>% 
+tbl_results %>%
+  tidyr::unnest(res) %>%
+  group_by(group_id) %>%
   summarize(
     pos_phi_1 = mean(phi_1),
     pos_phi_2 = mean(phi_2)
@@ -234,26 +243,28 @@ prms_berry <- bhmbasket::setPriorParametersBerry(
 )
 
 data_to_bhmbasket_trial <- function(data) {
-  data %>% 
-    group_by(group_id, subject_id) %>% 
-    summarize(responder = any(to == "response")) %>% 
-    summarize(r = sum(responder), n = n()) %>% 
-    {bhmbasket::createTrial(.$n, .$r)} %>% 
+  data %>%
+    group_by(group_id, subject_id) %>%
+    summarize(responder = any(to == "response")) %>%
+    summarize(r = sum(responder), n = n()) %>%
+    {
+      bhmbasket::createTrial(.$n, .$r)
+    } %>%
     return()
 }
 
 eval_phi_3 <- function(data, nsim = 250) {
-  prob = 0.25 # needs to be hard coded
+  prob <- 0.25 # needs to be hard coded
   set.seed(2340239L)
   res <- suppressMessages(bhmbasket::performAnalyses(
-      scenario_list         = data_to_bhmbasket_trial(data),
-      method_names          = "berry",
-      evidence_levels       = 1 - prob,
-      prior_parameters_list = prms_berry,
-      target_rates          = c(.2, .3, .3),
-      n_mcmc_iterations     = nsim,
-      verbose               = FALSE
-    ))
+    scenario_list         = data_to_bhmbasket_trial(data),
+    method_names          = "berry",
+    evidence_levels       = 1 - prob,
+    prior_parameters_list = prms_berry,
+    target_rates          = c(.2, .3, .3),
+    n_mcmc_iterations     = nsim,
+    verbose               = FALSE
+  ))
   return(tibble(
     group_id = attr(mdl, "group_id"),
     phi_3 = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
@@ -261,38 +272,40 @@ eval_phi_3 <- function(data, nsim = 250) {
 }
 ```
 
-```{r, eval=JAGS_FOUND, warning=FALSE}
+```{r, eval=jags_found, warning=FALSE}
 # it is a good idea to cache long running simulation ;)
-tbl_results_bhmbasket <- xfun::cache_rds({ 
-  
-  tbl_prior_predictive %>%
-    ungroup() %>% 
-    mutate(
-      res = furrr::future_map(
-        data, eval_phi_3,
-        .options = furrr::furrr_options(seed = TRUE)
-      )
-    ) %>% 
-    select(-data)
-  
-}, dir = ".cache/", file = "sim_results_bhmbasket.rds") # end caching
+tbl_results_bhmbasket <- xfun::cache_rds(
+  {
+    tbl_prior_predictive %>%
+      ungroup() %>%
+      mutate(
+        res = furrr::future_map(
+          data, eval_phi_3,
+          .options = furrr::furrr_options(seed = TRUE)
+        )
+      ) %>%
+      select(-data)
+  },
+  dir = ".cache/",
+  file = "sim_results_bhmbasket.rds"
+) # end caching
 ```
 
-```{r, eval=JAGS_FOUND}
-tbl_results_bhmbasket %>% 
-  tidyr::unnest(res) %>% 
-  group_by(group_id) %>% 
+```{r, eval=jags_found}
+tbl_results_bhmbasket %>%
+  tidyr::unnest(res) %>%
+  group_by(group_id) %>%
   summarize(
     pos_phi_3 = mean(phi_3)
-  ) %>% 
+  ) %>%
   left_join(
-    tbl_results %>% 
-      tidyr::unnest(res) %>% 
-      group_by(group_id) %>% 
+    tbl_results %>%
+      tidyr::unnest(res) %>%
+      group_by(group_id) %>%
       summarize(
         pos_phi_1 = mean(phi_1),
         pos_phi_2 = mean(phi_2)
-      ), 
+      ),
     by = "group_id"
   )
 ```
@@ -303,78 +316,81 @@ tbl_results_bhmbasket %>%
 
 todo.
 
-```{r, eval=JAGS_FOUND, warning=FALSE}
+```{r, eval=jags_found, warning=FALSE}
 recruitment_rate_overall <- 3
 
 # sample from predictive and then reduce to t = 10
 tbl_interim <- sample_predictive(
-    mdl, 
-    sample = smpl_prior,
-    n_per_group = c(30L, 30L, 30L), 
-    nsim = 250, 
-    seed = 3423423
-  ) %>% 
-  filter(iter == 1) %>% 
-  select(-t_sot) %>% 
-  {left_join(
-    .,
-    select(., subject_id, group_id) %>% 
-      distinct() %>% 
-      arrange(runif(n())) %>% # permute groups
-      mutate(
-        t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)), # poisson recruitment process
-      ),
-    by = c("subject_id", "group_id")
-  )} %>% 
+  mdl,
+  sample = smpl_prior,
+  n_per_group = c(30L, 30L, 30L),
+  nsim = 250,
+  seed = 3423423
+) %>%
+  filter(iter == 1) %>%
+  select(-t_sot) %>%
+  {
+    left_join(
+      .,
+      select(., subject_id, group_id) %>%
+        distinct() %>%
+        arrange(runif(n())) %>% # permute groups
+        mutate(
+          # poisson recruitment process
+          t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)),
+        ),
+      by = c("subject_id", "group_id")
+    )
+  } %>%
   mutate(
     t_min = t_min + t_sot,
     t_max = t_max + t_sot
-  ) %>% 
-  mstate_to_visits(mdl, .) %>% 
-  filter(t <= 10) %>% 
+  ) %>%
+  mstate_to_visits(mdl, .) %>%
+  filter(t <= 10) %>%
   visits_to_mstate(
-    start_state = "stable", 
-    absorbing_states = "progression", 
+    start_state = "stable",
+    absorbing_states = "progression",
     now = 10
   )
 
-tbl_interim_sample_sizes <- tbl_interim %>% 
-  select(group_id, subject_id) %>% 
-  distinct() %>% 
-  group_by(group_id) %>% 
+tbl_interim_sample_sizes <- tbl_interim %>%
+  select(group_id, subject_id) %>%
+  distinct() %>%
+  group_by(group_id) %>%
   summarize(n = n())
 
 # posterior inference based on the interim data
 smpl_posterior <- sample_posterior(
-  mdl, 
-  tbl_interim, 
+  mdl,
+  tbl_interim,
   nsim = 2000, warmup = 250, seed = 76947
 )
 
 # need to create initial visits for to-be-recruited individuals
 tbl_to_be_recruited <- tibble(
-    group_id = tbl_interim_sample_sizes$group_id,
-    n_to_be_recruited = 30 - tbl_interim_sample_sizes$n  
-  ) %>% 
+  group_id = tbl_interim_sample_sizes$group_id,
+  n_to_be_recruited = 30 - tbl_interim_sample_sizes$n
+) %>%
   mutate(
     tmp = purrr::map(
-      n_to_be_recruited, 
-      ~tibble(
+      n_to_be_recruited,
+      ~ tibble(
         # use unique identifiers to avoid clashing between groups
         subject_id = uuid::UUIDgenerate(n = .),
-        # sample recruitment times per group using half the overall 
+        # sample recruitment times per group using half the overall
         # recruitment rate
-        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall/2))
+        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall / 2))
       )
     )
-  ) %>% 
-  select(-n_to_be_recruited) %>% 
-  tidyr::unnest(tmp) %>% 
+  ) %>%
+  select(-n_to_be_recruited) %>%
+  tidyr::unnest(tmp) %>%
   # add information on starting state etc to expand to full mstate table
   mutate(
     from = "stable",
     to = NA_character_,
-    t_min = t_sot + 1/30, # preclude events on the day of recruitment
+    t_min = t_sot + 1 / 30, # preclude events on the day of recruitment
     t_max = Inf # right censored
   )
 
@@ -383,30 +399,32 @@ tbl_mstate_interim_forward <- bind_rows(tbl_interim, tbl_to_be_recruited)
 
 # MI using interim posterior
 tbl_posterior_predictive <- impute_predictive(
-    mdl,
-    data = tbl_mstate_interim_forward, 
-    sample = smpl_posterior,
-    nsim = 250
-  ) %>% 
-  group_by(iter) %>% 
+  mdl,
+  data = tbl_mstate_interim_forward,
+  sample = smpl_posterior,
+  nsim = 250
+) %>%
+  group_by(iter) %>%
   tidyr::nest()
 
-tbl_pos <- xfun::cache_rds({ 
-  
-  tbl_posterior_predictive %>%
-    ungroup() %>% 
-    mutate(
-      res = furrr::future_map(
-        data, eval_phi_3,
-        .options = furrr::furrr_options(seed = TRUE)
-      )
-    ) %>% 
-    select(-data) %>% 
-    tidyr::unnest(res) %>% 
-    group_by(group_id) %>% 
-    summarize(pos = mean(phi_3))
-  
-}, dir = ".cache/", file = "sim_pos.rds") # end caching
+tbl_pos <- xfun::cache_rds(
+  {
+    tbl_posterior_predictive %>%
+      ungroup() %>%
+      mutate(
+        res = furrr::future_map(
+          data, eval_phi_3,
+          .options = furrr::furrr_options(seed = TRUE)
+        )
+      ) %>%
+      select(-data) %>%
+      tidyr::unnest(res) %>%
+      group_by(group_id) %>%
+      summarize(pos = mean(phi_3))
+  },
+  dir = ".cache/",
+  file = "sim_pos.rds"
+) # end caching
 
 
 tbl_pos

@@ -91,7 +91,8 @@ test_that("visits to mstate conversion works", {
     start_state = "stable",
     absorbing_states = c("progression")
   )
-  expect_true(all(tbl_mstate$from == c("stable", "response", "stable", "response", "stable", "response")))
+  expect_true(all(tbl_mstate$from == c("stable", "response", "stable",
+                                       "response", "stable", "response")))
   expect_equal(tbl_mstate$t_min, c(1.2, 2.4, 2, 3.6, 1.5, 3.5))
   expect_equal(tbl_mstate$t_max, c(2.4, 3.6, 3.0, Inf, 3.0, -Inf))
   expect_equal(tbl_mstate$t_sot, c(0, 0, 2, 2, 1.5, 1.5))
@@ -111,7 +112,7 @@ test_that("visits to mstate conversion works", {
       start_state = "stable",
       absorbing_states = c("progression")
     ),
-    regexp = "first visit must be in starting state; subject_id=2, state=response"
+    regexp = "first visit must be in starting state; subject_id=2, state=response" # nolint
   )
 
 })
