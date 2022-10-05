@@ -111,16 +111,19 @@ is_valid.srp_model <- function(mdl) { # nolint
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  # TODO: convert data to matrix and process in c++
   stopifnot(isa(parameter_sample, "stanfit"))
   # extract subject and group id levels for conversion to and back from integer
   subject_id_levels <- unique(as.character(data$subject_id))
   group_id_levels <- attr(model, "group_id") # important to maintain ordering
-  # extract parameter matrices
+  # extract parameter arrays from stanfit object
+  # p[i,j] is probability for ith sample for jth group
   p <- rstan::extract(parameter_sample, "p")[[1]]
+  # scale[i,j,k] is the scale value for ith sample in jth group for
+  # kth transition (k being 1. stable-> response, 2. stable -> progression,
+  # 3. response -> progression)
   scale <- rstan::extract(parameter_sample, "scale")[[1]]
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
-
+  # sorting the samples and changing type to integer for groups and subj id
   data <- data %>%
     arrange(.data$t_sot, .data$subject_id, (.data$t_min + .data$t_max) / 2) %>%
     mutate(
