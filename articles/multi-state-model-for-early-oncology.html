@@ -90,10 +90,10 @@
 <p><strong>tl;dr:</strong> <em>Tumor response data is often treated as binary endpoint in early oncology trials (objective response or progression free survival at x months). This ignores the fact that these are time-to-event endpoints. Instead, the multi-state characteristics of the data can be exploited to reduce bias at interim analyses and drive event prediction for probability of success calculations.</em></p>
 <p>In early oncology trials, (objective tumor) response based on the RECIST criteria is often used as primary endpoint to establish the activity of a treatment. Response is often treated as binary variable although it is a delayed event endpoint. At the final analysis, this simplification is of little concern since all individuals tend to be followed up long enough to justify the assumption that non-responders are unlikely to still become responders. This approach is often plausible since individuals with tumors not responding to treatment ultimately progress. However, when continuously monitoring such a trial, the assumption of sufficient follow-up is no longer fulfilled and a simple binary analysis may be biased.</p>
 <p>In this vignette, the problem is addressed by extending the statistic binary response model to a three-state model for “stable”, “response”, and “progression or death”. The respective transition numbers are given in the graph below.</p>
-<div id="htmlwidget-4d8710fcd9f7a84d3463" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-4d8710fcd9f7a84d3463">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Once someone becomes a responder, this model only allows a transition to the combined progression or death state. This means that progression and death are not modeled as competing events and simplifies analysis greatly over a model like the one below:</p>
-<div id="htmlwidget-d0bf762b89362a0c2712" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-d0bf762b89362a0c2712">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3a --> progression\n  response -- 3b --> death\n  progression -- 4 --> death\n  stable -- 2a --> progression\n  stable -- 2b --> death\n"},"evals":[],"jsHooks":[]}</script><p>Coming back to the simpler model, there is still a competing event issue when starting from ‘stable’. Often, the convenient hazard-based approach is used to model multi-state situations like this. The hazard-based approach is intuitive, especially when considering non-parametric estimation, and co variate inclusion is well-understood. However, a hazard-based approach has several disadvantages:</p>
+<div id="htmlwidget-54933b0518caf75d1bd4" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-54933b0518caf75d1bd4">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Once someone becomes a responder, this model only allows a transition to the combined progression or death state. This means that progression and death are not modeled as competing events and simplifies analysis greatly over a model like the one below:</p>
+<div id="htmlwidget-e9be8e8c7e14ce83427d" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e9be8e8c7e14ce83427d">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3a --> progression\n  response -- 3b --> death\n  progression -- 4 --> death\n  stable -- 2a --> progression\n  stable -- 2b --> death\n"},"evals":[],"jsHooks":[]}</script><p>Coming back to the simpler model, there is still a competing event issue when starting from ‘stable’. Often, the convenient hazard-based approach is used to model multi-state situations like this. The hazard-based approach is intuitive, especially when considering non-parametric estimation, and co variate inclusion is well-understood. However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a momentary risk, not a probability. This leads to problems with prior specification in a Bayesian setting. The Bayesian approach is, however, particularly useful in the early development process since it allows to augment data with prior opinion or evidence and thus improve accuracy.</p></li>
 <li><p>A hazard based, non-Markov multi-state model leads to intractable expressions for the implicitly given transition probabilities. Hence they need to be calculated by simulation which makes the model less convenient to work with if transition probabilities a or of primary interest. Since the (objective) response rate often plays an important role in the analysis of early oncology trials, this is a disadvantage.</p></li>
@@ -136,31 +136,34 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <p>We assume a time-scale of months.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/srp_model.html">create_srp_model</a></span><span class="op">(</span></span>
-<span>    <span class="co"># names of the arms/groups</span></span>
-<span>    group_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"intervention"</span><span class="op">)</span>,</span>
-<span>    <span class="co"># per-group logodds of response|stable</span></span>
-<span>    logodds_mean <span class="op">=</span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="../reference/logodds.html">logodds</a></span><span class="op">(</span><span class="fl">.25</span><span class="op">)</span>, <span class="fu"><a href="../reference/logodds.html">logodds</a></span><span class="op">(</span><span class="fl">.5</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    logodds_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.75</span>, <span class="fl">.75</span><span class="op">)</span>,</span>
-<span>    <span class="co"># m[i,j] is the median time to next event for group i and transition j</span></span>
-<span>    median_time_to_next_event <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>      <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span>,</span>
-<span>      <span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">12</span></span>
-<span>    <span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>,  nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>    <span class="co"># fixed standard deviation of the prior for all median times</span></span>
-<span>    median_time_to_next_event_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span> </span>
-<span>      <span class="fl">1</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>,  nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    <span class="co"># uniform prior over the shape parameter, difficult to identify, </span></span>
-<span>    <span class="co"># better keep it tight to avoid issues with the sampler</span></span>
-<span>    shape_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span> </span>
-<span>      <span class="fl">.75</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>,  nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    shape_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span> </span>
-<span>      <span class="fl">2</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>,  nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    <span class="co"># the visit interval</span></span>
-<span>    visit_spacing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.2</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="co"># names of the arms/groups</span></span>
+<span>  group_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"intervention"</span><span class="op">)</span>,</span>
+<span>  <span class="co"># per-group logodds of response|stable</span></span>
+<span>  logodds_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="../reference/logodds.html">logodds</a></span><span class="op">(</span><span class="fl">.25</span><span class="op">)</span>, <span class="fu"><a href="../reference/logodds.html">logodds</a></span><span class="op">(</span><span class="fl">.5</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  logodds_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.75</span>, <span class="fl">.75</span><span class="op">)</span>,</span>
+<span>  <span class="co"># m[i,j] is the median time to next event for group i and transition j</span></span>
+<span>  median_time_to_next_event <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span>,</span>
+<span>    <span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">12</span></span>
+<span>  <span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  <span class="co"># fixed standard deviation of the prior for all median times</span></span>
+<span>  median_time_to_next_event_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>    <span class="fl">1</span>,</span>
+<span>    byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="co"># uniform prior over the shape parameter, difficult to identify,</span></span>
+<span>  <span class="co"># better keep it tight to avoid issues with the sampler</span></span>
+<span>  shape_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>    <span class="fl">.75</span>,</span>
+<span>    byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  shape_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>    <span class="fl">2</span>,</span>
+<span>    byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="co"># the visit interval</span></span>
+<span>  visit_spacing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.2</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co"># TODO: implement a nice summary / print function here</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -187,18 +190,18 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <p>Next, we draw samples from the prior-predictive distribution of the model. We sample 100 trials with 30 individuals per arm. Here, we can re-use the sample prior sample already used for plotting.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
-<span>  <span class="va">mdl</span>, </span>
+<span>  <span class="va">mdl</span>,</span>
 <span>  sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
-<span>  n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30L</span>, <span class="fl">30L</span><span class="op">)</span>, </span>
-<span>  nsim <span class="op">=</span> <span class="fl">100</span>, </span>
+<span>  n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30L</span>, <span class="fl">30L</span><span class="op">)</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">3423423</span></span>
-<span><span class="op">)</span> </span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># estimate of the response rates</span></span>
-<span><span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>p_response <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">to</span> <span class="op">==</span> <span class="st">"response"</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>p_response <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">to</span> <span class="op">==</span> <span class="st">"response"</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
 <span><span class="co">#&gt;   group_id     p_response</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
@@ -206,10 +209,10 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention      0.498</span></span>
 <span></span>
 <span><span class="co"># crude approximation of the median jump times from "stable"</span></span>
-<span><span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>  </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span>, <span class="va">from</span>, <span class="va">to</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>t_jump_approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">t_min</span> <span class="op">+</span> <span class="va">t_max</span><span class="op">)</span><span class="op">/</span><span class="fl">2</span>, .groups <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span> </span>
+<span><span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span>, <span class="va">from</span>, <span class="va">to</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>t_jump_approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">t_min</span> <span class="op">+</span> <span class="va">t_max</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span>, .groups <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 4</span></span></span>
 <span><span class="co">#&gt;   group_id     from   to          t_jump_approx</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
@@ -233,8 +236,8 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 </h3>
 <p>Usually, data will come in the form of individual visits, not yet in the form of interval censored transitions. We can mimic this for the sake of example by converting one of our prior predictive samples to visit data. Note that the conversion is not exact since the mstate format does not contain information about potential visits between the interval boundaries.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">iter</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<code class="sourceCode R"><span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">iter</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/mstate_to_visits.html">mstate_to_visits</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 'mstate_to_visits.srp_model' is experimental</span></span>
 <span></span>
@@ -258,26 +261,27 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <code class="sourceCode R"><span><span class="va">recruitment_rate_overall</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
 <span><span class="co"># sample from poisson process</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">31532</span><span class="op">)</span></span>
-<span><span class="va">tbl_sot</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">tbl_sot</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span></span>
-<span>    <span class="va">subject_id</span>, </span>
+<span>    <span class="va">subject_id</span>,</span>
 <span>    <span class="va">group_id</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># permute groups</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>    t_sot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, rate <span class="op">=</span> <span class="va">recruitment_rate_overall</span><span class="op">)</span><span class="op">)</span> <span class="co"># poisson recruitment process</span></span>
+<span>    <span class="co"># poisson recruitment process</span></span>
+<span>    t_sot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, rate <span class="op">=</span> <span class="va">recruitment_rate_overall</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="co"># add to visit times</span></span>
-<span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">tbl_sot</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subject_id"</span>, <span class="st">"group_id"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">t</span> <span class="op">+</span> <span class="va">t_sot</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">tbl_sot</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subject_id"</span>, <span class="st">"group_id"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">t</span> <span class="op">+</span> <span class="va">t_sot</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">t_sot</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># convert back to mstate format and plot</span></span>
-<span><span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span>start_state <span class="op">=</span> <span class="st">"stable"</span>, absorbing_states <span class="op">=</span> <span class="st">"progression"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span>start_state <span class="op">=</span> <span class="st">"stable"</span>, absorbing_states <span class="op">=</span> <span class="st">"progression"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span>, relative_to_sot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;"></p>
 </div>
@@ -286,14 +290,14 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 </h3>
 <p>If we now cut the data at 15 months after the first SoT, we can imitate a hypothetical interim analysis.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_visits_interim</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">15</span><span class="op">)</span> </span>
+<code class="sourceCode R"><span><span class="va">tbl_visits_interim</span> <span class="op">&lt;-</span> <span class="va">tbl_visits</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">15</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># convert to mstate plot</span></span>
 <span><span class="va">tbl_mstate_interim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span></span>
-<span>  <span class="va">tbl_visits_interim</span>, </span>
-<span>  start_state <span class="op">=</span> <span class="st">"stable"</span>, </span>
-<span>  absorbing_states <span class="op">=</span> <span class="st">"progression"</span>, </span>
+<span>  <span class="va">tbl_visits_interim</span>,</span>
+<span>  start_state <span class="op">=</span> <span class="st">"stable"</span>,</span>
+<span>  absorbing_states <span class="op">=</span> <span class="st">"progression"</span>,</span>
 <span>  now <span class="op">=</span> <span class="fl">15</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_mstate_interim</span>, relative_to_sot <span class="op">=</span> <span class="cn">FALSE</span>, now <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></code></pre></div>
@@ -301,10 +305,10 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <p>We can check the observed response rates. Careful, due to the different time-to-event these will be biased.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># estimate of the response rates (biased due to missing!)</span></span>
-<span><span class="va">tbl_mstate_interim</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>p_response <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">to</span> <span class="op">==</span> <span class="st">"response"</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tbl_mstate_interim</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">from</span> <span class="op">==</span> <span class="st">"stable"</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>p_response <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">to</span> <span class="op">==</span> <span class="st">"response"</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
 <span><span class="co">#&gt;   group_id     p_response</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
@@ -313,15 +317,15 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <p>We can now do inference by drawing sample from the posterior distribution. Clearly, this is a very extreme sample from the prior and a shift of the posterior as compared to the prior is to be expected.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">smpl_posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span></span>
-<span>  <span class="va">mdl</span>, </span>
-<span>  <span class="va">tbl_mstate_interim</span>, </span>
+<span>  <span class="va">mdl</span>,</span>
+<span>  <span class="va">tbl_mstate_interim</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">500</span>, nsim <span class="op">=</span> <span class="fl">5000</span>, warmup <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">76947</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'srp_model' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000127 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.27 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000109 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.09 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -338,22 +342,22 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; Chain 1: Iteration: 4750 / 5250 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 5250 / 5250 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 1.22221 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                13.3817 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                14.6039 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 0.933249 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                10.2765 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                11.2098 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, dt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">36</span><span class="op">)</span>, sample <span class="op">=</span> <span class="va">smpl_posterior</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="va">smpl_posterior</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/parameter_sample_to_tibble.html">parameter_sample_to_tibble</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">parameter</span> <span class="op">==</span> <span class="st">"p"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">smpl_posterior</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/parameter_sample_to_tibble.html">parameter_sample_to_tibble</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">parameter</span> <span class="op">==</span> <span class="st">"p"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
-<span>    p_posterior_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span>, </span>
-<span>    q25 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, probs <span class="op">=</span> <span class="fl">.25</span><span class="op">)</span>, </span>
+<span>    p_posterior_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span>,</span>
+<span>    q25 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, probs <span class="op">=</span> <span class="fl">.25</span><span class="op">)</span>,</span>
 <span>    q75 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, probs <span class="op">=</span> <span class="fl">.75</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
@@ -364,10 +368,10 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <p>The Bayesian approach specifies a full generative model. This can be used to draw samples from the posterior predictive distribution for the individuals still at risk and the ones not yet recruited. The process is the same as for sampling from the prior predictive - just with replacing the prior distribution with the posterior distribution obtained from conditioning on any available data.</p>
 <p>At 15 months into the trial, there are still individuals who have not been recruited (the final sample size was set to 30 per group).</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_interim_sample_sizes</span> <span class="op">&lt;-</span> <span class="va">tbl_mstate_interim</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">group_id</span>, <span class="va">subject_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<code class="sourceCode R"><span><span class="va">tbl_interim_sample_sizes</span> <span class="op">&lt;-</span> <span class="va">tbl_mstate_interim</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">group_id</span>, <span class="va">subject_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tbl_interim_sample_sizes</span><span class="op">)</span></span>
@@ -379,28 +383,28 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <p>We now sample recruitment dates and randomization probabilities for the still-to-be-recruited individuals.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_to_be_recruited</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
-<span>    group_id <span class="op">=</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">group_id</span>,</span>
-<span>    n_to_be_recruited <span class="op">=</span> <span class="fl">30</span> <span class="op">-</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">n</span>  </span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  group_id <span class="op">=</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">group_id</span>,</span>
+<span>  n_to_be_recruited <span class="op">=</span> <span class="fl">30</span> <span class="op">-</span> <span class="va">tbl_interim_sample_sizes</span><span class="op">$</span><span class="va">n</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    tmp <span class="op">=</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
-<span>      <span class="va">n_to_be_recruited</span>, </span>
-<span>      <span class="op">~</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>      <span class="va">n_to_be_recruited</span>,</span>
+<span>      <span class="op">~</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>        <span class="co"># use unique identifiers to avoid clashing between groups</span></span>
 <span>        subject_id <span class="op">=</span> <span class="fu">uuid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uuid/man/UUIDgenerate.html" class="external-link">UUIDgenerate</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">.</span><span class="op">)</span>,</span>
-<span>        <span class="co"># sample recruitment times per group using half the overall </span></span>
+<span>        <span class="co"># sample recruitment times per group using half the overall</span></span>
 <span>        <span class="co"># recruitment rate</span></span>
-<span>        t_sot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">.</span>, rate <span class="op">=</span> <span class="va">recruitment_rate_overall</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span>        t_sot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">.</span>, rate <span class="op">=</span> <span class="va">recruitment_rate_overall</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">n_to_be_recruited</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/nest.html" class="external-link">unnest</a></span><span class="op">(</span><span class="va">tmp</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">n_to_be_recruited</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/nest.html" class="external-link">unnest</a></span><span class="op">(</span><span class="va">tmp</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="co"># add information on starting state etc to expand to full mstate table</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    from <span class="op">=</span> <span class="st">"stable"</span>,</span>
 <span>    to <span class="op">=</span> <span class="cn">NA_character_</span>,</span>
-<span>    t_min <span class="op">=</span> <span class="va">t_sot</span> <span class="op">+</span> <span class="fl">1</span><span class="op">/</span><span class="fl">30</span>, <span class="co"># preclude events on the day of recruitment</span></span>
+<span>    t_min <span class="op">=</span> <span class="va">t_sot</span> <span class="op">+</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">30</span>, <span class="co"># preclude events on the day of recruitment</span></span>
 <span>    t_max <span class="op">=</span> <span class="cn">Inf</span> <span class="co"># right censored</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
@@ -408,36 +412,36 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 20 × 7</span></span></span>
 <span><span class="co">#&gt;    group_id     subject_id                        t_sot from  to     t_min t_max</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> control      06ab3d86-1511-47b7-be72-9b95fe1…  0.151 stab… <span style="color: #BB0000;">NA</span>     0.184   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> control      28f3bcd3-7e4e-49b4-8bf6-e613ecf…  1.33  stab… <span style="color: #BB0000;">NA</span>     1.36    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> control      6c9487bc-1117-47c9-b659-52ef088…  2.76  stab… <span style="color: #BB0000;">NA</span>     2.79    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> control      a3d9547c-1f58-4c42-89de-0ce76d5…  3.88  stab… <span style="color: #BB0000;">NA</span>     3.91    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> control      edde7248-eb3b-48aa-baf0-320968d…  4.79  stab… <span style="color: #BB0000;">NA</span>     4.82    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> control      5e4f652c-7c41-4e43-a077-44ea554…  6.10  stab… <span style="color: #BB0000;">NA</span>     6.13    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> control      6b935c8f-7caa-4e48-8dbb-c09d93f…  7.78  stab… <span style="color: #BB0000;">NA</span>     7.82    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> control      a923d702-67cb-43d6-94c0-bebcc55…  8.16  stab… <span style="color: #BB0000;">NA</span>     8.20    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> control      0e0315c6-99a3-4a70-b2e9-85088d2… 10.0   stab… <span style="color: #BB0000;">NA</span>    10.1     <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> control      60aefc78-4dce-44fd-a75e-c55c0ac… 13.9   stab… <span style="color: #BB0000;">NA</span>    13.9     <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> intervention 53223006-e291-4394-a8ba-2952cc8…  0.554 stab… <span style="color: #BB0000;">NA</span>     0.587   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> intervention af3a92c2-d611-4750-976e-f1f6001…  0.724 stab… <span style="color: #BB0000;">NA</span>     0.758   <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> intervention b6d3dc87-9dce-4b21-87b2-fe6b997…  2.31  stab… <span style="color: #BB0000;">NA</span>     2.34    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> intervention 036d7c04-da9b-4882-830b-2e5dca0…  2.35  stab… <span style="color: #BB0000;">NA</span>     2.38    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> intervention 97ed5706-08c0-4215-a4b3-6996bce…  2.88  stab… <span style="color: #BB0000;">NA</span>     2.92    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> intervention 6f3c7feb-c048-4396-a59e-cc9dd27…  3.04  stab… <span style="color: #BB0000;">NA</span>     3.07    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> intervention 55853fe7-0418-450c-be44-70454d7…  4.32  stab… <span style="color: #BB0000;">NA</span>     4.35    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> intervention 53e62019-0486-47d7-aa3a-95b6ee8…  5.15  stab… <span style="color: #BB0000;">NA</span>     5.18    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> intervention 6c7dc572-e08f-4b0e-aef7-8a54415…  6.29  stab… <span style="color: #BB0000;">NA</span>     6.33    <span style="color: #BB0000;">Inf</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> intervention 5cb806ed-c9fc-4692-9fc7-966b146…  6.52  stab… <span style="color: #BB0000;">NA</span>     6.55    <span style="color: #BB0000;">Inf</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> control      72ca5f79-5ec9-4f3f-83c7-240cf4d…  0.151 stab… <span style="color: #BB0000;">NA</span>     0.184   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> control      738db9a2-17c1-4dfc-8824-00e0e24…  1.33  stab… <span style="color: #BB0000;">NA</span>     1.36    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> control      297568b8-39da-4e0f-8c4b-eaa8260…  2.76  stab… <span style="color: #BB0000;">NA</span>     2.79    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> control      ff0c7bfc-b35f-40f3-a353-e9b741a…  3.88  stab… <span style="color: #BB0000;">NA</span>     3.91    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> control      81b5c86b-c25a-4726-be21-be83e76…  4.79  stab… <span style="color: #BB0000;">NA</span>     4.82    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> control      2249696a-6b44-493f-b656-6e91dd7…  6.10  stab… <span style="color: #BB0000;">NA</span>     6.13    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> control      85dd6da1-2656-446e-baf2-bc89021…  7.78  stab… <span style="color: #BB0000;">NA</span>     7.82    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> control      40d6f186-10d2-48b6-bb67-50cd0e6…  8.16  stab… <span style="color: #BB0000;">NA</span>     8.20    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> control      ac04fd93-7a46-4061-bd03-0527991… 10.0   stab… <span style="color: #BB0000;">NA</span>    10.1     <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> control      78aa0d3f-01d7-4abd-a47b-a686cae… 13.9   stab… <span style="color: #BB0000;">NA</span>    13.9     <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> intervention c3fedc2c-7f31-4297-b21d-6841917…  0.554 stab… <span style="color: #BB0000;">NA</span>     0.587   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> intervention fd47e024-d8d6-4b62-869f-b0a8db5…  0.724 stab… <span style="color: #BB0000;">NA</span>     0.758   <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> intervention 193737c0-135e-456e-9fc6-9e984a3…  2.31  stab… <span style="color: #BB0000;">NA</span>     2.34    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> intervention 62671a99-65d7-4c57-9966-58e5159…  2.35  stab… <span style="color: #BB0000;">NA</span>     2.38    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> intervention a4f25c6b-08ef-45a0-b518-da5059f…  2.88  stab… <span style="color: #BB0000;">NA</span>     2.92    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> intervention 33f11438-cfd2-4eb6-87ca-4e179e0…  3.04  stab… <span style="color: #BB0000;">NA</span>     3.07    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> intervention e7aad600-0202-4d7f-bd67-2a9f743…  4.32  stab… <span style="color: #BB0000;">NA</span>     4.35    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> intervention ac128603-a576-4875-9037-7468c5c…  5.15  stab… <span style="color: #BB0000;">NA</span>     5.18    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> intervention dafcf17f-4428-47ae-a7f9-6c3f2c7…  6.29  stab… <span style="color: #BB0000;">NA</span>     6.33    <span style="color: #BB0000;">Inf</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> intervention 1421ec8e-c710-4397-be10-02f0335…  6.52  stab… <span style="color: #BB0000;">NA</span>     6.55    <span style="color: #BB0000;">Inf</span></span></span></code></pre></div>
 <p>The hypothetical future first-visits can now be combined with the interim data and the trajectories can be sampled forward using the already fitted posterior distribution.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_mstate_interim_forward</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">tbl_mstate_interim</span>, <span class="va">tbl_to_be_recruited</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl_posterior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/impute_predictive.html">impute_predictive</a></span><span class="op">(</span></span>
-<span>    <span class="va">mdl</span>,</span>
-<span>    data <span class="op">=</span> <span class="va">tbl_mstate_interim_forward</span>, </span>
-<span>    sample <span class="op">=</span> <span class="va">smpl_posterior</span>,</span>
-<span>    nsim <span class="op">=</span> <span class="fl">1</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="va">mdl</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">tbl_mstate_interim_forward</span>,</span>
+<span>  sample <span class="op">=</span> <span class="va">smpl_posterior</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_posterior_predictive</span>, relative_to_sot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="multi-state-model-for-early-oncology_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;"></p>
@@ -470,7 +474,7 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; [1] ggplot2_3.3.6      dplyr_1.0.10       oncomsm_0.1.0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Rcpp_1.0.9           tidyr_1.2.1          visNetwork_2.1.0    </span></span>
+<span><span class="co">#&gt;  [1] Rcpp_1.0.9           tidyr_1.2.1          visNetwork_2.1.2    </span></span>
 <span><span class="co">#&gt;  [4] prettyunits_1.1.1    ps_1.7.1             rprojroot_2.0.3     </span></span>
 <span><span class="co">#&gt;  [7] digest_0.6.29        utf8_1.2.2           R6_2.5.1            </span></span>
 <span><span class="co">#&gt; [10] backports_1.4.1      stats4_4.2.1         evaluate_0.16       </span></span>
@@ -484,13 +488,13 @@ R &amp;\sim \operatorname{Bernoulli}(p) \\
 <span><span class="co">#&gt; [34] systemfonts_1.0.4    pkgbuild_1.3.1       htmltools_0.5.3     </span></span>
 <span><span class="co">#&gt; [37] tidyselect_1.1.2     tibble_3.1.8         gridExtra_2.3       </span></span>
 <span><span class="co">#&gt; [40] codetools_0.2-18     matrixStats_0.62.0   fansi_1.0.3         </span></span>
-<span><span class="co">#&gt; [43] crayon_1.5.1         withr_2.5.0          grid_4.2.1          </span></span>
-<span><span class="co">#&gt; [46] jsonlite_1.8.0       gtable_0.3.1         lifecycle_1.0.2     </span></span>
+<span><span class="co">#&gt; [43] crayon_1.5.2         withr_2.5.0          grid_4.2.1          </span></span>
+<span><span class="co">#&gt; [46] jsonlite_1.8.2       gtable_0.3.1         lifecycle_1.0.2     </span></span>
 <span><span class="co">#&gt; [49] magrittr_2.0.3       StanHeaders_2.21.0-7 scales_1.2.1        </span></span>
 <span><span class="co">#&gt; [52] RcppParallel_5.1.5   cli_3.4.1            stringi_1.7.8       </span></span>
 <span><span class="co">#&gt; [55] cachem_1.0.6         farver_2.1.1         fs_1.5.2            </span></span>
-<span><span class="co">#&gt; [58] bslib_0.4.0          ellipsis_0.3.2       ragg_1.2.2          </span></span>
-<span><span class="co">#&gt; [61] generics_0.1.3       vctrs_0.4.1          RColorBrewer_1.1-3  </span></span>
+<span><span class="co">#&gt; [58] bslib_0.4.0          ellipsis_0.3.2       ragg_1.2.3          </span></span>
+<span><span class="co">#&gt; [61] generics_0.1.3       vctrs_0.4.2          RColorBrewer_1.1-3  </span></span>
 <span><span class="co">#&gt; [64] tools_4.2.1          glue_1.6.2           purrr_0.3.4         </span></span>
 <span><span class="co">#&gt; [67] processx_3.7.0       parallel_4.2.1       fastmap_1.1.0       </span></span>
 <span><span class="co">#&gt; [70] yaml_2.3.5           inline_0.3.19        colorspace_2.0-3    </span></span>
