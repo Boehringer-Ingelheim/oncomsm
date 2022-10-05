@@ -107,7 +107,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 
 # see Model.R
 .impute.srp_model <- function(model, data, nsim, parameter_sample, # nolint
-                              seed = NULL, ...) {
+                              seed = NULL, DEBUG = FALSE, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -131,6 +131,11 @@ is_valid.srp_model <- function(mdl) { # nolint
                                      levels = subject_id_levels)),
       group_id = as.integer(factor(.data$group_id, levels = group_id_levels))
     )
+
+  if (DEBUG == TRUE) {
+    browser()
+    temp <- impute_srp_model(data, as.vector(shape), nsim, as.integer(length(group_id_levels)))
+  }
 
   res <- tribble(
       ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter

@@ -25,11 +25,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// impute_srp_model
+double impute_srp_model(DataFrame df, NumericVector shape, int nsim, int ngroups);
+RcppExport SEXP _oncomsm_impute_srp_model(SEXP dfSEXP, SEXP shapeSEXP, SEXP nsimSEXP, SEXP ngroupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< int >::type nsim(nsimSEXP);
+    Rcpp::traits::input_parameter< int >::type ngroups(ngroupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(impute_srp_model(df, shape, nsim, ngroups));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_oncomsm_rtruncweibull", (DL_FUNC) &_oncomsm_rtruncweibull, 4},
+    {"_oncomsm_impute_srp_model", (DL_FUNC) &_oncomsm_impute_srp_model, 4},
     {"_rcpp_module_boot_stan_fit4srp_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srp_model_mod, 0},
     {NULL, NULL, 0}
 };
