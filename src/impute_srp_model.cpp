@@ -95,9 +95,37 @@ DataFrame impute_srp_model(
             );
           bool response = R::rbinom(1, pr_response);
           if (response) {
-
-            // todo
-
+            double dt = rtruncweibull(
+              shape[iter][g][0], scale[iter][g][0], t_min(i), R_PosInf
+            );
+            double dt_prog = R::rweibull(
+              shape[iter][g][2], scale[iter][g][2]
+            );
+            // apply visit scheme
+            double n_visits = floor(dt / visit_spacing(g));
+            double tmin = t_min(i) + visit_spacing(g) * n_visits;
+            double tmax = t_min(i) + visit_spacing(g) * (n_visits + 1);
+            double n_visits_prog = floor(dt_prog / visit_spacing(g));
+            double tmin_prog = t_min(i) + visit_spacing(g) * n_visits_prog;
+            double tmax_prog = t_min(i) + visit_spacing(g) * (n_visits_prog + 1);
+            // append to results vectors stable -> response
+            subject_id_out.push_back(subject_id(i));
+            group_id_out.push_back(group_id(i));
+            from_out.push_back("stable");
+            to_out.push_back("response");
+            t_min_out.push_back(tmin);
+            t_max_out.push_back(tmax);
+            t_sot_out.push_back(t_sot(i));
+            iter_out.push_back(iter);
+            //append to results vectors response -> progression
+            subject_id_out.push_back(subject_id(i));
+            group_id_out.push_back(group_id(i));
+            from_out.push_back("stable");
+            to_out.push_back("progression");
+            t_min_out.push_back(tmin_prog);
+            t_max_out.push_back(tmax_prog);
+            t_sot_out.push_back(t_sot(i));
+            iter_out.push_back(iter);
           } else {
             // non-responder (directly to progression)
             // sample exact time from stable to progression
