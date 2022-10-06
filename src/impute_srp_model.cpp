@@ -120,7 +120,7 @@ DataFrame impute_srp_model(
             //append to results vectors response -> progression
             subject_id_out.push_back(subject_id(i));
             group_id_out.push_back(group_id(i));
-            from_out.push_back("stable");
+            from_out.push_back("response");
             to_out.push_back("progression");
             t_min_out.push_back(tmin_prog);
             t_max_out.push_back(tmax_prog);
@@ -148,9 +148,29 @@ DataFrame impute_srp_model(
           }
         }
         if (from(i) == "response") {
-
-          // todo
-
+          if (from[i - 1] != "stable" ||
+              subject_id[i - 1] != subject_id[i]) {
+            stop("Unexpected");
+          }
+          double t_response = rtruncweibull(
+            shape[iter][g][0], scale[iter][g][0], t_min(i-1), t_max(i-1)
+          );
+          double dt_progression = rtruncweibull(
+              shape[iter][g][2], scale[iter][g][2],
+                                               t_min(i) - t_response, R_PosInf
+          );
+          double n_visits_prog = floor(dt_progression / visit_spacing(g));
+          double tmin_prog = t_min(i) + visit_spacing(g) * n_visits_prog;
+          double tmax_prog = t_min(i) + visit_spacing(g) * (n_visits_prog + 1);
+          // append results
+          subject_id_out.push_back(subject_id(i));
+          group_id_out.push_back(group_id(i));
+          from_out.push_back("response");
+          to_out.push_back("progression");
+          t_min_out.push_back(tmin_prog);
+          t_max_out.push_back(tmax_prog);
+          t_sot_out.push_back(t_sot(i));
+          iter_out.push_back(iter);
         }
       }
     }
