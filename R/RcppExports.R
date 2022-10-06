@@ -5,7 +5,7 @@ rtruncweibull <- function(shape, scale, a, b) {
     .Call(`_oncomsm_rtruncweibull`, shape, scale, a, b)
 }
 
-impute_srp_model <- function(df, shape, nsim, ngroups) {
-    .Call(`_oncomsm_impute_srp_model`, df, shape, nsim, ngroups)
+impute_srp_model <- function(df, p, shape_vec, scale_vec, visit_spacing, n_sim, n_groups) {
+    .Call(`_oncomsm_impute_srp_model`, df, p, shape_vec, scale_vec, visit_spacing, n_sim, n_groups)
 }
 

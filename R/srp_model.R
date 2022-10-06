@@ -123,6 +123,8 @@ is_valid.srp_model <- function(mdl) { # nolint
   # 3. response -> progression)
   scale <- rstan::extract(parameter_sample, "scale")[[1]]
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
+  # extract visit_spacing
+  visit_spacing <- attr(model, "visit_spacing")
   # sorting the samples and changing type to integer for groups and subj id
   data <- data %>%
     arrange(.data$t_sot, .data$subject_id, (.data$t_min + .data$t_max) / 2) %>%
@@ -131,18 +133,26 @@ is_valid.srp_model <- function(mdl) { # nolint
                                      levels = subject_id_levels)),
       group_id = as.integer(factor(.data$group_id, levels = group_id_levels))
     )
-
+  # sub/re-sample parameters
+  n_params_sample <- dim(p)[1]
+  idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
   if (DEBUG == TRUE) {
     browser()
-    temp <- impute_srp_model(data, as.vector(shape), nsim, as.integer(length(group_id_levels)))
+    temp <- impute_srp_model(
+      data,
+      p[idx, ],
+      as.vector(shape[idx, , ]),
+      as.vector(scale[idx, , ]),
+      visit_spacing,
+      nsim,
+      as.integer(length(group_id_levels))
+    ) %>%
+    arrange(subject_id, iter)
   }
 
   res <- tribble(
       ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter
     )
-
-  visit_spacing <- attr(model, "visit_spacing")
-  idx <- sample(seq_len(dim(p)[1]), size = nsim, replace = TRUE)
 
   for (i in seq_len(nrow(data))) {
   if (!is.na(data$to[i])) { # observed transition, nothing to sample
