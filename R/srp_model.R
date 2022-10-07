@@ -137,7 +137,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   n_params_sample <- dim(p)[1]
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
   if (DEBUG == TRUE) {
-    browser()
+    #browser()
     temp <- impute_srp_model(
       data,
       p[idx, ],
