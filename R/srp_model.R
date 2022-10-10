@@ -71,8 +71,9 @@ create_srp_model <- function(
 #' @importFrom checkmate assert_vector
 is_valid.srp_model <- function(mdl) { # nolint
   with(mdl, {
-    #stopifnot(logodds_mean[length(attr(mdl, "group_id"))] < logodds_max[length(attr(mdl, "group_id"))])
-    checkmate::assertTRUE(logodds_mean[length(attr(mdl, "group_id"))] < logodds_max[length(attr(mdl, "group_id"))], .var.name = "logodds_mean < logodds_max")
+    checkmate::assertTRUE(logodds_mean[length(attr(mdl, "group_id"))] <
+                            logodds_max[length(attr(mdl, "group_id"))],
+                          .var.name = "logodds_mean < logodds_max")
     checkmate::assert_vector(logodds_mean, len = length(attr(mdl, "group_id")),
                              any.missing = FALSE, .var.name = "logodds_mean")
     checkmate::assert_vector(logodds_sd, len = length(attr(mdl, "group_id")),
