@@ -36,17 +36,16 @@ test_that("private function is_valid throws correct errors", {
 
   expect_error(
     create_srp_model(
-      group_id = 1:2,
-      logodds_mean =  c(logodds(.5), logodds(.9)),
-      logodds_max = c(logodds(.75), logodds(.75)),
-      logodds_sd = c(.5, .5),
-      visit_spacing = c(1.2, 1.2),
+      group_id = 1,
+      logodds_mean =  c(logodds(.9)),
+      logodds_max = c(logodds(.75)),
+      logodds_sd = c(.5),
+      visit_spacing = c(1.2),
       median_time_to_next_event = matrix(c(
-        3, 3, 6,
         3, 3, 6
-      ), byrow = TRUE,  nrow = 2, ncol = 3),
+      ), byrow = TRUE,  nrow = 1, ncol = 3),
       median_time_to_next_event_sd = matrix(
-        1, byrow = TRUE,  nrow = 2, ncol = 3
+        1, byrow = TRUE,  nrow = 1, ncol = 3
       )
     ),
     regexp = "Assertion on 'logodds_mean < logodds_max' failed: Must be TRUE"
