@@ -15,6 +15,8 @@ test_that("can create SRP model", {
 
 }) # "can create SRP model"
 
+
+
 test_that("private function is_valid throws correct errors", {
   expect_error(
     create_srp_model(
@@ -36,20 +38,19 @@ test_that("private function is_valid throws correct errors", {
 
   expect_error(
     create_srp_model(
-      group_id = 1:2,
-      logodds_mean =  c(logodds(.9), logodds(.5)),
-      logodds_max = c(logodds(.75), logodds(.75)),
-      logodds_sd = c(.5, .5),
-      visit_spacing = c(1.2, 1.2),
+      group_id = 1,
+      logodds_mean =  c(logodds(.9)),
+      logodds_max = c(logodds(.75)),
+      logodds_sd = c(.5),
+      visit_spacing = c(1.2),
       median_time_to_next_event = matrix(c(
-          3, 3, 6,
-          3, 3, 6
-        ), byrow = TRUE,  nrow = 2, ncol = 3),
+        3, 3, 6
+      ), byrow = TRUE,  nrow = 1, ncol = 3),
       median_time_to_next_event_sd = matrix(
-          1, byrow = TRUE,  nrow = 2, ncol = 3
-        )
+        1, byrow = TRUE,  nrow = 1, ncol = 3
+      )
     ),
-    regexp = "logodds_mean\\[1\\] < logodds_max\\[1\\] is not TRUE"
+    regexp = "Assertion on 'logodds_mean < logodds_max' failed: Must be TRUE"
   )
 
   expect_error(
@@ -78,7 +79,8 @@ test_that("can create empty standata for SRP model", {
   lst_standata <- oncomsm:::data2standata.srp_model(
     mdl, oncomsm:::.nodata.srp_model(mdl)
   )
-  # TODO: implement check
+
+  expect_true(TRUE) # TODO: implement check
 
 })
 
@@ -107,7 +109,8 @@ test_that("can convert data to standata for SRP model", {
     absorbing_states = c("progression")
   )
   lst_standata <- oncomsm:::data2standata.srp_model(mdl, tbl_mstate)
-  # TODO: implement check
+
+  expect_true(TRUE) # TODO: implement check
 
 })
 
@@ -117,7 +120,7 @@ test_that("can plot mstate data for SRP model", {
 
   create_plot <- function() {
     plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
-    }
+  }
 
   vdiffr::expect_doppelganger("plot_mstate.srp_model", create_plot)
 
@@ -194,7 +197,7 @@ test_that("can generate visit data from SRP model", {
 
   generate_visit_data(mdl, n_per_group = c(20, 20), seed = 112341)
 
-  # TODO: plausi checks on data
+  expect_true(TRUE) # TODO: implement check
 
 })
 
@@ -237,6 +240,42 @@ test_that("can sample from posterior predictive", {
     select(-iter)
 
   impute_predictive(mdl, data = tbl_data, nsim = 10)
+
+  expect_true(TRUE) # TODO: implement check
+
+})
+
+
+
+test_that("default plotting works as intended", {
+
+  mdl <- create_srp_model(
+    group_id = 1:2,
+    logodds_mean =  c(logodds(.5), logodds(.75)),
+    logodds_sd = c(.5, .75),
+    visit_spacing = c(1.2, 1.2),
+    median_time_to_next_event = matrix(c(
+      3, 3, 6,
+      4, 6, 10
+    ), byrow = TRUE,  nrow = 2, ncol = 3),
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
+  )
+  smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
+  plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
+
+  mdl <- create_srp_model(
+    group_id = 1,
+    logodds_mean = 0,
+    logodds_sd = .5,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE, nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
+  )
+  smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
+  plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
+
   expect_true(TRUE) # TODO: implement check
 
 })

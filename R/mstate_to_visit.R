@@ -32,29 +32,29 @@ mstate_to_visits.Model <- function(model, tbl_mstate, ...) {
 #' @export
 mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
 
-  message("'mstate_to_visits.srp_model' is experimental")
+  # TODO: double check
 
   starting_state <- attr(model, "states")[1]
   visit_spacing <- attr(model, "visit_spacing")[1] # TODO: respect groups
 
-  tbl_mstate %>% select(
-      .data$subject_id,
-      .data$group_id,
-      .data$from,
-      .data$to,
-      .data$t_min,
-      .data$t_max,
-      .data$t_sot
-    ) %>%
+  tbl_mstate %>% select(all_of(c(
+      "subject_id",
+      "group_id",
+      "from",
+      "to",
+      "t_min",
+      "t_max",
+      "t_sot"
+    ))) %>%
     bind_rows(
       tbl_mstate %>%
-        select(.data$subject_id, .data$group_id, .data$t_sot) %>%
+        select(all_of(c("subject_id", "group_id", "t_sot"))) %>%
         distinct() %>%
         mutate(from = starting_state, to = starting_state,
                t_min = .data$t_sot, t_max = .data$t_sot)
     ) %>%
     arrange(.data$subject_id, .data$t_min, .data$t_max) %>%
-    select(-.data$t_sot) %>%
+    select(-"t_sot") %>%
     distinct() %>%
     group_by(.data$subject_id) %>%
     mutate(
@@ -83,8 +83,8 @@ mstate_to_visits.srp_model <- function(model, tbl_mstate, ...) {
         }
       )
     ) %>%
-    tidyr::unnest(.data$tmp) %>%
-    select(.data$subject_id, .data$group_id, .data$t, .data$state) %>%
+    tidyr::unnest("tmp") %>%
+    select(all_of(c("subject_id", "group_id", "t", "state"))) %>%
     ungroup()
 
 }
