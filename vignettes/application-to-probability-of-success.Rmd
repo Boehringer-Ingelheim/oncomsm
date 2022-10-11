@@ -134,18 +134,6 @@ smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 6835L)
 plot(mdl, dt = c(0, 36), sample = smpl_prior)
 ```
 
-The induced prior over PFS rates at 3, 6, 12, and 18 months is 
-
-```{r pfsx-rates}
-tbl_pfs_rates <- sample_pfs_rate(mdl, c(3, 6, 12, 18), sample = smpl_prior) %>%
-  mutate(t = factor(t))
-
-ggplot(tbl_pfs_rates) +
-  geom_boxplot(aes(x = t, y = pfs, color = group_id)) +
-  scale_color_discrete("") +
-  labs(x = "t", y = "Pr[no death or progression before t]")
-```
-
 
 ## Definition of success criterion
 
