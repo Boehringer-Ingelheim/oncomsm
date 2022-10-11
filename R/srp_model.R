@@ -49,7 +49,7 @@ create_srp_model <- function(
   mdl$group_id <- NULL
   mdl$visit_spacing <- NULL
   mdl <- lapply(mdl, base::as.array)
-  attr(mdl, "group_id") <- group_id
+  attr(mdl, "group_id") <- as.character(group_id) # assert type
   attr(mdl, "states") <- c("stable", "response", "progression")
   attr(mdl, "visit_spacing") <- as.array(visit_spacing)
   attr(mdl, "stanmodel") <- stanmodels[["srp_model"]]
