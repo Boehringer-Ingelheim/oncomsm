@@ -49,7 +49,7 @@ create_srp_model <- function(
   mdl$group_id <- NULL
   mdl$visit_spacing <- NULL
   mdl <- lapply(mdl, base::as.array)
-  attr(mdl, "group_id") <- group_id
+  attr(mdl, "group_id") <- as.character(group_id) # assert type
   attr(mdl, "states") <- c("stable", "response", "progression")
   attr(mdl, "visit_spacing") <- as.array(visit_spacing)
   attr(mdl, "stanmodel") <- stanmodels[["srp_model"]]
@@ -71,8 +71,6 @@ create_srp_model <- function(
 #' @importFrom checkmate assert_vector
 is_valid.srp_model <- function(mdl) { # nolint
   with(mdl, {
-    stopifnot(logodds_mean[1] < logodds_max[1])
-    stopifnot(logodds_mean[2] < logodds_max[2])
     checkmate::assert_vector(logodds_mean, len = length(attr(mdl, "group_id")),
                              any.missing = FALSE, .var.name = "logodds_mean")
     checkmate::assert_vector(logodds_sd, len = length(attr(mdl, "group_id")),
@@ -91,6 +89,8 @@ is_valid.srp_model <- function(mdl) { # nolint
                              len = length(attr(mdl, "group_id")) *
                                length(attr(mdl, "states")), any.missing = FALSE,
                              .var.name = "median_time_to_next_event_mean")
+    checkmate::assertTRUE(all(logodds_mean < logodds_max),
+                          .var.name = "logodds_mean < logodds_max")
     with(mdl,
       checkmate::assert_numeric(
         median_time_to_next_event_mean[median_time_to_next_event_mean < 0],
@@ -343,11 +343,11 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
     mutate(
       iter = row_number()
     ) %>%
-    tidyr::pivot_longer(-.data$iter) %>%
+    tidyr::pivot_longer(-"iter") %>%
     filter(.data$name != "lp__") %>%
-    tidyr::separate(.data$name, into = c("parameter", "group_id"),
+    tidyr::separate("name", into = c("parameter", "group_id"),
                     sep = "\\[", fill = "right") %>%
-    tidyr::separate(.data$group_id, into = c("group_id", "transition"),
+    tidyr::separate("group_id", into = c("group_id", "transition"),
                     sep = "[\\]|,]", fill = "right", extra = "drop") %>%
     mutate(
       group_id = attr(model, "group_id")[as.integer(stringr::str_extract(
@@ -367,7 +367,7 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # no
   starting_state <- attr(model, "states")[1]
 
   tbl_mstate <- data %>%
-    rename(`Group ID` = .data$group_id)
+    rename(`Group ID` = "group_id")
 
   if (relative_to_sot) {
     tbl_mstate <- tbl_mstate %>%
@@ -389,15 +389,15 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # no
         }
       )
     ) %>%
-    select(.data$subject_id, .data$`Group ID`, .data$tmp) %>%
-    tidyr::unnest(.data$tmp) %>%
+    select(all_of(c("subject_id", "Group ID", "tmp"))) %>%
+    tidyr::unnest("tmp") %>%
     filter(is.finite(.data$t), .data$t < now) %>%
     distinct() %>%
     arrange(.data$subject_id, .data$t)
 
   tbl_intervals <- tbl_mstate %>%
     bind_rows(
-      select(tbl_mstate, .data$subject_id, .data$`Group ID`, .data$t_sot) %>%
+      select(tbl_mstate, all_of(c("subject_id", "Group ID", "t_sot"))) %>%
         distinct() %>%
         mutate(
           from = starting_state,
@@ -490,8 +490,8 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
   # plot transition times
   p1 <- tbl_sample %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
-    tidyr::pivot_wider(names_from = .data$parameter,
-                       values_from = .data$value) %>%
+    tidyr::pivot_wider(names_from = "parameter",
+                       values_from = "value") %>%
     tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
     mutate(
       survival = 1 - stats::pweibull(.data$dt,
@@ -606,10 +606,10 @@ sample_pfs_rate.srp_model <- function( # nolint
   tbl_pfs <- sample %>%
     # pivot parameters
     tidyr::pivot_wider(
-      names_from = c(.data$parameter, .data$transition),
-      values_from = .data$value
+      names_from = all_of(c("parameter", "transition")),
+      values_from = "value"
     ) %>%
-    rename(pr_response = .data$p_NA) %>%
+    rename(pr_response = "p_NA") %>%
     # cross with time points
     tidyr::expand_grid(t = t) %>%
     # compute PFS before t
@@ -631,6 +631,6 @@ sample_pfs_rate.srp_model <- function( # nolint
       )
     ) %>%
     # only keep interesting stuff
-    select(.data$iter, .data$group_id, .data$t, .data$pfs)
+    select(all_of(c("iter", "group_id", "t", "pfs")))
   return(tbl_pfs)
 }

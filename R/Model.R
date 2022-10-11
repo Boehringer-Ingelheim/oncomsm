@@ -377,7 +377,7 @@ generate_visit_data <- function(model, n_per_group, ...) {
 #' @export
 generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
   sample_predictive(model, n_per_group = n_per_group, nsim = 1, seed = seed) %>%
-    select(-.data$iter) %>%
+    select(-"iter") %>%
     mstate_to_visits(model, .)
 }
 
