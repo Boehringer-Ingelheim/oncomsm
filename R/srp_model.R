@@ -89,8 +89,7 @@ is_valid.srp_model <- function(mdl) { # nolint
                              len = length(attr(mdl, "group_id")) *
                                length(attr(mdl, "states")), any.missing = FALSE,
                              .var.name = "median_time_to_next_event_mean")
-    checkmate::assertTRUE(sum(logodds_mean < logodds_max) ==
-                            length(attr(mdl, "group_id")),
+    checkmate::assertTRUE(all(logodds_mean < logodds_max),
                           .var.name = "logodds_mean < logodds_max")
     with(mdl,
       checkmate::assert_numeric(
