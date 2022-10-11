@@ -59,3 +59,4 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://boehringer-ingelheim.github.io/oncomsm/, https://github.com/Boehringer-Ingelheim/oncomsm
 BugReports: https://github.com/Boehringer-Ingelheim/oncomsm/issues
+LazyData: true

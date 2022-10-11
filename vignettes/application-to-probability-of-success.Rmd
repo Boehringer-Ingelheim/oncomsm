@@ -169,12 +169,12 @@ eval_phi <- function(data, prob = 0.25, nsim = 250) {
 
 ```{r sample-prior-predictive}
 tbl_prior_predictive <- sample_predictive(
-  mdl,
-  n_per_group = rep(30L, 3),
-  sample = smpl_prior,
-  nsim = 100L, # same, here, only for demonstration purposes
-  seed = 34930L
-) %>%
+    mdl,
+    n_per_group = rep(30L, 3),
+    sample = smpl_prior,
+    nsim = 100L, # same, here, only for demonstration purposes
+    seed = 34930L
+  ) %>%
   group_by(iter) %>%
   tidyr::nest()
 ```
@@ -182,22 +182,15 @@ tbl_prior_predictive <- sample_predictive(
 ```{r, warning=FALSE}
 plan(multisession) # instruct future how to run in parallel
 
-# it is a good idea to cache long running simulation ;)
-tbl_results <- xfun::cache_rds(
-  {
-    tbl_prior_predictive %>%
-      ungroup() %>%
-      mutate(
-        res = furrr::future_map(
-          data, eval_phi,
-          .options = furrr::furrr_options(seed = TRUE, scheduling = 5L)
-        )
-      ) %>%
-      select(-data)
-  },
-  dir = ".cache/",
-  file = "sim_results.rds"
-) # end caching
+tbl_results <- tbl_prior_predictive %>%
+  ungroup() %>%
+  mutate(
+    res = furrr::future_map(
+      data, eval_phi,
+      .options = furrr::furrr_options(seed = TRUE, scheduling = 5L)
+    )
+  ) %>%
+  select(-data)
 ```
 
 ```{r}
@@ -261,22 +254,15 @@ eval_phi_3 <- function(data, nsim = 250) {
 ```
 
 ```{r, eval=jags_found, warning=FALSE}
-# it is a good idea to cache long running simulation ;)
-tbl_results_bhmbasket <- xfun::cache_rds(
-  {
-    tbl_prior_predictive %>%
-      ungroup() %>%
-      mutate(
-        res = furrr::future_map(
-          data, eval_phi_3,
-          .options = furrr::furrr_options(seed = TRUE)
-        )
-      ) %>%
-      select(-data)
-  },
-  dir = ".cache/",
-  file = "sim_results_bhmbasket.rds"
-) # end caching
+tbl_results_bhmbasket <- tbl_prior_predictive %>%
+  ungroup() %>%
+  mutate(
+    res = furrr::future_map(
+      data, eval_phi_3,
+      .options = furrr::furrr_options(seed = TRUE)
+    )
+  ) %>%
+  select(-data)
 ```
 
 ```{r, eval=jags_found}
@@ -302,73 +288,56 @@ tbl_results_bhmbasket %>%
 
 # Computing dynamic Probability of Success
 
-todo.
+Load the example interim data set. See `?tbl_interim_example` for details. 
 
 ```{r, eval=jags_found, warning=FALSE}
-recruitment_rate_overall <- 3
-
 # sample from predictive and then reduce to t = 10
-tbl_interim <- sample_predictive(
-  mdl,
-  sample = smpl_prior,
-  n_per_group = c(30L, 30L, 30L),
-  nsim = 250,
-  seed = 3423423
-) %>%
-  filter(iter == 1) %>%
-  select(-t_sot) %>%
-  {
-    left_join(
-      .,
-      select(., subject_id, group_id) %>%
-        distinct() %>%
-        arrange(runif(n())) %>% # permute groups
-        mutate(
-          # poisson recruitment process
-          t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)),
-        ),
-      by = c("subject_id", "group_id")
-    )
-  } %>%
-  mutate(
-    t_min = t_min + t_sot,
-    t_max = t_max + t_sot
-  ) %>%
-  mstate_to_visits(mdl, .) %>%
-  filter(t <= 10) %>%
-  visits_to_mstate(
-    start_state = "stable",
-    absorbing_states = "progression",
-    now = 10
-  )
+data("tbl_interim_example")
 
-tbl_interim_sample_sizes <- tbl_interim %>%
+tbl_interim_example
+```
+
+Sample from the posterior distribution.
+
+```{r}
+# posterior inference based on the interim data
+smpl_posterior <- sample_posterior(
+    mdl,
+    tbl_interim_example,
+    nsim = 2000, warmup = 250, seed = 76947
+  )
+``` 
+
+
+Calculate number of individuals at interim analysis.
+
+```{r}
+tbl_interim_sample_sizes <- tbl_interim_example %>%
   select(group_id, subject_id) %>%
   distinct() %>%
   group_by(group_id) %>%
   summarize(n = n())
 
-# posterior inference based on the interim data
-smpl_posterior <- sample_posterior(
-  mdl,
-  tbl_interim,
-  nsim = 2000, warmup = 250, seed = 76947
-)
+tbl_interim_sample_sizes
+```
 
-# need to create initial visits for to-be-recruited individuals
+Next we sample recruitment dates for the remaining individuals.
+Since the decision rule is not adaptive 
+(we always finish the planned 30 individuals per group),
+the future recruitment times are irrelevant and can be set to 0
+
+```{r}
 tbl_to_be_recruited <- tibble(
-  group_id = tbl_interim_sample_sizes$group_id,
-  n_to_be_recruited = 30 - tbl_interim_sample_sizes$n
-) %>%
+    group_id = tbl_interim_sample_sizes$group_id,
+    n_to_be_recruited = 30 - tbl_interim_sample_sizes$n
+  ) %>%
   mutate(
     tmp = purrr::map(
       n_to_be_recruited,
       ~ tibble(
         # use unique identifiers to avoid clashing between groups
         subject_id = uuid::UUIDgenerate(n = .),
-        # sample recruitment times per group using half the overall
-        # recruitment rate
-        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall / 2))
+        t_sot = 1
       )
     )
   ) %>%
@@ -378,42 +347,47 @@ tbl_to_be_recruited <- tibble(
   mutate(
     from = "stable",
     to = NA_character_,
-    t_min = t_sot + 1 / 30, # preclude events on the day of recruitment
+    t_min = t_sot,
     t_max = Inf # right censored
   )
 
-# combine data
-tbl_mstate_interim_forward <- bind_rows(tbl_interim, tbl_to_be_recruited)
+tbl_to_be_recruited
+```
 
-# MI using interim posterior
+Combine observed data with 
+
+```{r}
+tbl_mstate_interim_forward <- bind_rows(
+    tbl_interim_example, 
+    tbl_to_be_recruited
+  )
+```
+
+Next, we can impute the "missing" data by sampling form the posterior-predictive 
+distribution.
+
+```{r}
 tbl_posterior_predictive <- impute_predictive(
-  mdl,
-  data = tbl_mstate_interim_forward,
-  sample = smpl_posterior,
-  nsim = 250
-) %>%
+    mdl,
+    data = tbl_mstate_interim_forward,
+    sample = smpl_posterior,
+    nsim = 250
+  ) %>%
   group_by(iter) %>%
   tidyr::nest()
 
-tbl_pos <- xfun::cache_rds(
-  {
-    tbl_posterior_predictive %>%
-      ungroup() %>%
-      mutate(
-        res = furrr::future_map(
-          data, eval_phi_3,
-          .options = furrr::furrr_options(seed = TRUE)
-        )
-      ) %>%
-      select(-data) %>%
-      tidyr::unnest(res) %>%
-      group_by(group_id) %>%
-      summarize(pos = mean(phi_3))
-  },
-  dir = ".cache/",
-  file = "sim_pos.rds"
-) # end caching
-
+tbl_pos <- tbl_posterior_predictive %>%
+    ungroup() %>%
+    mutate(
+      res = furrr::future_map(
+        data, eval_phi_3,
+        .options = furrr::furrr_options(seed = TRUE)
+      )
+    ) %>%
+    select(-data) %>%
+    tidyr::unnest(res) %>%
+    group_by(group_id) %>%
+    summarize(pos = mean(phi_3))
 
 tbl_pos
 ```
