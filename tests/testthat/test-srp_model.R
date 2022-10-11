@@ -244,6 +244,8 @@ test_that("can sample from posterior predictive", {
 
 test_that("default plotting works as intended", {
 
+  set.seed(42L)
+
   mdl <- create_srp_model(
     group_id = 1:2,
     logodds_mean =  c(logodds(.5), logodds(.75)),
@@ -255,7 +257,7 @@ test_that("default plotting works as intended", {
     ), byrow = TRUE,  nrow = 2, ncol = 3),
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
   )
-  smpl <- sample_prior(mdl, nsim = 1000, seed = 1414322)
+  smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
   plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
   vdiffr::expect_doppelganger("plot.srp_model_two_groups", plt)
 
@@ -269,7 +271,7 @@ test_that("default plotting works as intended", {
     ), byrow = TRUE, nrow = 1, ncol = 3),
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
   )
-  smpl <- sample_prior(mdl, nsim = 1000, seed = 1414322)
+  smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
   plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
   vdiffr::expect_doppelganger("plot.srp_model_one_groups", plt)
 
