@@ -10,7 +10,7 @@
 
 
 
-# Bayesian multi-state models for oncology
+# Bayesian multi-state models for early oncology
 
 **Tl;dr:** This package implements methods to dynamically predict response 
 and progression of individuals in early oncology trials using parametric
