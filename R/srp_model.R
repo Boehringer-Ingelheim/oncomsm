@@ -107,7 +107,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 
 # see Model.R
 .impute.srp_model <- function(model, data, nsim, parameter_sample, # nolint
-                              seed = NULL, DEBUG = FALSE, ...) {
+                              seed = NULL, debug = FALSE, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -136,8 +136,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   # sub/re-sample parameters
   n_params_sample <- dim(p)[1]
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
-  if (DEBUG == TRUE) {
-    #browser()
+  if (debug == TRUE) {
     temp <- impute_srp_model(
       data,
       p[idx, ],
@@ -227,9 +226,10 @@ is_valid.srp_model <- function(mdl) { # nolint
               visit_spacing[g] * (n_visits_progression + 1)
             res <- bind_rows(
               res, tribble(
-                ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter,
-                data$subject_id[i], g, "stable", "progression", tmin_progression,
-                  tmax_progression, data$t_sot[i], j
+                ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
+                  ~iter,
+                data$subject_id[i], g, "stable", "progression",
+                  tmin_progression, tmax_progression, data$t_sot[i], j
               )
             )
           } # end stable -> progression
@@ -257,9 +257,10 @@ is_valid.srp_model <- function(mdl) { # nolint
             visit_spacing[g] * (n_visits_progression + 1)
           res <- bind_rows(
             res, tribble(
-              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter,
-              data$subject_id[i], g, "response", "progression", tmin_progression,
-                tmax_progression, data$t_sot[i], j
+              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
+                ~iter,
+              data$subject_id[i], g, "response", "progression",
+                tmin_progression, tmax_progression, data$t_sot[i], j
             )
           )
         } # end from == 2
@@ -279,7 +280,7 @@ is_valid.srp_model <- function(mdl) { # nolint
           )
       )
   }
-  if (DEBUG == TRUE) {
+  if (debug == TRUE) {
     return(temp)
   } else {
     return(res)

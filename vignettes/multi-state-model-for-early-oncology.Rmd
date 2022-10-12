@@ -234,7 +234,7 @@ function of the "progression or death" event.
 ```{r plotting-the-prior}
 smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
 
-# plot(mdl, dt = c(0, 36), sample = smpl_prior)
+# plot(mdl, dt = c(0, 36), sample = smpl_prior) # nolint TODO: reactivate
 ```
 
 
@@ -249,7 +249,7 @@ tbl_prior_predictive <- sample_predictive(
   mdl,
   sample = smpl_prior,
   n_per_group = c(30L, 30L),
-  nsim = 10, # 100
+  nsim = 10, # TODO: bump to 100
   seed = 3423423,
   DEBUG = TRUE
 )
