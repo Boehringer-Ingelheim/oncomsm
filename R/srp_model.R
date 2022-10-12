@@ -137,16 +137,21 @@ is_valid.srp_model <- function(mdl) { # nolint
   n_params_sample <- dim(p)[1]
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
   if (debug == TRUE) {
+    if (length(idx) == 1) {
+      # TODO: can we fix that by "correctly" indexing in the matrix
+      p_ <- matrix(p[idx, ], nrow = 1)
+    }
     temp <- impute_srp_model(
-      data,
-      p[idx, ],
-      as.vector(shape[idx, , ]),
-      as.vector(scale[idx, , ]),
-      visit_spacing,
-      nsim,
-      as.integer(length(group_id_levels))
-    ) %>%
-    arrange(subject_id, iter)
+        data,
+        p_,
+        as.vector(shape[idx, , ]),
+        as.vector(scale[idx, , ]),
+        visit_spacing,
+        nsim,
+        as.integer(length(group_id_levels))
+      ) %>%
+      arrange(subject_id, iter) %>%
+      as_tibble()
   } else {
 
     res <- tribble(

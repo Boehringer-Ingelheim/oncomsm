@@ -37,7 +37,7 @@ DataFrame impute_srp_model(
     NumericVector shape_vec,
     NumericVector scale_vec,
     NumericVector visit_spacing,
-    int n_sim,
+    int n_sim, // number of resamples
     int n_groups
 ) {
   // extract columns from df
