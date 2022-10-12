@@ -82,7 +82,7 @@ DataFrame impute_srp_model(
         t_min_out.push_back(t_min(i));
         t_max_out.push_back(t_max(i));
         t_sot_out.push_back(t_sot(i));
-        iter_out.push_back(iter + 1); // offset 0-based indexing
+        iter_out.push_back(iter + 1);
       } else {
         if (from(i) == "stable") {
           // first sample whether response or progression happens
@@ -105,7 +105,7 @@ DataFrame impute_srp_model(
             double n_visits = floor(dt / visit_spacing(g));
             double tmin = t_min(i) + visit_spacing(g) * n_visits;
             double tmax = t_min(i) + visit_spacing(g) * (n_visits + 1);
-            double n_visits_prog = floor(dt_prog / visit_spacing(g));
+            double n_visits_prog = floor((dt_prog + dt) / visit_spacing(g));
             double tmin_prog = t_min(i) + visit_spacing(g) * n_visits_prog;
             double tmax_prog = t_min(i) + visit_spacing(g) * (n_visits_prog + 1);
             // append to results vectors stable -> response
@@ -116,7 +116,7 @@ DataFrame impute_srp_model(
             t_min_out.push_back(tmin);
             t_max_out.push_back(tmax);
             t_sot_out.push_back(t_sot(i));
-            iter_out.push_back(iter);
+            iter_out.push_back(iter + 1);
             //append to results vectors response -> progression
             subject_id_out.push_back(subject_id(i));
             group_id_out.push_back(group_id(i));
@@ -125,7 +125,7 @@ DataFrame impute_srp_model(
             t_min_out.push_back(tmin_prog);
             t_max_out.push_back(tmax_prog);
             t_sot_out.push_back(t_sot(i));
-            iter_out.push_back(iter);
+            iter_out.push_back(iter + 1);
           } else {
             // non-responder (directly to progression)
             // sample exact time from stable to progression
@@ -144,7 +144,7 @@ DataFrame impute_srp_model(
             t_min_out.push_back(tmin);
             t_max_out.push_back(tmax);
             t_sot_out.push_back(t_sot(i));
-            iter_out.push_back(iter);
+            iter_out.push_back(iter + 1);
           }
         }
         if (from(i) == "response") {
@@ -170,7 +170,7 @@ DataFrame impute_srp_model(
           t_min_out.push_back(tmin_prog);
           t_max_out.push_back(tmax_prog);
           t_sot_out.push_back(t_sot(i));
-          iter_out.push_back(iter);
+          iter_out.push_back(iter + 1);
         }
       }
     }

@@ -22,7 +22,7 @@ test_that("Testing .impute function", {
                             debug = FALSE)
   tbl2 <- sample_predictive(mdl,
                     sample = smpl_prior,
-                    n_per_group = c(1L, 0L),
+                    n_per_group = c(1L, 2L),
                     nsim = 1,
                     seed = 3423423,
                     debug = FALSE)
@@ -31,7 +31,7 @@ test_that("Testing .impute function", {
   # TODO: temporary tests during refactoring from R to cpp implementation
   tbl3 <- sample_predictive(mdl,
                             sample = smpl_prior,
-                            n_per_group = c(1L, 0L),
+                            n_per_group = c(1L, 2L),
                             nsim = 1,
                             seed = 3423423,
                             debug = TRUE)
