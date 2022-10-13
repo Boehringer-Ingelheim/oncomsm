@@ -218,6 +218,89 @@ impute_predictive.Model <- function(
 
 
 
+#' Impute data from predictive distribution
+#'
+#' If no parameter sample is provided, sample from posterior predictive
+#'
+#' @template param-model
+#' @param data the (multi-state) data frame to impute further trajectories for.
+#' @param n_per_group the number of individuals per group to be recruited.
+#' @param recruitment_rates the per-group recruitment rates.
+#' @param now exact time point relative to start of the trial
+#' @param sample a stanfit object containing samples. These parameter samples
+#'   represent the parameter distribution over which the predictive distribution
+#'   averages. Technically, the parameters are resampled with replacement from
+#'   this sample to match the desired number of imputations.
+#' @template param-nsim
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @template param-seed
+#' @template param-dotdotdot
+#'
+#' @return a data frame with imputed version of the input data.
+#'
+#' @export
+impute_trial <- function(model, data, n_per_group, recruitment_rates, now,
+                         sample, nsim, nsim_parameters, warmup_parameters,
+                         seed, ...) {
+  UseMethod("impute_trial")
+}
+
+#' @inheritParams impute_trial
+#' @rdname Model
+#' @export
+impute_trial.Model <- function(
+  model,
+  data,
+  n_per_group,
+  recruitment_rates,
+  now = NULL,
+  sample = NULL,
+  nsim = 250L,
+  nsim_parameters = 500L,
+  warmup_parameters = 250L,
+  seed = NULL,
+  ...
+) {
+  if (is.null(sample)) {
+    sample <- sample_posterior(
+      model, data = data, rstan_output = TRUE, seed = seed,
+      warmup = warmup_parameters, nsim = nsim_parameters, ...
+    )
+  }
+  if (is.null(now)) {
+    # convert to visits and take the last time point
+    now <- max(mstate_to_visits(model, data)$t)
+  }
+  tbl_to_be_recruited <- list()
+  group_ids <- attr(model, "group_id")
+  for (i in seq_along(group_ids)) {
+    n_recruited <- data %>%
+      filter(.data$group_id == group_ids[i]) %>%
+      pull("subject_id") %>%
+      unique() %>%
+      length()
+    n_to_be_recruited <- n_per_group[i] - n_recruited
+    tbl_to_be_recruited <- rbind(tbl_to_be_recruited, tibble(
+        group_id = group_ids[i],
+        subject_id = uuid::UUIDgenerate(n = n_to_be_recruited),
+        t_sot = now +
+          cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i])),
+        from = "stable",
+        to = NA_character_,
+        t_min = .data$t_sot + 1/30,
+        t_max = Inf # right censored
+      )) %>%
+      arrange(.data$t_sot)
+  }
+  tbl_tmp <- bind_rows(data, tbl_to_be_recruited)
+  res <- impute_predictive(model, data = tbl_tmp, sample = sample, nsim = nsim)
+  return(res)
+}
+
+
+
+
 
 .sample <- function(model, data, ...) {
   UseMethod(".sample")

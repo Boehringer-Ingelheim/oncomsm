@@ -260,6 +260,9 @@ is_valid.srp_model <- function(mdl) { # nolint
                  labels = group_id_levels)
         )
     )
+  if (any(!is.finite(res$t_max))) {
+    browser()
+  }
   return(res)
 }
 

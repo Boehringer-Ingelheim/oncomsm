@@ -1,0 +1,150 @@
+---
+title: "Integration with bhmbasket"
+author: "Kevin Kunzmann"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{integration-with-bhmbasket}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r knitr-setup, include = FALSE}
+# see whether jags can be found, if not deactivate execution
+jags_found <- tryCatch(
+  {
+    rjags::jags.version()
+    TRUE
+  },
+  error = function(e) FALSE
+)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  eval = jags_found,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 7 / 1.61,
+  fig.align = "center"
+)
+```
+
+```{r setup}
+library(oncomsm)
+library(ggplot2)
+library(dplyr, warn.conflicts = FALSE)
+library(future) # parallel processing
+
+plan(multisession) # instruct future how to run in parallel
+```
+
+
+**tl;dr:** *...*
+
+For a general introduction to the multi-state approach used throughout this
+package, see the vignette *Multi-state Models for Early Oncology*.
+
+```{r prior-specification}
+mdl <- create_srp_model(
+  # names of the arms/groups
+  group_id = c("A", "B", "C"),
+  # per-group logodds of response|stable
+  logodds_mean = c(logodds(.3), logodds(.4), logodds(.5)),
+  logodds_sd = c(.5, .5, .5),
+  # m[i,j] is the median time to next event for group i and transition j
+  median_time_to_next_event = matrix(c(
+    3, 2, 6,
+    2.5, 8, 18,
+    2, 12, 24
+  ), byrow = TRUE, nrow = 3, ncol = 3),
+  # fixed standard deviation of the prior for all median times
+  median_time_to_next_event_sd = matrix(
+    1,
+    byrow = TRUE, nrow = 3, ncol = 3
+  ),
+  # the visit interval
+  visit_spacing = c(1.2, 1.2, 1.2)
+)
+```
+
+```{r sample-from-prios}
+smpl_prior <- sample_prior(mdl, seed = 6835L)
+
+plot(mdl, dt = c(0, 36), sample = smpl_prior, n_grid = 25)
+```
+
+The `bhmbasket` package implements dynamic borrowing between arms in
+basket trials via Bayesian hierarchical models (BHMs).
+Here, we demonstrate how the prior predictive sample generated earlier can be
+used in conjunction with such a shrinkage estimator to compute PoS for a
+decision based on a BHM.
+We use the "Berry" type model for analysis of the response data and use a
+posterior $0.25$ quantile of the response rate above $0.3$ to declare success 
+($\phi_3^i$).
+
+```{r}
+prms_berry <- bhmbasket::setPriorParametersBerry(
+  mu_mean   = bhmbasket::logit(0.25),
+  mu_sd     = 1,
+  tau_scale = 1
+)
+
+data_to_bhmbasket_trial <- function(data) {
+  data %>%
+    group_by(group_id, subject_id) %>%
+    summarize(responder = any(to == "response")) %>%
+    summarize(r = sum(responder), n = n()) %>%
+    {
+      bhmbasket::createTrial(.$n, .$r)
+    } %>%
+    return()
+}
+
+is_success <- function(data, nsim = 250) {
+  set.seed(2340239L)
+  res <- suppressMessages(bhmbasket::performAnalyses(
+    scenario_list         = data_to_bhmbasket_trial(data),
+    method_names          = "berry",
+    evidence_levels       = 1 - 0.25,
+    prior_parameters_list = prms_berry,
+    target_rates          = c(.2, .3, .3),
+    n_mcmc_iterations     = nsim,
+    verbose               = FALSE
+  ))
+  return(tibble(
+    group_id = attr(mdl, "group_id"),
+    success = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
+  ))
+}
+```
+
+```{r, warning=FALSE}
+tbl_prior_predictive <- sample_predictive(
+    mdl,
+    n_per_group = rep(40L, 3),
+    sample = smpl_prior,
+    nsim = 250L,
+    seed = 34930L
+  ) %>%
+  group_by(iter) %>%
+  tidyr::nest() %>% 
+  ungroup()
+
+tbl_results_bhmbasket <- tbl_prior_predictive %>%
+  ungroup() %>%
+  mutate(
+    res = furrr::future_map(
+      data, is_success,
+      .options = furrr::furrr_options(seed = TRUE)
+    )
+  ) %>%
+  select(-data)
+```
+
+```{r}
+tbl_results_bhmbasket %>%
+  tidyr::unnest(res) %>%
+  group_by(group_id) %>%
+  summarize(
+    PoS = mean(success)
+  )
+```
