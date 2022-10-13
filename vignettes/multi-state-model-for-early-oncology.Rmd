@@ -29,28 +29,25 @@ library(ggplot2)
 
 # Background
 
-**tl;dr:** *Tumor response data is often treated as binary endpoint in early
-oncology trials (objective response or progression free survival at x months). 
-This ignores the fact that these are time-to-event endpoints. 
-Instead, the multi-state characteristics of the data can be exploited to 
-reduce bias at interim analyses and drive event prediction for probability of 
-success calculations.*
+**tl;dr:** *The multi-state characteristics of RECIST-like visit data
+in oncology can be exploited to reduce bias at interim analyses of objective
+response rate and drive event prediction for probability of success 
+calculations.*
 
 In early oncology trials, (objective tumor) response based on the RECIST
 criteria is often used as primary endpoint to establish the activity of
-a treatment. Response is often treated as binary variable although it is
-a delayed event endpoint. At the final analysis, this simplification is
-of little concern since all individuals tend to be followed up long
-enough to justify the assumption that non-responders are unlikely to
-still become responders. This approach is often plausible since
-individuals with tumors not responding to treatment ultimately progress.
+a treatment. 
+Often, response is treated as binary variable although it is
+a delayed event endpoint. 
+At the final analysis, this simplification is of little concern since all 
+individuals tend to be followed up long enough to ignore the small amount of
+censoring. 
 However, when continuously monitoring such a trial, the assumption of
-sufficient follow-up is no longer fulfilled and a simple binary analysis
-may be biased.
+sufficient follow-up is no longer fulfilled at interim analyses and a simple 
+binary analysis is biased.
 
-In this vignette, the problem is addressed by extending the statistic
-binary response model to a three-state model for "stable", "response", and
-"progression or death".
+The problem can be addressed by extending the statistic binary response model 
+to a three-state model for "stable", "response", and "progression or death".
 The respective transition numbers are given in the graph below.
 
 ```{r msm-1, eval=TRUE, echo=FALSE}
@@ -62,29 +59,8 @@ graph LR
 ", height = 200)
 ```
 
-Once someone becomes a responder, this model only allows a transition to
-the combined progression or death state.
-This means that progression and death are not modeled as competing events and
-simplifies analysis greatly over a model like the one below:
-
-```{r msm-2, eval=TRUE, echo=FALSE}
-DiagrammeR::mermaid("
-graph LR
-  stable -- 1 --> response
-  response -- 3a --> progression
-  response -- 3b --> death
-  progression -- 4 --> death
-  stable -- 2a --> progression
-  stable -- 2b --> death
-", height = 200)
-```
-
-Coming back to the simpler model, there is still a competing event issue when
-starting from 'stable'.
-Often, the convenient hazard-based approach is used to model multi-state 
-situations like this. The hazard-based approach is intuitive, especially when 
-considering non-parametric estimation, and co variate inclusion is 
-well-understood. However, a hazard-based approach has several disadvantages:
+Often, a hazard-based approach is used to model multi-state data. 
+However, a hazard-based approach has several disadvantages:
 
 1. The hazard scale is difficult to interpret since it is a momentary risk, 
 not a probability. 
@@ -104,17 +80,16 @@ An alternative framework to model multi-state data are mixture models.
 For details, see @jackson_comparison_2022 and @jackson_flexible_2022.
 Here, we describe the concrete application to he simplified "stable", 
 "response", "progression" model.
-The approach is similar to @aubel_bayesian_2021.
+The approach is similar to @aubel_bayesian_2021 and @beyer_multistate_2020.
 
-Assuming that the transition process can be described as a semi-Markov process
-is one way of rendering modeling tractable. 
+Here, a semi-Markov approach is used.
 This means that the time to the next transition only depends on the time
-already spent in a state, not on prior jumps. 
+already spent in a state, not on the full history of previous jumps.
 Additionally, it is assumed that the transition times between states conditional
 on both originating and target state can be described by Weibull distributions. 
 This parametric family encompasses the exponential distribution with constant
 transition rates as special cases but also allows increasing or decreasing 
-hazards over time. 
+hazards over time.
 
 Let $\tau_{S}$ be the transition time from the "stable" state and
 $\tau_{R}$ the transition tome from the "response" state (also "sojourn" times).
@@ -154,17 +129,21 @@ The following priors are used:
 1. a normal prior for the log-odds of response $\operatorname{logit}(p) \sim \mathcal{N}(\mu_p,\sigma_p^2)$
 2. a truncated normal prior for the median of each transition $\operatorname{median}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)$
 3. a flat prior on the shape of each transition $\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i, b_i)$
-4. it is assumed that the observation process (visit spacing) is fixed, e.g. every 6 weeks. This is irrelevant for inference, but important for sampling forward from the model since it cannot be assumed that transition times are observed exactly but only at the regular visits. 
+4. it is assumed that the observation process (visit spacing) is fixed, e.g. every 6 weeks. 
+This means that all transition times are interval censored.
 
 We treat recruitment times as independent of outcome. 
 They can be modeled separately if required.
+
+We assume that all times are given in months.
 
 
 # Example 
 
 ## Specifying the model
 
-We assume a time-scale of months.
+The following code defined the prior assumptions for a two-group trial with
+a visit-spacing of 1.2 months, i.e., about 6 weeks.
 
 ```{r specify-model}
 mdl <- create_srp_model(
@@ -199,6 +178,8 @@ mdl <- create_srp_model(
 # TODO: implement a nice summary / print function here
 ```
 
+The model assumptions can be visualized by sampling from the prior.
+
 
 ## Prior checks
 
@@ -208,8 +189,6 @@ response probabilities per group.
 These are based on a sample drawn from the prior distribution of the model.
 We can re-use the same parameter sample for sampling from the prior-predictive
 distribution by separating the sampling from the plotting steps.
-If no parameter sample is provided to the plotting function it samples 
-automatically.
 
 Often, the rate of progression free survival (PFS) at a particular time point 
 is of interest.
@@ -252,24 +231,31 @@ tbl_prior_predictive <- sample_predictive(
   nsim = 100,
   seed = 3423423
 )
+```
 
-# estimate of the response rates
+We can then run some quick checks on the sampled data, e.g., the observed 
+response rates.
+
+```{r}
 tbl_prior_predictive %>%
   filter(from == "stable") %>%
   group_by(group_id) %>%
   summarize(p_response = sum(to == "response") / n())
+```
 
-# crude approximation of the median jump times from "stable"
+A crude approximation of the median transition times can be obtained from the
+midpoints of the censoring intervals. 
+
+```{r}
 tbl_prior_predictive %>%
   filter(from == "stable") %>%
   group_by(group_id, from, to) %>%
   summarize(t_jump_approx = median(t_min + t_max) / 2, .groups = "drop")
 ```
 
-The generated data can also be visualized in swimmer plots
+The generated data can also be visualized in swimmer plots.
 
 ```{r plot-preior-predictive, fig.height=6}
-# TODO: improve sorting
 plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
 ```
 
@@ -294,7 +280,8 @@ tbl_visits <- tbl_prior_predictive %>%
 print(tbl_visits)
 ```
 
-Next, we add recruitment times.
+Next, we add recruitment times assuming an overall recruitment rate of 
+3 per month.
 
 ```{r, fig.height=6}
 recruitment_rate_overall <- 3
@@ -315,8 +302,7 @@ tbl_sot <- tbl_visits %>%
 # add to visit times
 tbl_visits <- tbl_visits %>%
   left_join(tbl_sot, by = c("subject_id", "group_id")) %>%
-  mutate(t = t + t_sot) %>%
-  select(-t_sot)
+  mutate(t = t + t_sot) # shift event times accordingly
 
 # convert back to mstate format and plot
 tbl_visits %>%
@@ -357,18 +343,13 @@ tbl_mstate_interim %>%
 ```
 
 We can now do inference by drawing sample from the posterior distribution.
-Clearly, this is a very extreme sample from the prior and a shift of the
-posterior as compared to the prior is to be expected.
 
 ```{r}
-smpl_posterior <- sample_posterior(
-  mdl,
-  tbl_mstate_interim,
-  refresh = 500, nsim = 5000, warmup = 250, seed = 76947
-)
+smpl_posterior <- sample_posterior(mdl, tbl_mstate_interim, seed = 76947)
 
 plot(mdl, dt = c(0, 36), sample = smpl_posterior)
 
+# calculate posterior quantiles of response probability
 smpl_posterior %>%
   parameter_sample_to_tibble(mdl, .) %>%
   filter(parameter == "p") %>%
@@ -379,83 +360,6 @@ smpl_posterior %>%
     q75 = quantile(value, probs = .75)
   )
 ```
-
-The Bayesian approach specifies a full generative model.
-This can be used to draw samples from the posterior
-predictive distribution for the individuals still at risk and the ones not
-yet recruited.
-The process is the same as for sampling from the prior predictive - just with
-replacing the prior distribution with the posterior distribution obtained
-from conditioning on any available data. 
-
-At 15 months into the trial, there are still individuals who have not been 
-recruited (the final sample size was set to 30 per group). 
-
-```{r}
-tbl_interim_sample_sizes <- tbl_mstate_interim %>%
-  select(group_id, subject_id) %>%
-  distinct() %>%
-  group_by(group_id) %>%
-  summarize(n = n())
-
-print(tbl_interim_sample_sizes)
-```
-
-We now sample recruitment dates and randomization probabilities for the 
-still-to-be-recruited individuals.
-
-```{r}
-tbl_to_be_recruited <- tibble(
-  group_id = tbl_interim_sample_sizes$group_id,
-  n_to_be_recruited = 30 - tbl_interim_sample_sizes$n
-) %>%
-  mutate(
-    tmp = purrr::map(
-      n_to_be_recruited,
-      ~ tibble(
-        # use unique identifiers to avoid clashing between groups
-        subject_id = uuid::UUIDgenerate(n = .),
-        # sample recruitment times per group using half the overall
-        # recruitment rate
-        t_sot = cumsum(rexp(n = ., rate = recruitment_rate_overall / 2))
-      )
-    )
-  ) %>%
-  select(-n_to_be_recruited) %>%
-  tidyr::unnest(tmp) %>%
-  # add information on starting state etc to expand to full mstate table
-  mutate(
-    from = "stable",
-    to = NA_character_,
-    t_min = t_sot + 1 / 30, # preclude events on the day of recruitment
-    t_max = Inf # right censored
-  )
-
-tbl_to_be_recruited
-```
-
-The hypothetical future first-visits can now be combined with the interim data
-and the trajectories can be sampled forward using the already fitted
-posterior distribution.
-
-```{r, fig.height=6}
-tbl_mstate_interim_forward <- bind_rows(tbl_mstate_interim, tbl_to_be_recruited)
-
-tbl_posterior_predictive <- impute_predictive(
-  mdl,
-  data = tbl_mstate_interim_forward,
-  sample = smpl_posterior,
-  nsim = 1
-)
-
-plot_mstate(mdl, tbl_posterior_predictive, relative_to_sot = FALSE)
-```
-
-Repeatedly sampling from the posterior-predictive distribution allows to evaluate
-any decision criterion as if the full trial were completed since the 
-individual-level data is practically imputed using the posterior predictive 
-distribution.
-This allows to compute the Probability of Success, see [???].
 
 
 
