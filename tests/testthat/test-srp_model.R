@@ -103,7 +103,7 @@ test_that("can convert data to standata for SRP model", {
           "1",         "3",     4,    "response",
           "1",         "3",   4.25,         "EOF"
   )
-  tbl_mstate <<- visits_to_mstate(
+  tbl_mstate <- visits_to_mstate(
     tbl_visits,
     start_state = "stable",
     absorbing_states = c("progression")
@@ -111,18 +111,6 @@ test_that("can convert data to standata for SRP model", {
   lst_standata <- oncomsm:::data2standata.srp_model(mdl, tbl_mstate)
 
   expect_true(TRUE) # TODO: implement check
-
-})
-
-
-
-test_that("can plot mstate data for SRP model", {
-
-  create_plot <- function() {
-    plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
-  }
-
-  vdiffr::expect_doppelganger("plot_mstate.srp_model", create_plot)
 
 })
 
@@ -247,35 +235,16 @@ test_that("can sample from posterior predictive", {
 
 
 
-test_that("default plotting works as intended", {
+test_that("impute remainder of trial from interim data", {
 
-  mdl <- create_srp_model(
-    group_id = 1:2,
-    logodds_mean =  c(logodds(.5), logodds(.75)),
-    logodds_sd = c(.5, .75),
-    visit_spacing = c(1.2, 1.2),
-    median_time_to_next_event = matrix(c(
-      3, 3, 6,
-      4, 6, 10
-    ), byrow = TRUE,  nrow = 2, ncol = 3),
-    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
+  # sample some data
+  tbl_data1 <- sample_predictive(mdl, c(20, 20), nsim = 1) %>%
+    select(-iter)
+  # impute another 20/group conditional on observed data
+  tbl_data2 <- impute_trial(mdl, tbl_data1, c(40, 40),
+                            recruitment_rates = c(1, 1), nsim = 25)
+  expect_true(
+    tbl_data2 %>% group_by(subject_id, group_id, iter) %>% n_groups() == 40*25*2
   )
-  smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
-  plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
-
-  mdl <- create_srp_model(
-    group_id = 1,
-    logodds_mean = 0,
-    logodds_sd = .5,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE, nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
-  )
-  smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
-  plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
-
-  expect_true(TRUE) # TODO: implement check
 
 })

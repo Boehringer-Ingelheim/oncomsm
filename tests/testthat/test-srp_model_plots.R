@@ -1,3 +1,4 @@
+# plot() =======================================================================
 test_that("default plotting works as intended", {
 
   mdl <- create_srp_model(
@@ -37,5 +38,82 @@ test_that("default plotting works as intended", {
   )
   plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
   vdiffr::expect_doppelganger("plot.srp_model_2", plt)
+
+})
+
+
+
+# plot_mstate() ================================================================
+test_that("can plot mstate data for SRP model", {
+
+  # one group
+  mdl <- create_srp_model(
+    group_id = 1,
+    logodds_mean = logodds(.5),
+    logodds_sd = 0.5,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE,  nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
+  )
+  tbl_visits <- tibble::tribble(
+    ~group_id, ~subject_id,    ~t,        ~state,
+          "1",         "1",     0,      "stable",
+          "1",         "1",   1.2,      "stable",
+          "1",         "1",   2.4,    "response",
+          "1",         "1",   3.0,    "response",
+          "1",         "1",   3.6, "progression",
+          "1",         "2",   1.5,      "stable",
+          "1",         "2",     2,      "stable",
+          "1",         "2",     3,    "response",
+          "1",         "3",   1.5,      "stable",
+          "1",         "3",     3,    "response",
+          "1",         "3",     4,    "response",
+          "1",         "3",   4.25,         "EOF"
+    )
+
+  tbl_mstate <- visits_to_mstate(
+    tbl_visits,
+    start_state = "stable",
+    absorbing_states = c("progression")
+  )
+  plt <- plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
+  vdiffr::expect_doppelganger("plot_mstate.srp_model_1", plt)
+
+  # two groups
+  mdl <- create_srp_model(
+    group_id = 1:2,
+    logodds_mean = rep(logodds(.5), 2),
+    logodds_sd = rep(0.5, 2),
+    visit_spacing = rep(1.2, 2),
+    median_time_to_next_event = matrix(c(
+      3, 3, 6,
+      3, 3, 6
+    ), byrow = TRUE,  nrow = 2, ncol = 3),
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
+  )
+  tbl_visits <- tibble::tribble(
+    ~group_id, ~subject_id,    ~t,        ~state,
+          "1",         "1",     0,      "stable",
+          "1",         "1",   1.2,      "stable",
+          "1",         "1",   2.4,    "response",
+          "1",         "1",   3.0,    "response",
+          "1",         "1",   3.6, "progression",
+          "1",         "2",   1.5,      "stable",
+          "1",         "2",     2,      "stable",
+          "1",         "2",     3,    "response",
+          "1",         "3",   1.5,      "stable",
+          "2",         "3",     3,    "response",
+          "2",         "3",     4,    "response",
+          "2",         "3",   4.25,         "EOF"
+  )
+  tbl_mstate <- visits_to_mstate(
+    tbl_visits,
+    start_state = "stable",
+    absorbing_states = c("progression")
+  )
+  plt <- plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
+  vdiffr::expect_doppelganger("plot_mstate.srp_model_2", plt)
 
 })
