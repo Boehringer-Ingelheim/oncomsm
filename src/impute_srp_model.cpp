@@ -28,8 +28,6 @@ double conditional_response_probability_srp(
   return pr_response;
 }
 
-
-
 // [[Rcpp::export]]
 DataFrame impute_srp_model(
     DataFrame df,

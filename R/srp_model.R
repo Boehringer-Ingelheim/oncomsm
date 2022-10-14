@@ -103,8 +103,6 @@ is_valid.srp_model <- function(mdl) { # nolint
   return(TRUE)
 }
 
-
-
 # see Model.R
 .impute.srp_model <- function(model, data, nsim, parameter_sample, # nolint
                               seed = NULL, debug = FALSE, ...) {
@@ -158,70 +156,102 @@ is_valid.srp_model <- function(mdl) { # nolint
         ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot, ~iter
       )
 
-    for (i in seq_len(nrow(data))) {
-    if (!is.na(data$to[i])) { # observed transition, nothing to sample
-      res <- bind_rows(res, tidyr::expand_grid(data[i, ], iter = 1:nsim))
-    } else { # a censored transition
-      for (j in 1:nsim) {
-        g <- data$group_id[i]
-        k <- idx[j]
-        sshape <- shape[k, g, ]
-        sscale <- scale[k, g, ]
-        if (data$from[i] == "stable") {
-          # first sample response/progression
-          pr_response_raw <- p[k, g] # use survival information!
-          pr_survival_response <- 1 - stats::pweibull(
-            data$t_min[i] -
-              data$t_sot[i],
-            sshape[1], sscale[1]
-          )
-          pr_survival_progression <- 1 - stats::pweibull(
-            data$t_min[i] -
-              data$t_sot[i],
-            sshape[2], sscale[2]
-          )
-          pr_response <- pr_response_raw * pr_survival_response / (
-            pr_response_raw * pr_survival_response +
-              (1 - pr_response_raw) * pr_survival_progression
-          )
-          response <- stats::rbinom(1, 1, pr_response)
-          if (response) {
+    for (j in 1:nsim) {
+    # a censored transition
+      for (i in seq_len(nrow(data))) {
+        if (!is.na(data$to[i])) { # observed transition, nothing to sample
+          res <- bind_rows(res, tidyr::expand_grid(data[i, ], iter = 1:nsim))
+        } else {
+          g <- data$group_id[i]
+          k <- idx[j]
+          sshape <- shape[k, g, ]
+          sscale <- scale[k, g, ]
+          if (data$from[i] == "stable") {
+            # first sample response/progression
+            pr_response_raw <- p[k, g] # use survival information!
+            pr_survival_response <- 1 - stats::pweibull(
+              data$t_min[i] -
+                data$t_sot[i],
+              sshape[1], sscale[1]
+            )
+            pr_survival_progression <- 1 - stats::pweibull(
+              data$t_min[i] -
+                data$t_sot[i],
+              sshape[2], sscale[2]
+            )
+            pr_response <- pr_response_raw * pr_survival_response / (
+              pr_response_raw * pr_survival_response +
+                (1 - pr_response_raw) * pr_survival_progression
+            )
+            response <- stats::rbinom(1, 1, pr_response)
+            if (response) {
+              # sample exact response time
+              t_response <- rtruncweibull(
+                sshape[1],
+                # t_min since time of SoT is known
+                scale = sscale[1], data$t_min[i], Inf
+              )
+              # apply visit scheme
+              n_visits_response <- t_response %/% visit_spacing[g]
+              tmin_response <- data$t_min[i] +
+                visit_spacing[g] * n_visits_response
+              tmax_response <- data$t_min[i] +
+                visit_spacing[g] * (n_visits_response + 1)
+              # sample subsequent progression,
+              dt_progression <- stats::rweibull(1, sshape[3], sscale[3])
+              # apply visit scheme
+              n_visits_progression <- (dt_progression +
+                t_response) %/% visit_spacing[g]
+              tmin_progression <- data$t_min[i] +
+                visit_spacing[g] * n_visits_progression
+              tmax_progression <- data$t_min[i] +
+                visit_spacing[g] * (n_visits_progression + 1)
+              res <- bind_rows(
+                res, tribble(
+                  ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
+                    ~iter,
+                  data$subject_id[i], g, "stable", "response", tmin_response,
+                    tmax_response, data$t_sot[i], j,
+                  data$subject_id[i], g, "response", "progression",
+                    tmin_progression, tmax_progression, data$t_sot[i], j
+                )
+              )
+            } else { # sample progression directly
+              dt_progression <- rtruncweibull(
+                sshape[2],
+                scale = sscale[2],
+                data$t_min[i], Inf # t_min since time of SoT is known
+              )
+              # apply visit scheme
+              n_visits_progression <- dt_progression %/% visit_spacing[g]
+              tmin_progression <- data$t_min[i] +
+                visit_spacing[g] * n_visits_progression
+              tmax_progression <- data$t_min[i] +
+                visit_spacing[g] * (n_visits_progression + 1)
+              res <- bind_rows(
+                res, tribble(
+                  ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
+                    ~iter,
+                  data$subject_id[i], g, "stable", "progression",
+                    tmin_progression, tmax_progression, data$t_sot[i], j
+                )
+              )
+            } # end stable -> progression
+          } # end from == 1
+          if (data$from[i] == "response") {
+            if (data$from[i - 1] != "stable" ||
+              data$subject_id[i - 1] != data$subject_id[i]) {
+              stop()
+            }
             # sample exact response time
             t_response <- rtruncweibull(
               sshape[1],
-              # t_min since time of SoT is known
-              scale = sscale[1], data$t_min[i], Inf
+              scale = sscale[1], data$t_min[i - 1], data$t_max[i - 1]
             )
-            # apply visit scheme
-            n_visits_response <- t_response %/% visit_spacing[g]
-            tmin_response <- data$t_min[i] +
-              visit_spacing[g] * n_visits_response
-            tmax_response <- data$t_min[i] +
-              visit_spacing[g] * (n_visits_response + 1)
-            # sample subsequent progression,
-            dt_progression <- stats::rweibull(1, sshape[3], sscale[3])
-            # apply visit scheme
-            n_visits_progression <- (dt_progression +
-              t_response) %/% visit_spacing[g]
-            tmin_progression <- data$t_min[i] +
-              visit_spacing[g] * n_visits_progression
-            tmax_progression <- data$t_min[i] +
-              visit_spacing[g] * (n_visits_progression + 1)
-            res <- bind_rows(
-              res, tribble(
-                ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
-                  ~iter,
-                data$subject_id[i], g, "stable", "response", tmin_response,
-                  tmax_response, data$t_sot[i], j,
-                data$subject_id[i], g, "response", "progression",
-                  tmin_progression, tmax_progression, data$t_sot[i], j
-              )
-            )
-          } else { # sample progression directly
+            # sample progression time
             dt_progression <- rtruncweibull(
-              sshape[2],
-              scale = sscale[2],
-              data$t_min[i], Inf # t_min since time of SoT is known
+              sshape[3],
+              scale = sscale[3], data$t_min[i] - t_response, Inf
             )
             # apply visit scheme
             n_visits_progression <- dt_progression %/% visit_spacing[g]
@@ -233,43 +263,12 @@ is_valid.srp_model <- function(mdl) { # nolint
               res, tribble(
                 ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
                   ~iter,
-                data$subject_id[i], g, "stable", "progression",
+                data$subject_id[i], g, "response", "progression",
                   tmin_progression, tmax_progression, data$t_sot[i], j
               )
             )
-          } # end stable -> progression
-        } # end from == 1
-        if (data$from[i] == "response") {
-          if (data$from[i - 1] != "stable" ||
-            data$subject_id[i - 1] != data$subject_id[i]) {
-            stop()
-          }
-          # sample exact response time
-          t_response <- rtruncweibull(
-            sshape[1],
-            scale = sscale[1], data$t_min[i - 1], data$t_max[i - 1]
-          )
-          # sample progression time
-          dt_progression <- rtruncweibull(
-            sshape[3],
-            scale = sscale[3], data$t_min[i] - t_response, Inf
-          )
-          # apply visit scheme
-          n_visits_progression <- dt_progression %/% visit_spacing[g]
-          tmin_progression <- data$t_min[i] +
-            visit_spacing[g] * n_visits_progression
-          tmax_progression <- data$t_min[i] +
-            visit_spacing[g] * (n_visits_progression + 1)
-          res <- bind_rows(
-            res, tribble(
-              ~subject_id, ~group_id, ~from, ~to, ~t_min, ~t_max, ~t_sot,
-                ~iter,
-              data$subject_id[i], g, "response", "progression",
-                tmin_progression, tmax_progression, data$t_sot[i], j
-            )
-          )
-        } # end from == 2
-      } # end iterate of j
+          } # end from == 2
+        } # end iterate of j
     } # end if/else
   } # end iteration over i
     # convert subject and group id back
