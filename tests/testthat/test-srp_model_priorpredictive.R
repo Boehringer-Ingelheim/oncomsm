@@ -17,7 +17,7 @@ test_that("Testing prior predictive impute function", {
                             n_per_group = c(1L),
                             nsim = 10000,
                             seed = 3423423,
-                            debug = FALSE)
+                            debug = TRUE)
   tbl_cpp %>%
     group_by(subject_id, iter) %>%
     summarise(
@@ -29,13 +29,12 @@ test_that("Testing prior predictive impute function", {
       p_se = sd(responder) / sqrt(n())
     )
 
-  4.33 * gamma(2)
-
-  tbl_cpp %>%
+  means <- tbl_cpp %>%
     filter(from == "stable", to == "response") %>%
     summarise(
       mean_hat = mean((t_min + t_max) / 2),
       mean_se = sd((t_min + t_max) / 2) / sqrt(n())
     )
+  expect_true(all((means$mean_hat - 4.33 * gamma(2)) < 0.1))
 
 })
