@@ -17,16 +17,20 @@ test_that("Testing .impute function", {
   # sample only from one group
   tbl1 <- sample_predictive(mdl,
                             sample = smpl_prior,
-                            n_per_group = c(1L, 0L),
-                            nsim = 1,
+                            n_per_group = c(0L, 1L, 0L),
+                            nsim = 2,
                             seed = 3423423,
-                            debug = FALSE)
+                            debug = TRUE)
   tbl2 <- sample_predictive(mdl,
                     sample = smpl_prior,
-                    n_per_group = c(1L, 2L, 1L),
-                    nsim = 1,
+                    n_per_group = c(0L, 1L, 0L),
+                    nsim = 2,
                     seed = 3423423,
                     debug = FALSE)
+  # TODO: Take care of the corner case where progression and response intervals
+  # are the same
+  # TODO: Write a test case with low median time, so that many corner cases are
+  # generated
   # TODO: check that fixed seed works and results are the same
   # TODO: check that only one individual from group one is sampled once
   # TODO: temporary tests during refactoring from R to cpp implementation
@@ -41,16 +45,29 @@ test_that("Testing .impute function", {
   expect_true(all(tbl3 == tbl2))
   tbl4 <- sample_predictive(mdl,
                             sample = smpl_prior,
-                            n_per_group = c(1L, 0L),
-                            nsim = 2,
+                            n_per_group = c(1L, 2L, 1L),
+                            nsim = 1,
                             seed = 3423423,
                             debug = TRUE)
   tbl5 <- sample_predictive(mdl,
                             sample = smpl_prior,
-                            n_per_group = c(1L, 0L),
-                            nsim = 2,
+                            n_per_group = c(1L, 2L, 1L),
+                            nsim = 1,
                             seed = 3423423,
                             debug = FALSE)
+
+  lb <- bench::mark(sample_predictive(mdl,
+                                      sample = smpl_prior,
+                                      n_per_group = c(1L, 2L, 1L),
+                                      nsim = 1000,
+                                      seed = 3423423,
+                                      debug = TRUE),
+                    sample_predictive(mdl, sample = smpl_prior,
+                                      n_per_group = c(1L, 2L, 1L),
+                                      nsim = 1000,
+                                      seed = 3423423,
+                                      debug = FALSE), check = FALSE,
+                    max_iterations = 10)
 
 
 })

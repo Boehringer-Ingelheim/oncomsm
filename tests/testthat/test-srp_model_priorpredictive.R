@@ -16,8 +16,7 @@ test_that("Testing prior predictive impute function", {
                             sample = smpl_prior,
                             n_per_group = c(1L),
                             nsim = 10000,
-                            seed = 3423423,
-                            debug = TRUE)
+                            seed = 3423423)
   tbl_cpp %>%
     group_by(subject_id, iter) %>%
     summarise(
