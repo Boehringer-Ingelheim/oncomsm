@@ -3,7 +3,7 @@ test_that("Testing prior predictive impute function", {
     group_id = 1,
     logodds_mean =  c(logodds(.5)),
     logodds_sd = c(.01),
-    visit_spacing = c(0.1),
+    visit_spacing = c(1.2),
     median_time_to_next_event = matrix(c(
       3, 3, 6
     ), byrow = TRUE,  nrow = 1, ncol = 3),
@@ -14,9 +14,10 @@ test_that("Testing prior predictive impute function", {
 
   tbl_cpp <- sample_predictive(mdl,
                             sample = smpl_prior,
-                            n_per_group = c(1L),
-                            nsim = 10000,
+                            n_per_group = c(3L),
+                            nsim = 20,
                             seed = 3423423)
+
   tbl_cpp %>%
     group_by(subject_id, iter) %>%
     summarise(

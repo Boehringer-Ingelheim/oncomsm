@@ -136,7 +136,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
   # TODO: can we fix that by "correctly" indexing in the matrix
   p <- matrix(p[idx, ], nrow = 1)
-  temp <- impute_srp_model(
+  res <- impute_srp_model(
     data,
     p,
     as.vector(shape[idx, , ]),
@@ -145,10 +145,10 @@ is_valid.srp_model <- function(mdl) { # nolint
     nsim,
     as.integer(length(group_id_levels))
   ) %>%
-    arrange(subject_id, iter) %>%
-    as_tibble()
+  arrange(subject_id, iter) %>%
+  as_tibble()
 
-  return(temp)
+  return(res)
 }
 
 
