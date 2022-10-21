@@ -17,57 +17,46 @@ test_that("Testing .impute function", {
   # sample only from one group
   tbl1 <- sample_predictive(mdl,
                             sample = smpl_prior,
-                            n_per_group = c(0L, 1L, 0L),
-                            nsim = 2,
-                            seed = 3423423,
-                            debug = TRUE)
+                            n_per_group = c(1L, 1L, 0L),
+                            nsim = 20,
+                            seed = 3423423)
   tbl2 <- sample_predictive(mdl,
-                    sample = smpl_prior,
-                    n_per_group = c(0L, 1L, 0L),
-                    nsim = 2,
-                    seed = 3423423,
-                    debug = FALSE)
+                            sample = smpl_prior,
+                            n_per_group = c(1L, 1L, 0L),
+                            nsim = 20,
+                            seed = 3423423)
+  expect_true(all(tbl1 == tbl2))
   # TODO: Take care of the corner case where progression and response intervals
   # are the same
   # TODO: Write a test case with low median time, so that many corner cases are
   # generated
-  # TODO: check that fixed seed works and results are the same
-  # TODO: check that only one individual from group one is sampled once
-  # TODO: temporary tests during refactoring from R to cpp implementation
-  tbl3 <- sample_predictive(mdl,
-                            sample = smpl_prior,
-                            n_per_group = c(1L, 2L, 1L),
+  mdl2 <- create_srp_model(
+    group_id = 1,
+    logodds_mean =  c(logodds(.5)),
+    logodds_sd = c(.5),
+    visit_spacing = c(1.2),
+    median_time_to_next_event = matrix(c(
+      0.5, 0.7, 0.6
+    ), byrow = TRUE,  nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
+  )
+  smpl_prior2 <- sample_prior(mdl2, warmup = 500, nsim = 2000, seed = 36L)
+
+  tbl3 <- sample_predictive(mdl2,
+                            sample = smpl_prior2,
+                            n_per_group = c(1L),
                             nsim = 3,
-                            seed = 3423423,
-                            debug = TRUE)
-  # TODO: check that c++ implementation returns the same as r implementation
-  expect_true(all(dim(tbl3) == dim(tbl2)))
-  expect_true(all(tbl3 == tbl2))
+                            seed = 3423423)
+  # TODO: check that only one individual from group one is sampled once
   tbl4 <- sample_predictive(mdl,
                             sample = smpl_prior,
                             n_per_group = c(1L, 2L, 1L),
-                            nsim = 1,
+                            nsim = 2,
                             seed = 3423423,
                             debug = TRUE)
-  tbl5 <- sample_predictive(mdl,
-                            sample = smpl_prior,
-                            n_per_group = c(1L, 2L, 1L),
-                            nsim = 1,
-                            seed = 3423423,
-                            debug = FALSE)
-
-  lb <- bench::mark(sample_predictive(mdl,
-                                      sample = smpl_prior,
-                                      n_per_group = c(1L, 2L, 1L),
-                                      nsim = 1000,
-                                      seed = 3423423,
-                                      debug = TRUE),
-                    sample_predictive(mdl, sample = smpl_prior,
-                                      n_per_group = c(1L, 2L, 1L),
-                                      nsim = 1000,
-                                      seed = 3423423,
-                                      debug = FALSE), check = FALSE,
-                    max_iterations = 10)
-
+  tbl_data <- tbl4 %>%
+    filter(group_id == 1) %>%
+    count(subject_id)
+  expect_true(tbl_data["subject_id"] == 1)
 
 })

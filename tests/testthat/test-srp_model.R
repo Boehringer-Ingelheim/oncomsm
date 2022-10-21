@@ -209,13 +209,13 @@ test_that("can sample from posterior", {
     filter(iter == 1) %>%
     select(-iter)
 
-  p_obs <- tbl_prior_predictive1 %>%
+  p_obs <- tbl_data %>%
     filter(from == "stable") %>%
     group_by(group_id) %>%
     summarize(p = mean(to == "response")) %>%
     pull(p)
 
-  smpl_posterior <- sample_posterior(mdl, tbl_prior_predictive1)
+  smpl_posterior <- sample_posterior(mdl, tbl_data)
 
   p <- parameter_sample_to_tibble(mdl, smpl_posterior) %>%
     filter(parameter == "p") %>%
