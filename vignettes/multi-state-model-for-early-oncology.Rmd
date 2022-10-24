@@ -250,8 +250,7 @@ tbl_prior_predictive <- sample_predictive(
   sample = smpl_prior,
   n_per_group = c(30L, 30L),
   nsim = 10, # TODO: bump to 100
-  seed = 3423423,
-  DEBUG = TRUE
+  seed = 3423423
 )
 
 # estimate of the response rates

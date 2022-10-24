@@ -147,7 +147,15 @@ is_valid.srp_model <- function(mdl) { # nolint
   ) %>%
   arrange(subject_id, iter) %>%
   as_tibble()
-
+  res <- res %>%
+    mutate(
+      subject_id = as.character(
+        factor(.data$subject_id, levels = subject_id_levels)
+      ),
+      group_id = as.character(
+        factor(.data$group_id, levels = subject_id_levels)
+      )
+    )
   return(res)
 }
 
