@@ -145,15 +145,19 @@ is_valid.srp_model <- function(mdl) { # nolint
     nsim,
     as.integer(length(group_id_levels))
   ) %>%
-  arrange(subject_id, iter) %>%
+  arrange(.data$subject_id, .data$iter) %>%
   as_tibble()
+  # Mapping back from integer to character type for effective recognition
+  # of groups
   res <- res %>%
     mutate(
       subject_id = as.character(
-        factor(.data$subject_id, levels = subject_id_levels)
+        factor(.data$subject_id, levels = seq_along(subject_id_levels),
+               labels = subject_id_levels)
       ),
       group_id = as.character(
-        factor(.data$group_id, levels = subject_id_levels)
+        factor(.data$group_id, levels = seq_along(group_id_levels),
+               labels = group_id_levels)
       )
     )
   return(res)
