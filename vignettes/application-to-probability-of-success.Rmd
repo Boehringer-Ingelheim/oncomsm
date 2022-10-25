@@ -23,8 +23,9 @@ library(oncomsm)
 library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
-
 plan(multisession) # instruct future how to run in parallel
+library(doFuture)
+registerDoFuture()
 ```
 
 
@@ -44,7 +45,7 @@ package, see the vignette *Multi-state Models for Early Oncology*.
 
 
 
-# Decision criteria and Probability of Success
+## Decision criteria and Probability of Success
 
 Let $D_t \in \mathbb{D}$ be the observed (visit) data at time point 
 $t$ after the start of the trial.
@@ -82,8 +83,6 @@ certain relevance threshold,
 4. or a combination of the above.
 
 
-
-# Example
 
 We consider a situation with a trial including three different arms 
 "A", "B", and "C".
@@ -131,6 +130,8 @@ months:
 
 $$\phi(D_\tau) := \operatorname{Pr}\big[\,\text{ORR} \geq 0.3\ \&\ \text{no progression or death before 12 months} \geq 0.5 \, | \, D_\tau\,\big] \geq 0.75$$
 
+The decision criterion can be implemented as follows.
+
 ```{r}
 is_success <- function(data, prob = 0.75, nsim = 250) {
   smpl <- sample_posterior(mdl,
@@ -152,7 +153,11 @@ is_success <- function(data, prob = 0.75, nsim = 250) {
 }
 ```
 
-```{r, eval=FALSE}
+An example of how to apply the criterion to a sample from the prior predictive 
+distribution is given below.
+Here we use a low number of posterior samples to speed up computation.
+
+```{r}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 3),
@@ -164,7 +169,9 @@ tbl_prior_predictive <- sample_predictive(
 is_success(tbl_prior_predictive)
 ```
 
-```{r sample-prior-predictive, eval=FALSE}
+Next, we can create a table of multiple prior-predictive samples.
+
+```{r sample-prior-predictive}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 3),
@@ -175,18 +182,26 @@ tbl_prior_predictive <- sample_predictive(
   group_by(iter) %>%
   tidyr::nest() %>% 
   ungroup()
+
+tbl_prior_predictive
 ```
 
-```{r, warning=FALSE, eval=FALSE}
-tmp <- furrr::future_map(
-    tbl_prior_predictive$data, 
-    function(data) is_success(data),
-     .options = furrr::furrr_options(seed = TRUE)
-  )
+Applying the decision criterion to each of them and averaging over all iterations
+is an MCMC approximation of the expected Probability of Success.
 
-mean(purrr::map_lgl(tmp, ~.$success[1]))
-mean(purrr::map_lgl(tmp, ~.$success[2]))
-mean(purrr::map_lgl(tmp, ~.$success[3]))
+```{r, warning=FALSE}
+# compute results in parallel (also consider the furrr package)
+res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dopar% {
+  is_success(tbl_prior_predictive$data[[i]])
+}
+
+pos <- c(
+  A = mean(purrr::map_lgl(tmp, ~.$success[1])),
+  B = mean(purrr::map_lgl(tmp, ~.$success[2])),
+  C = mean(purrr::map_lgl(tmp, ~.$success[3]))
+)
+
+pos
 ```
 
 
@@ -198,7 +213,9 @@ be calculated at any time point given the data observed so far.
 This then allows to sample the future course of the trial from the posterior
 predictive distribution.
 
-```{r, warning=FALSE, eval=FALSE}
+```{r, warning=FALSE}
+# use generate_visit_data?
+generate_visit_data(mdl, c(40, 40, 40))
 recruitment_rate_overall <- 3
 tbl_example <- sample_predictive(
     mdl,
@@ -240,7 +257,7 @@ the future recruitment times are irrelevant and can be set to 0
 Next, we can impute the "missing" data by sampling form the posterior-predictive 
 distribution.
 
-```{r, eval=FALSE}
+```{r}
 tbl_mi <- impute_trial(
     mdl, tbl_example, c(40L, 40L, 40L), c(1, 1, 1), nsim = 100L
   ) %>%
@@ -249,7 +266,7 @@ tbl_mi <- impute_trial(
   ungroup()
 ```
 
-```{r, eval=FALSE}
+```{r}
 tmp <- furrr::future_map(
     tbl_mi$data, function(x) tryCatch({is_success(x)}, error = function(e) NA), 
     .options = furrr::furrr_options(seed = TRUE)
@@ -258,4 +275,11 @@ tmp <- furrr::future_map(
 mean(purrr::map_lgl(tmp, ~.$success[1]))
 mean(purrr::map_lgl(tmp, ~.$success[2]))
 mean(purrr::map_lgl(tmp, ~.$success[3]))
+```
+
+
+## Session info
+
+```{r session-info}
+sessionInfo()
 ```

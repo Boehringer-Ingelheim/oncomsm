@@ -447,10 +447,12 @@ plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
 #'
 #' @template param-model
 #' @template param-n_per_group
+#' @param recruitment_rate numeric vector with the monthly recruitment rates
+#' per group
 #' @template param-dotdotdot
 #'
 #' @export
-generate_visit_data <- function(model, n_per_group, ...) {
+generate_visit_data <- function(model, n_per_group, recruitment_rate, ...) {
   UseMethod("generate_visit_data")
 }
 
@@ -458,9 +460,24 @@ generate_visit_data <- function(model, n_per_group, ...) {
 #' @template param-seed
 #' @rdname Model
 #' @export
-generate_visit_data.Model <- function(model, n_per_group, seed = NULL, ...) {
-  sample_predictive(model, n_per_group = n_per_group, nsim = 1, seed = seed) %>%
-    select(-"iter") %>%
+generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
+                                      seed = NULL, ...) {
+  tbl_data <- sample_predictive(model, n_per_group = n_per_group, nsim = 1,
+                                seed = seed) %>% select(-"iter", -"t_sot")
+
+  tbl_recruitment_times <- select(tbl_data, "subject_id", "group_id") %>%
+    distinct() %>%
+    mutate( # poisson recruitment process
+      tmp <- recruitment_rate[purrr::map_lgl(.data$group_id, ~which(attr(model, "group_id") == .))]
+      # t_sot = cumsum(rexp(n = n(), rate = recruitment_rate[which(attr(model, "group_id") == group_id)])),
+    )
+  group_by(.data$group_id) %>%
+  # join and shift transition times accordingly
+  tbl_example <- left_join(tbl_example, tbl_recruitment_times, by = "subject_id") %>%
+    mutate(
+      t_min = t_min + t_sot,
+      t_max = t_max + t_sot
+    )
     mstate_to_visits(model, .)
 }
 

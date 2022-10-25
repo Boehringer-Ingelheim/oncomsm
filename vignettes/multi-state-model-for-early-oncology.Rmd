@@ -27,8 +27,6 @@ library(ggplot2)
 
 
 
-# Background
-
 **tl;dr:** *The multi-state characteristics of RECIST-like visit data
 in oncology can be exploited to reduce bias at interim analyses of objective
 response rate and drive event prediction for probability of success 
@@ -138,8 +136,6 @@ They can be modeled separately if required.
 We assume that all times are given in months.
 
 
-# Example 
-
 ## Specifying the model
 
 The following code defined the prior assumptions for a two-group trial with
@@ -217,7 +213,7 @@ plot(mdl, dt = c(0, 36), sample = smpl_prior)
 ```
 
 
-### Sampling from the prior-predictive distribution
+## Sampling from the prior-predictive distribution
 
 Next, we draw samples from the prior-predictive distribution of the model.
 We sample 100 trials with 30 individuals per arm.
@@ -260,8 +256,6 @@ plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
 ```
 
 
-
-# Inference
 
 ## Building a visit data set
 
@@ -309,7 +303,6 @@ tbl_visits %>%
   visits_to_mstate(start_state = "stable", absorbing_states = "progression") %>%
   plot_mstate(mdl, ., relative_to_sot = FALSE)
 ```
-
 
 
 ## A hypothetical interim analysis
@@ -363,7 +356,7 @@ smpl_posterior %>%
 
 
 
-# Session info
+## Session info
 
 ```{r session-info}
 sessionInfo()

@@ -53,6 +53,7 @@ Suggests:
     uuid,
     future,
     furrr,
+    doFuture,
     rjags,
     xfun
 VignetteBuilder: knitr
