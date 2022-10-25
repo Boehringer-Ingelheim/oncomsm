@@ -44,10 +44,15 @@ test_that("Testing .impute function", {
 
   tbl3 <- sample_predictive(mdl2,
                             sample = smpl_prior2,
-                            n_per_group = c(1L),
-                            nsim = 3,
+                            n_per_group = c(5L),
+                            nsim = 100,
                             seed = 3423423)
-  # TODO: check that only one individual from group one is sampled once
+  corner_check <- tbl3 %>%
+         group_by(iter, subject_id) %>%
+         filter(t_min == lag(t_min) & t_max == lag(t_max)) %>%
+    nrow()
+  expect_true(corner_check == 0)
+    # TODO: check that only one individual from group one is sampled once
   tbl4 <- sample_predictive(mdl,
                             sample = smpl_prior,
                             n_per_group = c(1L, 2L, 1L),

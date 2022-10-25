@@ -106,24 +106,38 @@ DataFrame impute_srp_model(
             double n_visits_prog = floor((dt_prog + dt) / visit_spacing(g));
             double tmin_prog = t_min(i) + visit_spacing(g) * n_visits_prog;
             double tmax_prog = t_min(i) + visit_spacing(g) * (n_visits_prog + 1);
-            // append to results vectors stable -> response
-            subject_id_out.push_back(subject_id(i));
-            group_id_out.push_back(group_id(i));
-            from_out.push_back("stable");
-            to_out.push_back("response");
-            t_min_out.push_back(tmin);
-            t_max_out.push_back(tmax);
-            t_sot_out.push_back(t_sot(i));
-            iter_out.push_back(iter + 1);
-            //append to results vectors response -> progression
-            subject_id_out.push_back(subject_id(i));
-            group_id_out.push_back(group_id(i));
-            from_out.push_back("response");
-            to_out.push_back("progression");
-            t_min_out.push_back(tmin_prog);
-            t_max_out.push_back(tmax_prog);
-            t_sot_out.push_back(t_sot(i));
-            iter_out.push_back(iter + 1);
+            // check corner case where transitions are in same visit interval
+            if (tmin_prog == tmin)
+            {
+              // append to results vectors stable -> progression
+              subject_id_out.push_back(subject_id(i));
+              group_id_out.push_back(group_id(i));
+              from_out.push_back("stable");
+              to_out.push_back("progression");
+              t_min_out.push_back(tmin);
+              t_max_out.push_back(tmax);
+              t_sot_out.push_back(t_sot(i));
+              iter_out.push_back(iter + 1);
+            } else {
+              // append to results vectors stable -> response
+              subject_id_out.push_back(subject_id(i));
+              group_id_out.push_back(group_id(i));
+              from_out.push_back("stable");
+              to_out.push_back("response");
+              t_min_out.push_back(tmin);
+              t_max_out.push_back(tmax);
+              t_sot_out.push_back(t_sot(i));
+              iter_out.push_back(iter + 1);
+              //append to results vectors response -> progression
+              subject_id_out.push_back(subject_id(i));
+              group_id_out.push_back(group_id(i));
+              from_out.push_back("response");
+              to_out.push_back("progression");
+              t_min_out.push_back(tmin_prog);
+              t_max_out.push_back(tmax_prog);
+              t_sot_out.push_back(t_sot(i));
+              iter_out.push_back(iter + 1);
+            }
           } else {
             // non-responder (directly to progression)
             // sample exact time from stable to progression
