@@ -107,8 +107,7 @@ DataFrame impute_srp_model(
             double tmin_prog = t_min(i) + visit_spacing(g) * n_visits_prog;
             double tmax_prog = t_min(i) + visit_spacing(g) * (n_visits_prog + 1);
             // check corner case where transitions are in same visit interval
-            if (tmin_prog == tmin)
-            {
+            if (tmin_prog == tmin) {
               // append to results vectors stable -> progression
               subject_id_out.push_back(subject_id(i));
               group_id_out.push_back(group_id(i));
