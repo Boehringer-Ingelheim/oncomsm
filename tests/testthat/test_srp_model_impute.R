@@ -49,7 +49,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
       p_se = sd(responder) / sqrt(n())
     )
   # allow for 2 standard errors:
-  expect_true(with(tbl_observed_rr, abs(p_hat - 0.5) < 2*p_se))
+  expect_true(with(tbl_observed_rr, abs(p_hat - 0.5) < 2 * p_se))
   # check that stable to response timings are roughly calibrated, use midpoints
   # of intervals
   tbl_observed_mean <- tbl_prior_predictive %>%
@@ -60,7 +60,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     )
   # work out the theoretical mean given scale = 1 and specified median = 3
   # (see mdl definition and https://en.wikipedia.org/wiki/Weibull_distribution)
-  theoretical_mean <- mdl$median_time_to_next_event_mean[1]/log(2) * gamma(2)
+  theoretical_mean <- mdl$median_time_to_next_event_mean[1] / log(2) * gamma(2)
   # testing for comparison with theoretical mean, allowing for estimation error
   expect_true(with(tbl_observed_mean,
     abs(mean_hat - theoretical_mean) <= 2 * mean_se
