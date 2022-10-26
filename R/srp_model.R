@@ -117,7 +117,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   # p[i,j] is probability for ith sample for jth group
   p <- rstan::extract(parameter_sample, "p")[[1]]
   # scale[i,j,k] is the scale value for ith sample in jth group for
-  # kth transition (k being 1. stable-> response, 2. stable -> progression,
+  # k-th transition (k being 1. stable-> response, 2. stable -> progression,
   # 3. response -> progression)
   scale <- rstan::extract(parameter_sample, "scale")[[1]]
   shape <- rstan::extract(parameter_sample, "shape")[[1]]
