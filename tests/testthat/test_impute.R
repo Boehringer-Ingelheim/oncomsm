@@ -53,12 +53,22 @@ test_that("Testing corner case values when response and progression occur within
     nrow()
   expect_true(corner_check == 0)
   })
-test_that("Testing if a unique indivudual can is sampled only once in a group",
+test_that("Testing if a unique indivudual can be sampled only once in a group",
   {
-    smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
-    tbl4 <- sample_predictive(mdl,
+    mdl3 <- create_srp_model(
+      group_id = 1,
+      logodds_mean =  c(logodds(.5)),
+      logodds_sd = c(.5),
+      visit_spacing = c(1.2),
+      median_time_to_next_event = matrix(c(
+        3, 6, 9
+      ), byrow = TRUE,  nrow = 1, ncol = 3),
+      median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
+    )
+    smpl_prior <- sample_prior(mdl3, warmup = 500, nsim = 2000, seed = 36L)
+    tbl4 <- sample_predictive(mdl3,
                             sample = smpl_prior,
-                            n_per_group = c(1L, 2L, 1L),
+                            n_per_group = c(1L),
                             nsim = 2,
                             seed = 3423423,
                             debug = TRUE)
