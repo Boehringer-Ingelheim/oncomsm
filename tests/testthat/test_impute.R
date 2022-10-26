@@ -1,6 +1,6 @@
-test_that("Testing .impute function", {
+test_that("Testing consistency of .impute function to return same values", {
 
-  mdl <- create_srp_model(
+  mdl <<- create_srp_model(
     group_id = 1:3,
     logodds_mean =  c(logodds(.5), logodds(.5), logodds(.5)),
     logodds_sd = c(.5, .5, .5),
@@ -14,7 +14,6 @@ test_that("Testing .impute function", {
   )
   smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
 
-  # sample only from one group
   tbl1 <- sample_predictive(mdl,
                             sample = smpl_prior,
                             n_per_group = c(1L, 1L, 0L),
@@ -26,10 +25,11 @@ test_that("Testing .impute function", {
                             nsim = 20,
                             seed = 3423423)
   expect_true(all(tbl1 == tbl2))
-  # TODO: Take care of the corner case where progression and response intervals
-  # are the same
-  # TODO: Write a test case with low median time, so that many corner cases are
-  # generated
+})
+
+test_that("Testing corner case values when response and progression occur within
+          the same visit interval", {
+
   mdl2 <- create_srp_model(
     group_id = 1,
     logodds_mean =  c(logodds(.5)),
@@ -52,16 +52,18 @@ test_that("Testing .impute function", {
          filter(t_min == lag(t_min) & t_max == lag(t_max)) %>%
     nrow()
   expect_true(corner_check == 0)
-    # TODO: check that only one individual from group one is sampled once
-  tbl4 <- sample_predictive(mdl,
+  })
+test_that("Testing if a unique indivudual can is sampled only once in a group",
+  {
+    smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
+    tbl4 <- sample_predictive(mdl,
                             sample = smpl_prior,
                             n_per_group = c(1L, 2L, 1L),
                             nsim = 2,
                             seed = 3423423,
                             debug = TRUE)
-  tbl_data <- tbl4 %>%
+    tbl_data <- tbl4 %>%
     filter(group_id == 1) %>%
     count(subject_id)
-  expect_true(tbl_data["subject_id"] == 1)
-
-})
+    expect_true(tbl_data["subject_id"] == 1)
+  })

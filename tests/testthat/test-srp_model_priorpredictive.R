@@ -35,6 +35,7 @@ test_that("Testing prior predictive impute function", {
       mean_hat = mean((t_min + t_max) / 2),
       mean_se = sd((t_min + t_max) / 2) / sqrt(n())
     )
+  # 4.33 is the scale value for the weibull, testing for comparison with theoretical mean # nolint
   expect_true(all((means$mean_hat - 4.33 * gamma(2)) < 0.1))
 
 })
