@@ -134,8 +134,11 @@ is_valid.srp_model <- function(mdl) { # nolint
   # sub/re-sample parameters
   n_params_sample <- dim(p)[1]
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
-  # TODO: can we fix that by "correctly" indexing in the matrix
-  p <- matrix(p[idx, ], nrow = 1)
+  p <- p[idx, , drop = FALSE]
+  # Converting p to a single row matrix
+  if (nsim == 1) {
+    p <- matrix(p, nrow = 1)
+  }
   res <- impute_srp_model(
     data,
     p,

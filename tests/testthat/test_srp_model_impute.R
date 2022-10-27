@@ -53,29 +53,33 @@ test_that("Testing marginal calibration of sampling from the prior", {
   # check that stable to response timings are roughly calibrated, use midpoints
   # of intervals
   tbl_observed_mean <- tbl_prior_predictive %>%
-    filter(from == "stable", to == "response") %>%
+    filter(from == "response", to == "progression") %>%
     summarise(
       mean_hat = mean((t_min + t_max) / 2),
       mean_se = sd((t_min + t_max) / 2) / sqrt(n())
     )
   # work out the theoretical mean given scale = 1 and specified median = 3
   # (see mdl definition and https://en.wikipedia.org/wiki/Weibull_distribution)
-  theoretical_mean <- mdl$median_time_to_next_event_mean[1] / log(2) * gamma(2)
+  theoretical_mean <- mdl$median_time_to_next_event_mean[3] / log(2) * gamma(2)
   # testing for comparison with theoretical mean, allowing for estimation error
   expect_true(with(tbl_observed_mean,
-    abs(mean_hat - theoretical_mean) <= 2 * mean_se
+                   abs(mean_hat - theoretical_mean) <= 2 * mean_se
   ))
-  # TODO: Check other two means, can you do that elegantly without copy-paste?
-  tbl_obs_mean_prog <- tbl_prior_predictive %>%
-    filter(from == "stable", to == "progression") %>%
+
+  x <- tbl_prior_predictive %>%
+    group_by(from, to) %>%
     summarise(
       mean_hat = mean((t_min + t_max) / 2),
-      mean_se = sd((t_min + t_max) / 2) / sqrt(n())
-    )
-  theoretical_mean <- mdl$median_time_to_next_event_mean[2] / log(2) * gamma(2)
-  expect_true(with(tbl_obs_mean_prog,
-                   abs(mean_heat - theoretical_mean) <= 2* mean_se
-                   ))
+      mean_se = sd((t_min + t_max) / 2) / sqrt(n()),
+      .groups = "drop"
+    ) %>%
+    arrange(mean_hat)
+
+  x_mean <- mdl$median_time_to_next_event_mean/log(2) * gamma(2)
+  expect_true(all(with(x,
+                   abs(mean_hat - sort(x_mean)) <= 2 * mean_se
+  )))
+
 })
 
 test_that("Testing short time response->progression (within same isit interval)", { # nolint
