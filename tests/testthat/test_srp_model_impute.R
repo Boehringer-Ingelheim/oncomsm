@@ -66,6 +66,16 @@ test_that("Testing marginal calibration of sampling from the prior", {
     abs(mean_hat - theoretical_mean) <= 2 * mean_se
   ))
   # TODO: Check other two means, can you do that elegantly without copy-paste?
+  tbl_obs_mean_prog <- tbl_prior_predictive %>%
+    filter(from == "stable", to == "progression") %>%
+    summarise(
+      mean_hat = mean((t_min + t_max) / 2),
+      mean_se = sd((t_min + t_max) / 2) / sqrt(n())
+    )
+  theoretical_mean <- mdl$median_time_to_next_event_mean[2] / log(2) * gamma(2)
+  expect_true(with(tbl_obs_mean_prog,
+                   abs(mean_heat - theoretical_mean) <= 2* mean_se
+                   ))
 })
 
 test_that("Testing short time response->progression (within same isit interval)", { # nolint
