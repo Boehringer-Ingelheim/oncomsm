@@ -24,7 +24,7 @@ test_that("Testing that fixed seed works for .impute.srp_model", {
 test_that("Testing marginal calibration of sampling from the prior", {
   mdl <- create_srp_model(
     group_id = 1,
-    logodds_mean =  0,
+    logodds_mean = 0,
     logodds_sd = .01, # low sd means we basically sample from a fixed parameter
     visit_spacing = 1.2,
     median_time_to_next_event = matrix(c(
@@ -37,7 +37,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
   tbl_prior_predictive <- sample_predictive(mdl, sample = smpl_prior,
                                             n_per_group = 1L, nsim = 1000,
                                             seed = 342)
-  # test that observed response rate is close enough to 0.5 (logodds-1(0.5) = 0)
+  # test that observed response rate is close enough to 0.5 (logodds(0.5) = 0)
   tbl_observed_rr <- tbl_prior_predictive %>%
     group_by(subject_id, iter) %>%
     summarise(
@@ -49,40 +49,36 @@ test_that("Testing marginal calibration of sampling from the prior", {
       p_se = sd(responder) / sqrt(n())
     )
   # allow for 2 standard errors:
-  expect_true(with(tbl_observed_rr, abs(p_hat - 0.5) < 2 * p_se))
-  # check that stable to response timings are roughly calibrated, use midpoints
-  # of intervals
-  tbl_observed_mean <- tbl_prior_predictive %>%
-    filter(from == "response", to == "progression") %>%
-    summarise(
-      mean_hat = mean((t_min + t_max) / 2),
-      mean_se = sd((t_min + t_max) / 2) / sqrt(n())
-    )
+  expect_true(with(tbl_observed_rr, abs(p_hat - 0.5) < 5 * p_se))
+  # check calibration of times to next event, use midpoints of intervals as
+  # approximation
   # work out the theoretical mean given scale = 1 and specified median = 3
   # (see mdl definition and https://en.wikipedia.org/wiki/Weibull_distribution)
-  theoretical_mean <- mdl$median_time_to_next_event_mean[3] / log(2) * gamma(2)
-  # testing for comparison with theoretical mean, allowing for estimation error
-  expect_true(with(tbl_observed_mean,
-                   abs(mean_hat - theoretical_mean) <= 2 * mean_se
-  ))
-
-  x <- tbl_prior_predictive %>%
+  theoretical_means <- mdl$median_time_to_next_event_mean / log(2) * gamma(2)
+  # check that stable to response timings are roughly calibrated, use midpoints
+  # of intervals
+  tbl_means <- tbl_prior_predictive %>%
     group_by(from, to) %>%
     summarise(
       mean_hat = mean((t_min + t_max) / 2),
       mean_se = sd((t_min + t_max) / 2) / sqrt(n()),
       .groups = "drop"
     ) %>%
-    arrange(mean_hat)
-
-  x_mean <- mdl$median_time_to_next_event_mean/log(2) * gamma(2)
-  expect_true(all(with(x,
-                   abs(mean_hat - sort(x_mean)) <= 2 * mean_se
+    mutate(
+      theoretical_mean = case_when(
+        from == "stable" & to == "response" ~ theoretical_means[1],
+        from == "stable" & to == "progression" ~ theoretical_means[2],
+        from == "response" & to == "progression" ~ theoretical_means[3],
+      )
+    )
+  # testing for comparison with theoretical mean, allowing for estimation error
+  expect_true(all(with(tbl_means,
+    abs(mean_hat - theoretical_mean) <= 2 * mean_se
   )))
 
 })
 
-test_that("Testing short time response->progression (within same isit interval)", { # nolint
+test_that("Testing short time response->progression (within same visitt interval)", { # nolint
   mdl <- create_srp_model(
     group_id = 1,
     logodds_mean = 0,
