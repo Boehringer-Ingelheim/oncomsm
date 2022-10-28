@@ -183,7 +183,8 @@ test_that("prior predictive seed works", {
 
 test_that("can generate visit data from SRP model", {
 
-  generate_visit_data(mdl, n_per_group = c(20, 20), seed = 112341)
+  generate_visit_data(mdl, n_per_group = c(20, 20),
+                      recruitment_rate = c(.1, 5), seed = 112341)
 
   expect_true(TRUE) # TODO: implement check
 
