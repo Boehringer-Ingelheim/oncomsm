@@ -13,8 +13,8 @@ test_that("default plotting works as intended", {
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
   )
   # use stored sample to ensure cross-platform consistency
-  # smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
-  # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_1.rds", version = 3)
+  # smpl <- sample_prior(mdl, nsim = 500, seed = 1414322) # nolint
+  # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_1.rds", version = 3) # nolint
   smpl <- readRDS(
     system.file("testthat/prior_smpl_plotting_1.rds", package = "oncomsm")
   )
@@ -31,8 +31,8 @@ test_that("default plotting works as intended", {
     ), byrow = TRUE, nrow = 1, ncol = 3),
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
   )
-  # smpl <- sample_prior(mdl, nsim = 500, seed = 1414322)
-  # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_2.rds", version = 3)
+  # smpl <- sample_prior(mdl, nsim = 500, seed = 1414322) # nolint
+  # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_2.rds", version = 3) # nolint
   smpl <- readRDS(
     system.file("testthat/prior_smpl_plotting_2.rds", package = "oncomsm")
   )

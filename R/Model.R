@@ -288,7 +288,7 @@ impute_trial.Model <- function(
           cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i])),
         from = "stable",
         to = NA_character_,
-        t_min = .data$t_sot + 1/30,
+        t_min = .data$t_sot + 1 / 30,
         t_max = Inf # right censored
       )) %>%
       arrange(.data$t_sot)
@@ -464,21 +464,29 @@ generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
                                       seed = NULL, ...) {
   tbl_data <- sample_predictive(model, n_per_group = n_per_group, nsim = 1,
                                 seed = seed) %>% select(-"iter", -"t_sot")
-
   tbl_recruitment_times <- select(tbl_data, "subject_id", "group_id") %>%
     distinct() %>%
     mutate( # poisson recruitment process
-      tmp <- recruitment_rate[purrr::map_lgl(.data$group_id, ~which(attr(model, "group_id") == .))]
-      # t_sot = cumsum(rexp(n = n(), rate = recruitment_rate[which(attr(model, "group_id") == group_id)])),
+      t_sot = cumsum(
+        rexp(
+          n = n(),
+          rate = recruitment_rate[purrr::map_int(
+            .data$group_id, ~which(attr(model, "group_id") == .))]
+        )
+      )
     )
-  group_by(.data$group_id) %>%
   # join and shift transition times accordingly
-  tbl_example <- left_join(tbl_example, tbl_recruitment_times, by = "subject_id") %>%
+  res <- left_join(
+      tbl_data,
+      tbl_recruitment_times,
+      by = c("subject_id", "group_id")
+    ) %>%
     mutate(
       t_min = t_min + t_sot,
       t_max = t_max + t_sot
-    )
+    ) %>%
     mstate_to_visits(model, .)
+  return(res)
 }
 
 

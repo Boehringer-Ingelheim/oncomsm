@@ -75,7 +75,7 @@
 
 \method{plot_mstate}{Model}(model, data, now, relative_to_sot, ...)
 
-\method{generate_visit_data}{Model}(model, n_per_group, seed = NULL, ...)
+\method{generate_visit_data}{Model}(model, n_per_group, recruitment_rate, seed = NULL, ...)
 
 \method{sample_pfs_rate}{Model}(
   model,
@@ -124,6 +124,9 @@ this sample to match the desired number of imputations.}
 
 \item{relative_to_sot}{Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual}
+
+\item{recruitment_rate}{numeric vector with the monthly recruitment rates
+per group}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
 

@@ -24,8 +24,6 @@ library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
 plan(multisession) # instruct future how to run in parallel
-library(doFuture)
-registerDoFuture()
 ```
 
 
@@ -140,12 +138,12 @@ is_success <- function(data, prob = 0.75, nsim = 250) {
   )
   tbl_pfs_orr <- bind_cols(
       sample_pfs_rate(mdl, 12, smpl),
-      parameter_sample_to_tibble(mdl, smpl) %>% 
-        filter(parameter == "p") %>% 
+      parameter_sample_to_tibble(mdl, smpl) %>%
+        filter(parameter == "p") %>%
         transmute(orr = value)
     )
-  res <- tbl_pfs_orr %>% 
-    group_by(group_id) %>% 
+  res <- tbl_pfs_orr %>%
+    group_by(group_id) %>%
     summarize(
       success = mean(pfs >= 0.5 & orr >= 0.3) >= 0.75
     )
@@ -157,7 +155,7 @@ An example of how to apply the criterion to a sample from the prior predictive
 distribution is given below.
 Here we use a low number of posterior samples to speed up computation.
 
-```{r}
+```{r, warning=FALSE}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 3),
@@ -171,7 +169,7 @@ is_success(tbl_prior_predictive)
 
 Next, we can create a table of multiple prior-predictive samples.
 
-```{r sample-prior-predictive}
+```{r sample-prior-predictive, warning=FALSE}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 3),
@@ -180,7 +178,7 @@ tbl_prior_predictive <- sample_predictive(
     seed = 34930L
   ) %>%
   group_by(iter) %>%
-  tidyr::nest() %>% 
+  tidyr::nest() %>%
   ungroup()
 
 tbl_prior_predictive
@@ -196,9 +194,9 @@ res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dopar% {
 }
 
 pos <- c(
-  A = mean(purrr::map_lgl(tmp, ~.$success[1])),
-  B = mean(purrr::map_lgl(tmp, ~.$success[2])),
-  C = mean(purrr::map_lgl(tmp, ~.$success[3]))
+  A = mean(purrr::map_lgl(res, ~.$success[1])),
+  B = mean(purrr::map_lgl(res, ~.$success[2])),
+  C = mean(purrr::map_lgl(res, ~.$success[3]))
 )
 
 pos
@@ -214,33 +212,8 @@ This then allows to sample the future course of the trial from the posterior
 predictive distribution.
 
 ```{r, warning=FALSE}
-# use generate_visit_data?
-generate_visit_data(mdl, c(40, 40, 40))
-recruitment_rate_overall <- 3
-tbl_example <- sample_predictive(
-    mdl,
-    sample = smpl_prior,
-    n_per_group = c(40L, 40L, 40L),
-    nsim = 1,
-    seed = 3423423
-  ) %>% 
-  select(-t_sot)
-# sample recruitment times
-tbl_recruitment_times <- select(tbl_example, subject_id) %>%
-  distinct() %>%
-  arrange(runif(n())) %>% # permute groups
-  mutate(
-    # poisson recruitment process
-    t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall)),
-  )
-# join and shift transition times accordingly
-tbl_example <- left_join(tbl_example, tbl_recruitment_times, by = "subject_id") %>% 
-  mutate(
-    t_min = t_min + t_sot,
-    t_max = t_max + t_sot
-  )
-# convert to visits
-tbl_example <- mstate_to_visits(mdl, tbl_example) %>%
+recruitment_rates <- c(1, 1, 1)
+tbl_example <- generate_visit_data(mdl, c(40, 40, 40), recruitment_rates) %>% 
   filter(t <= 18) %>% # keep only visits before 18 months
   visits_to_mstate( # convert back to multi state data frame
     start_state = "stable",
@@ -257,18 +230,19 @@ the future recruitment times are irrelevant and can be set to 0
 Next, we can impute the "missing" data by sampling form the posterior-predictive 
 distribution.
 
-```{r}
+```{r, warning=FALSE}
 tbl_mi <- impute_trial(
     mdl, tbl_example, c(40L, 40L, 40L), c(1, 1, 1), nsim = 100L
   ) %>%
   group_by(iter) %>%
-  tidyr::nest() %>% 
+  tidyr::nest() %>%
   ungroup()
 ```
 
-```{r}
+```{r, warning=FALSE}
 tmp <- furrr::future_map(
-    tbl_mi$data, function(x) tryCatch({is_success(x)}, error = function(e) NA), 
+    tbl_mi$data,
+    function(x) is_success(x),
     .options = furrr::furrr_options(seed = TRUE)
   )
 

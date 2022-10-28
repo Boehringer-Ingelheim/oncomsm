@@ -4,12 +4,15 @@
 \alias{generate_visit_data}
 \title{Generate Visit data from a multi-state model}
 \usage{
-generate_visit_data(model, n_per_group, ...)
+generate_visit_data(model, n_per_group, recruitment_rate, ...)
 }
 \arguments{
 \item{model}{a model of class "Model"}
 
 \item{n_per_group}{integer vector with number of individuals per group.}
+
+\item{recruitment_rate}{numeric vector with the monthly recruitment rates
+per group}
 
 \item{...}{further arguments passed to method implementations}
 }

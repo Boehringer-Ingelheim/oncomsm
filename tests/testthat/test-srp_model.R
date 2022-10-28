@@ -244,7 +244,8 @@ test_that("impute remainder of trial from interim data", {
   tbl_data2 <- impute_trial(mdl, tbl_data1, c(40, 40),
                             recruitment_rates = c(1, 1), nsim = 25)
   expect_true(
-    tbl_data2 %>% group_by(subject_id, group_id, iter) %>% n_groups() == 40*25*2
+    tbl_data2 %>% group_by(subject_id, group_id, iter) %>% n_groups() ==
+      40 * 25 * 2
   )
 
 })

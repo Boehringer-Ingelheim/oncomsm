@@ -126,7 +126,7 @@ tbl_prior_predictive <- sample_predictive(
     seed = 34930L
   ) %>%
   group_by(iter) %>%
-  tidyr::nest() %>% 
+  tidyr::nest() %>%
   ungroup()
 
 tbl_results_bhmbasket <- tbl_prior_predictive %>%
