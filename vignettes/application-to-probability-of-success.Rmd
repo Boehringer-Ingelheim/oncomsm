@@ -23,6 +23,8 @@ library(oncomsm)
 library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
+library(doFuture)
+registerDoFuture()
 plan(multisession) # instruct future how to run in parallel
 ```
 
