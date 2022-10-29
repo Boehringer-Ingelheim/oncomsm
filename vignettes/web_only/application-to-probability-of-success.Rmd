@@ -180,8 +180,8 @@ res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dopar% {
   is_success(tbl_prior_predictive$data[[i]])
 }
 # bind results together and aggregate to probability of success
-tbl_pos <- bind_rows(res, .id = "iter") %>% 
-  group_by(group_id) %>% 
+tbl_pos <- bind_rows(res, .id = "iter") %>%
+  group_by(group_id) %>%
   summarize(
     PoS = mean(success),
     se  = sd(success) / sqrt(n())
@@ -219,7 +219,7 @@ mdl_point <- create_srp_model(
 tbl_data <- generate_visit_data(
     mdl_point,
     n_per_group = c(40L, 40L),
-    recruitment_rate = c(40/24, 40/24) # recruit in 24 months
+    recruitment_rate = c(40 / 24, 40 / 24) # recruit in 24 months
   )
 print(tbl_data)
 ```
@@ -232,7 +232,7 @@ up to 24 months are considered.
 ```{r}
 tbl_data_interims <- tibble(
     t_interim = c(1, 3, 6, 9, 12, 18, 24)
-  ) %>% 
+  ) %>%
   mutate(
     data = purrr::map(t_interim, function(t_interim) {
         filter(tbl_data, t <= t_interim) %>% # keep only visits before interim
@@ -263,7 +263,7 @@ pos <- function(tbl, nsim = 50L) {
     group_by(group_id) %>%
     summarize(
       PoS = mean(success),
-      se  = sd(success)/sqrt(n())
+      se  = sd(success) / sqrt(n())
     )
   return(tbl_pos)
 }
@@ -276,7 +276,8 @@ tbl_pos_over_time <- tbl_data_interims %>%
 # plot
 ggplot(tbl_pos_over_time) +
   aes(t_interim) +
-  geom_errorbar(aes(ymin = PoS - se, ymax = PoS + se, color = group_id), width = 1) +
+  geom_errorbar(aes(ymin = PoS - se, ymax = PoS + se, color = group_id),
+                width = 1) +
   geom_line(aes(y = PoS, color = group_id), alpha = 0.33)
 ```
 
