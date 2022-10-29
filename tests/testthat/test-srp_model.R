@@ -3,7 +3,7 @@ test_that("can create SRP model", {
   mdl <<- create_srp_model(
     group_id = 1:2,
     logodds_mean =  c(logodds(.5), logodds(.5)),
-    logodds_sd = c(.5, .5),
+    logodds_sd = c(.1, .1),
     visit_spacing = c(1.2, 1.2),
     median_time_to_next_event = matrix(c(
       3, 3, 6,
@@ -137,7 +137,7 @@ test_that("can generate data from SRP model", {
   tbl_prior_predictive1 <<- sample_predictive(
     mdl,
     n_per_group = c(20, 20),
-    nsim = 25,
+    nsim = 100,
     seed = 42L
   )
 
@@ -172,7 +172,7 @@ test_that("prior predictive seed works", {
   tbl_prior_predictive2 <- sample_predictive(
     mdl,
     n_per_group = c(20, 20),
-    nsim = 25,
+    nsim = 100,
     seed = 42L
   )
   expect_true(all(tbl_prior_predictive1 == tbl_prior_predictive2))
