@@ -464,17 +464,19 @@ generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
                                       seed = NULL, ...) {
   tbl_data <- sample_predictive(model, n_per_group = n_per_group, nsim = 1,
                                 seed = seed) %>% select(-"iter", -"t_sot")
-  tbl_recruitment_times <- select(tbl_data, "subject_id", "group_id") %>%
+  tbl_recruitment_times <- tbl_data %>%
+    select("subject_id", "group_id") %>%
     distinct() %>%
+    group_by(.data$group_id) %>%
     mutate( # poisson recruitment process
-      t_sot = cumsum(
-        rexp(
-          n = n(),
-          rate = recruitment_rate[purrr::map_int(
-            .data$group_id, ~which(attr(model, "group_id") == .))]
-        )
-      )
-    )
+      rate = purrr::map_dbl(
+          .data$group_id,
+          ~recruitment_rate[which(attr(model, "group_id") == .)]
+        ),
+      t_sot = cumsum(rexp(n = n(), rate = rate))
+    ) %>%
+    ungroup() %>%
+    select(-rate)
   # join and shift transition times accordingly
   res <- left_join(
       tbl_data,

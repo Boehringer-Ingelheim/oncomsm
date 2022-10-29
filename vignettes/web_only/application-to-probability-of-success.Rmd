@@ -2,10 +2,6 @@
 title: "Application to Probability of Success"
 author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{application-to-probability-of-success}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r knitr-setup, include = FALSE}
@@ -84,36 +80,26 @@ certain relevance threshold,
 
 
 
-We consider a situation with a trial including three different arms 
-"A", "B", and "C".
-
+Consider a situation with a trial including two different arms 
+"A" and "B".
 Assume that the following prior for the Weibull SRP multi-state model with 
 three arms/groups is given.
 
 ```{r prior-specification}
 mdl <- create_srp_model(
-  # names of the arms/groups
-  group_id = c("A", "B", "C"),
-  # per-group logodds of response|stable
-  logodds_mean = c(logodds(.3), logodds(.4), logodds(.5)),
-  logodds_sd = c(.5, .5, .5),
-  # m[i,j] is the median time to next event for group i and transition j
+  group_id = c("A", "B"),
+  logodds_mean = logodds(c(0.1, 0.9)),
+  logodds_sd = rep(3, 2L),
   median_time_to_next_event = matrix(c(
-    3, 2, 6,
-    2.5, 8, 18,
-    2, 12, 24
-  ), byrow = TRUE, nrow = 3, ncol = 3),
-  # fixed standard deviation of the prior for all median times
-  median_time_to_next_event_sd = matrix(
-    3,
-    byrow = TRUE, nrow = 3, ncol = 3
-  ),
-  # the visit interval
-  visit_spacing = c(1.2, 1.2, 1.2)
+    2, 6, 24,
+    2, 6, 24
+  ), byrow = TRUE, nrow = 2, ncol = 3),
+  median_time_to_next_event_sd = matrix(3, byrow = TRUE, nrow = 2, ncol = 3),
+  visit_spacing = rep(1.2, 2L)
 )
 ```
 
-We can now sample from the prior and visualize the prior assumptions.
+One can now sample from the prior and visualize the prior assumptions.
 
 ```{r sample-from-prios}
 smpl_prior <- sample_prior(mdl, seed = 6835L)
@@ -128,16 +114,14 @@ Assume that success is defined as a combination of a sufficiently high
 response rate and a sufficiently high progression-free-survival rate at 12
 months:
 
-$$\phi(D_\tau) := \operatorname{Pr}\big[\,\text{ORR} \geq 0.3\ \&\ \text{no progression or death before 12 months} \geq 0.5 \, | \, D_\tau\,\big] \geq 0.75$$
+$$\phi(D_\tau) := \operatorname{Pr}\big[\,\text{ORR} \geq 0.3\ \&\ \text{PFS}_{t=12} \geq 0.4 \, | \, D_\tau\,\big] \geq 0.75$$
 
-The decision criterion can be implemented as follows.
+This decision criterion can be implemented as the following function:
 
 ```{r}
-is_success <- function(data, prob = 0.75, nsim = 250) {
-  smpl <- sample_posterior(mdl,
-    data = data, seed = 38497, warmup = 150L,
-    nsim = nsim
-  )
+is_success <- function(data, nsim = 250L) {
+  set.seed(3819308)
+  smpl <- sample_posterior(mdl, data = data, warmup = 150L, nsim = nsim)
   tbl_pfs_orr <- bind_cols(
       sample_pfs_rate(mdl, 12, smpl),
       parameter_sample_to_tibble(mdl, smpl) %>%
@@ -154,13 +138,12 @@ is_success <- function(data, prob = 0.75, nsim = 250) {
 ```
 
 An example of how to apply the criterion to a sample from the prior predictive 
-distribution is given below.
-Here we use a low number of posterior samples to speed up computation.
+distribution is given below:
 
 ```{r, warning=FALSE}
 tbl_prior_predictive <- sample_predictive(
     mdl,
-    n_per_group = rep(40L, 3),
+    n_per_group = rep(40L, 2),
     sample = smpl_prior,
     nsim = 1L,
     seed = 34930L
@@ -170,87 +153,131 @@ is_success(tbl_prior_predictive)
 ```
 
 Next, we can create a table of multiple prior-predictive samples.
+Grouping them by iteration and nesting the data frames results in a data frame
+of data frames, where `tbl_prior_predictive$data[[i]]` corresponds to the data
+in the i-th resample.
 
 ```{r sample-prior-predictive, warning=FALSE}
 tbl_prior_predictive <- sample_predictive(
     mdl,
-    n_per_group = rep(40L, 3),
+    n_per_group = rep(40L, 2),
     sample = smpl_prior,
-    nsim = 50L, # same, here, only for demonstration purposes
+    nsim = 100L, # same, here, only for demonstration purposes
     seed = 34930L
   ) %>%
   group_by(iter) %>%
   tidyr::nest() %>%
   ungroup()
-
-tbl_prior_predictive
+print(tbl_prior_predictive)
 ```
 
 Applying the decision criterion to each of them and averaging over all iterations
 is an MCMC approximation of the expected Probability of Success.
 
 ```{r, warning=FALSE}
-# compute results in parallel (also consider the furrr package)
+# compute results in parallel
 res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dopar% {
   is_success(tbl_prior_predictive$data[[i]])
 }
-
-pos <- c(
-  A = mean(purrr::map_lgl(res, ~.$success[1])),
-  B = mean(purrr::map_lgl(res, ~.$success[2])),
-  C = mean(purrr::map_lgl(res, ~.$success[3]))
-)
-
-pos
+# bind results together and aggregate to probability of success
+tbl_pos <- bind_rows(res, .id = "iter") %>% 
+  group_by(group_id) %>% 
+  summarize(
+    PoS = mean(success),
+    se  = sd(success) / sqrt(n())
+  )
+print(tbl_pos)
 ```
 
 
 
-## Computing Probability of Success During an Ongoing Trial
+## Probability of Success During the Trial
 
-Since we use a Bayesian generative model, the posterior distribution can
-be calculated at any time point given the data observed so far.
-This then allows to sample the future course of the trial from the posterior
+The Bayesian generative model allows calculating the posterior distribution 
+at any time point given the data observed so far.
+The future course of the trial can then be sampled from the posterior
 predictive distribution.
 
+To illustrate the shift in success probability over time, a single
+realization from a point in the parameter space is sampled. 
+The probability of success can then be calculated at different time points to
+show how the prior shifts.
+
 ```{r, warning=FALSE}
-recruitment_rates <- c(1, 1, 1)
-tbl_example <- generate_visit_data(mdl, c(40, 40, 40), recruitment_rates) %>% 
-  filter(t <= 18) %>% # keep only visits before 18 months
-  visits_to_mstate( # convert back to multi state data frame
-    start_state = "stable",
-    absorbing_states = "progression",
-    now = 18
+mdl_point <- create_srp_model(
+  group_id = c("A", "B"),
+  logodds_mean = logodds(c(0.4, 0.4)), # chose conflicting ORR parameters
+  logodds_sd = rep(0.01, 2L), # almost constant prior = fixed parameter
+  median_time_to_next_event = matrix(c(
+     4, 8, 24,
+     4, 8, 24
+  ), byrow = TRUE, nrow = 2, ncol = 3),
+  median_time_to_next_event_sd = matrix(0.1, byrow = TRUE, nrow = 2, ncol = 3),
+  visit_spacing = c(1.2, 1.2)
+)
+# sample single realization
+tbl_data <- generate_visit_data(
+    mdl_point,
+    n_per_group = c(40L, 40L),
+    recruitment_rate = c(40/24, 40/24) # recruit in 24 months
+  )
+print(tbl_data)
+```
+
+Next, the snapshot at a sequence of time points of this trial data can be
+created.
+Interim analyses every 3 months starting at 9 months after first-patient-in
+up to 24 months are considered.
+
+```{r}
+tbl_data_interims <- tibble(
+    t_interim = c(1, 3, 6, 9, 12, 18, 24)
+  ) %>% 
+  mutate(
+    data = purrr::map(t_interim, function(t_interim) {
+        filter(tbl_data, t <= t_interim) %>% # keep only visits before interim
+        visits_to_mstate(start_state = "stable", # convert to mstate format
+                         absorbing_states = "progression", now = t_interim)
+      })
   )
 ```
 
-Calculate number of individuals at interim analysis.
-Next we sample recruitment dates for the remaining individuals.
-Since the decision rule is not adaptive 
-(we always finish the planned 30 individuals per group),
-the future recruitment times are irrelevant and can be set to 0
-Next, we can impute the "missing" data by sampling form the posterior-predictive 
-distribution.
+For each such interim data set, the remainder of the trial can be imputed by 
+sampling form the posterior-predictive distribution.
+Probability of success is then the average success rate in the posterior
+predictive sample.
+The change of PoS over time is shown below with errorbars corresponding to the
+standard error of the simulation.
 
 ```{r, warning=FALSE}
-tbl_mi <- impute_trial(
-    mdl, tbl_example, c(40L, 40L, 40L), c(1, 1, 1), nsim = 100L
+# wrap the steps to calculate PoS into a function
+pos <- function(tbl, nsim = 50L) {
+  tbl_posterior_predictive <- impute_trial(
+      mdl, tbl, rep(40L, 2), rep(1, 2L), nsim = nsim) %>%
+    group_by(iter) %>%
+    tidyr::nest()
+  res <- foreach(i = seq_len(nsim)) %dopar% {
+    is_success(tbl_posterior_predictive$data[[i]])
+  }
+  tbl_pos <- bind_rows(res, .id = "iter") %>%
+    group_by(group_id) %>%
+    summarize(
+      PoS = mean(success),
+      se  = sd(success)/sqrt(n())
+    )
+  return(tbl_pos)
+}
+# apply it to every time point
+tbl_pos_over_time <- tbl_data_interims %>%
+  mutate(
+    pos = purrr::map(data, pos, nsim = 50L)
   ) %>%
-  group_by(iter) %>%
-  tidyr::nest() %>%
-  ungroup()
-```
-
-```{r, warning=FALSE}
-tmp <- furrr::future_map(
-    tbl_mi$data,
-    function(x) is_success(x),
-    .options = furrr::furrr_options(seed = TRUE)
-  )
-
-mean(purrr::map_lgl(tmp, ~.$success[1]))
-mean(purrr::map_lgl(tmp, ~.$success[2]))
-mean(purrr::map_lgl(tmp, ~.$success[3]))
+  tidyr::unnest(pos)
+# plot
+ggplot(tbl_pos_over_time) +
+  aes(t_interim) +
+  geom_errorbar(aes(ymin = PoS - se, ymax = PoS + se, color = group_id), width = 1) +
+  geom_line(aes(y = PoS, color = group_id), alpha = 0.33)
 ```
 
 
