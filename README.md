@@ -34,13 +34,4 @@ The package documentation is hosted [here](https://boehringer-ingelheim.github.i
 
 ## Contributing
 
-### Updating stan models
-
-The stan models contained in `inst/stan` are not automatically updated to avoid
-taking a dependency on the `rstantools` package.  
-After modifying or adding new models, run 
-```{r}
-rstantools::rstan_config()
-```
-
-and silence `R/stanmodels.R` via `capture.output()`.
+See the [contributing guidelines](https://boehringer-ingelheim.github.io/oncomsm/CONTRIBUTING.html).

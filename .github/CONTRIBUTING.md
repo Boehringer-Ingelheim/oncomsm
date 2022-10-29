@@ -73,12 +73,23 @@ This repository uses the [Github flow](https://docs.github.com/en/get-started/qu
 This repository follows the standard [`tidyverse` style guide](https://style.tidyverse.org/) and uses [`lintr`](https://github.com/r-lib/lintr) for lint checks. Customized lint configurations are available in this repository's `.lintr` file.
 
 
+## Updating stan models
+
+The stan models contained in `inst/stan` are not automatically updated to avoid
+taking a dependency on the `rstantools` package.  
+After modifying or adding new models, run 
+```{r}
+rstantools::rstan_config()
+```
+
+and silence `R/stanmodels.R` via `capture.output()`.
+
+
 ## Recognition model
 
 There is currently no formal recognition model in place.
 If you expect recognition of a certain kind for a contribution, 
-make sure to clarify with the package maintainer before starting to work on the
-issue.
+make sure to clarify with the package maintainer in advance.
 
 
 ## Questions
