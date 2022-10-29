@@ -103,8 +103,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-2f3850045c9b161bb98a" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-2f3850045c9b161bb98a">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-3db4a8feaa686a034b5c" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3db4a8feaa686a034b5c">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -284,8 +284,8 @@ observed response rates.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
 <span><span class="co">#&gt;   group_id     p_response</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control           0.258</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention      0.498</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control           0.250</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention      0.479</span></span></code></pre></div>
 <p>A crude approximation of the median transition times can be obtained
 from the midpoints of the censoring intervals.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -320,20 +320,20 @@ interval boundaries.</p>
 <span>  <span class="fu"><a href="../reference/mstate_to_visits.html">mstate_to_visits</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">.</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tbl_visits</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 505 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 573 × 4</span></span></span>
 <span><span class="co">#&gt;    subject_id group_id     t state      </span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 1          control    0   stable     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 1          control    1.2 stable     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 1          control    2.4 progression</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 10         control    0   stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 10         control    1.2 stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 10         control    2.4 stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 10         control    3.6 stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 10         control    4.8 stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 10         control    6   stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 10         control    7.2 stable     </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 495 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 10         control    1.2 progression</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 11         control    0   stable     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 11         control    2.4 stable     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 11         control    3.6 progression</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 12         control    0   stable     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 12         control    2.4 stable     </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 563 more rows</span></span></span></code></pre></div>
 <p>Next, we add recruitment times assuming an overall recruitment rate
 of 3 per month.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -392,8 +392,8 @@ different time-to-event these will be biased.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
 <span><span class="co">#&gt;   group_id     p_response</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control           0.214</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention      0.545</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control           0    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention      0.833</span></span></code></pre></div>
 <p>We can now do inference by drawing sample from the posterior
 distribution.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -414,10 +414,10 @@ distribution.</p>
 <span>    q75 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, probs <span class="op">=</span> <span class="fl">.75</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
-<span><span class="co">#&gt;   group_id     p_posterior_mean   q25   q75</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control                 0.229 0.170 0.283</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention            0.529 0.453 0.609</span></span></code></pre></div>
+<span><span class="co">#&gt;   group_id     p_posterior_mean    q25   q75</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> control                 0.118 0.086<span style="text-decoration: underline;">5</span> 0.161</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> intervention            0.654 0.566  0.731</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>

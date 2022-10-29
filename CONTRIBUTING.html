@@ -104,8 +104,15 @@
 <p>This repository follows the standard <a href="https://style.tidyverse.org/" class="external-link"><code>tidyverse</code> style guide</a> and uses <a href="https://github.com/r-lib/lintr" class="external-link"><code>lintr</code></a> for lint checks. Customized lint configurations are available in this repository’s <code>.lintr</code> file.</p>
 </div>
 <div class="section level2">
+<h2 id="updating-stan-models">Updating stan models<a class="anchor" aria-label="anchor" href="#updating-stan-models"></a></h2>
+<p>The stan models contained in <code>inst/stan</code> are not automatically updated to avoid taking a dependency on the <code>rstantools</code> package.<br>
+After modifying or adding new models, run</p>
+<pre class="{r}"><code><span><span class="fu">rstantools</span><span class="fu">::</span><span class="fu">rstan_config</span><span class="op">(</span><span class="op">)</span></span></code></pre>
+<p>and silence <code>R/stanmodels.R</code> via <code><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output()</a></code>.</p>
+</div>
+<div class="section level2">
 <h2 id="recognition-model">Recognition model<a class="anchor" aria-label="anchor" href="#recognition-model"></a></h2>
-<p>There is currently no formal recognition model in place. If you expect recognition of a certain kind for a contribution, make sure to clarify with the package maintainer before starting to work on the issue.</p>
+<p>There is currently no formal recognition model in place. If you expect recognition of a certain kind for a contribution, make sure to clarify with the package maintainer in advance.</p>
 </div>
 <div class="section level2">
 <h2 id="questions">Questions<a class="anchor" aria-label="anchor" href="#questions"></a></h2>
