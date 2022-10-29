@@ -3,7 +3,6 @@
 S3method(generate_visit_data,Model)
 S3method(impute_predictive,Model)
 S3method(impute_trial,Model)
-S3method(is_valid,srp_model)
 S3method(mstate_to_visits,Model)
 S3method(mstate_to_visits,srp_model)
 S3method(parameter_sample_to_tibble,Model)

@@ -66,7 +66,6 @@ create_srp_model <- function(
 #' @param mdl an object of type srp_model
 #'
 #' @return True statements or corresponding parameter specific errors
-#' @export
 #'
 #' @importFrom checkmate assert_vector
 is_valid.srp_model <- function(mdl) { # nolint
