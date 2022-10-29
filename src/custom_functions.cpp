@@ -14,8 +14,10 @@ double rtruncweibull(double shape, double scale, double a, double b) {
   if (p2 - p1 < 1e-4) {
     u = (p2 + p1)/2.0;
   } else {
-    u = Rcpp::runif(1, p1, p2)(0);
+    u = R::runif(p1, p2);
   }
+  u = std::min(1.0 - 1e-4, std::max(1e-4, u));
   res = scale * pow(-log(1 - u), 1/shape);
+  res = std::min(b, std::max(a, res));
   return res;
 }

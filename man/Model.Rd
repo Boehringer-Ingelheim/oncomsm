@@ -6,6 +6,7 @@
 \alias{sample_posterior.Model}
 \alias{sample_predictive.Model}
 \alias{impute_predictive.Model}
+\alias{impute_trial.Model}
 \alias{parameter_sample_to_tibble.Model}
 \alias{plot_mstate.Model}
 \alias{generate_visit_data.Model}
@@ -56,11 +57,25 @@
   ...
 )
 
+\method{impute_trial}{Model}(
+  model,
+  data,
+  n_per_group,
+  recruitment_rates,
+  now = NULL,
+  sample = NULL,
+  nsim = 250L,
+  nsim_parameters = 500L,
+  warmup_parameters = 250L,
+  seed = NULL,
+  ...
+)
+
 \method{parameter_sample_to_tibble}{Model}(model, sample, ...)
 
 \method{plot_mstate}{Model}(model, data, now, relative_to_sot, ...)
 
-\method{generate_visit_data}{Model}(model, n_per_group, seed = NULL, ...)
+\method{generate_visit_data}{Model}(model, n_per_group, recruitment_rate, seed = NULL, ...)
 
 \method{sample_pfs_rate}{Model}(
   model,
@@ -92,7 +107,7 @@ tune the hyperparameters of the MCMC algorithm.}
 
 \item{data}{the (multi-state) data frame to impute further trajectories for.}
 
-\item{n_per_group}{integer vector with number of individuals per group.}
+\item{n_per_group}{the number of individuals per group to be recruited.}
 
 \item{sample}{a stanfit object containing samples. These parameter samples
 represent the parameter distribution over which the predictive distribution
@@ -103,10 +118,15 @@ this sample to match the desired number of imputations.}
 
 \item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
 
-\item{now}{the current time relative to the start of the trial (sot)}
+\item{recruitment_rates}{the per-group recruitment rates.}
+
+\item{now}{exact time point relative to start of the trial}
 
 \item{relative_to_sot}{Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual}
+
+\item{recruitment_rate}{numeric vector with the monthly recruitment rates
+per group}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
 
