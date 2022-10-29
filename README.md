@@ -28,6 +28,7 @@ remotes::install_github("https://github.com/Boehringer-Ingelheim/oncomsm")
 ## Documentation
 
 The package documentation is hosted [here](https://boehringer-ingelheim.github.io/oncomsm/).
+To get started, see the vignette on [multi-state models in early oncology](https://boehringer-ingelheim.github.io/oncomsm/articles/multi-state-model-for-early-oncology.html).
 
 
 ## Contributing
