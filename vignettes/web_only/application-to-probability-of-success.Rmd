@@ -206,7 +206,7 @@ show how the prior shifts.
 ```{r, warning=FALSE}
 mdl_point <- create_srp_model(
   group_id = c("A", "B"),
-  logodds_mean = logodds(c(0.4, 0.4)), # chose conflicting ORR parameters
+  logodds_mean = logodds(c(0.4, 0.3)), # chose conflicting ORR parameters
   logodds_sd = rep(0.01, 2L), # almost constant prior = fixed parameter
   median_time_to_next_event = matrix(c(
      4, 8, 24,
@@ -231,7 +231,7 @@ up to 24 months are considered.
 
 ```{r}
 tbl_data_interims <- tibble(
-    t_interim = c(1, 3, 6, 9, 12, 18, 24)
+    t_interim = c(1, 3, 6, 9, 12, 18, 24, 36)
   ) %>%
   mutate(
     data = purrr::map(t_interim, function(t_interim) {
@@ -278,7 +278,8 @@ ggplot(tbl_pos_over_time) +
   aes(t_interim) +
   geom_errorbar(aes(ymin = PoS - se, ymax = PoS + se, color = group_id),
                 width = 1) +
-  geom_line(aes(y = PoS, color = group_id), alpha = 0.33)
+  geom_line(aes(y = PoS, color = group_id), alpha = 0.33) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), limits = c(0, 1))
 ```
 
 
