@@ -24,8 +24,9 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/application-to-probability-of-success.html">Application to Probability of Success Calculation</a>
+    <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
     <a class="dropdown-item" href="../articles/multi-state-model-for-early-oncology.html">Multi-State Models for Oncology</a>
+    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -55,7 +56,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">generate_visit_data</span><span class="op">(</span><span class="va">model</span>, <span class="va">n_per_group</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">generate_visit_data</span><span class="op">(</span><span class="va">model</span>, <span class="va">n_per_group</span>, <span class="va">recruitment_rate</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,6 +67,11 @@
 
 <dt>n_per_group</dt>
 <dd><p>integer vector with number of individuals per group.</p></dd>
+
+
+<dt>recruitment_rate</dt>
+<dd><p>numeric vector with the monthly recruitment rates
+per group</p></dd>
 
 
 <dt>...</dt>

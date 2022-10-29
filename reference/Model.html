@@ -30,8 +30,9 @@ Only objects of the respective sub-classes can."><!-- mathjax --><script src="ht
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/application-to-probability-of-success.html">Application to Probability of Success Calculation</a>
+    <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
     <a class="dropdown-item" href="../articles/multi-state-model-for-early-oncology.html">Multi-State Models for Oncology</a>
+    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -112,13 +113,28 @@ Only objects of the respective sub-classes can.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
+<span><span class="fu"><a href="impute_trial.html">impute_trial</a></span><span class="op">(</span></span>
+<span>  <span class="va">model</span>,</span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">n_per_group</span>,</span>
+<span>  <span class="va">recruitment_rates</span>,</span>
+<span>  now <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">250L</span>,</span>
+<span>  nsim_parameters <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  warmup_parameters <span class="op">=</span> <span class="fl">250L</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="parameter_sample_to_tibble.html">parameter_sample_to_tibble</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">sample</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span>, <span class="va">now</span>, <span class="va">relative_to_sot</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu"><a href="generate_visit_data.html">generate_visit_data</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">n_per_group</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu"><a href="generate_visit_data.html">generate_visit_data</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">n_per_group</span>, <span class="va">recruitment_rate</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="sample_pfs_rate.html">sample_pfs_rate</a></span><span class="op">(</span></span>
@@ -171,7 +187,7 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>n_per_group</dt>
-<dd><p>integer vector with number of individuals per group.</p></dd>
+<dd><p>the number of individuals per group to be recruited.</p></dd>
 
 
 <dt>sample</dt>
@@ -189,13 +205,22 @@ this sample to match the desired number of imputations.</p></dd>
 <dd><p>integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.</p></dd>
 
 
+<dt>recruitment_rates</dt>
+<dd><p>the per-group recruitment rates.</p></dd>
+
+
 <dt>now</dt>
-<dd><p>the current time relative to the start of the trial (sot)</p></dd>
+<dd><p>exact time point relative to start of the trial</p></dd>
 
 
 <dt>relative_to_sot</dt>
 <dd><p>Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual</p></dd>
+
+
+<dt>recruitment_rate</dt>
+<dd><p>numeric vector with the monthly recruitment rates
+per group</p></dd>
 
 
 <dt>t</dt>

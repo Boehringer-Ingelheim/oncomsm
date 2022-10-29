@@ -10,13 +10,16 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/application-to-probability-of-success.html</loc>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/index.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/multi-state-model-for-early-oncology.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/authors.html</loc>
@@ -32,6 +35,9 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/impute_predictive.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/impute_trial.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/index.html</loc>
