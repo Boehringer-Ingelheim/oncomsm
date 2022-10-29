@@ -55,7 +55,8 @@ test_that("Testing marginal calibration of sampling from the prior", {
   # work out the theoretical mean given scale = 1 and specified median = 3
   # (see mdl definition and https://en.wikipedia.org/wiki/Weibull_distribution)
   theoretical_means <- mdl$median_time_to_next_event_mean / log(2) * gamma(2)
-  #making sure that the time scales are same for test case and observed case
+  # Theoretical mean time to event for response -> progression computed from
+  # the initial stable state
   theoretical_means[3] <- theoretical_means[3] + theoretical_means[2]
   # check that stable to response timings are roughly calibrated, use midpoints
   # of intervals
