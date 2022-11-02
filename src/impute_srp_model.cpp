@@ -288,8 +288,9 @@ DataFrame fast_impute(
               group_id_out[row_idx] = group_id(i);
               from_out[row_idx] = "stable";
               to_out[row_idx] = "progression";
-              t_min_out[row_idx] = t_min(i);
-              t_max_out[row_idx] = t_max(i);
+              t_min_out[row_idx] = tmin;
+              Rcout<<"from is: "<<from_out[row_idx]<<"\n";
+              t_max_out[row_idx] = tmax;
               t_sot_out[row_idx] = t_sot(i);
               iter_out[row_idx] = iter + 1;
               row_idx++;
@@ -299,8 +300,10 @@ DataFrame fast_impute(
               group_id_out[row_idx] = group_id(i);
               from_out[row_idx] = "stable";
               to_out[row_idx] = "response";
-              t_min_out[row_idx] = t_min(i);
-              t_max_out[row_idx] = t_max(i);
+              t_min_out[row_idx] = tmin;
+              Rcout<<"t_min is: "<<tmin<<"\n";
+              Rcout<<"from is: "<<from_out[row_idx]<<"\n";
+              t_max_out[row_idx] = tmax;
               t_sot_out[row_idx] = t_sot(i);
               iter_out[row_idx] = iter + 1;
               row_idx++;
@@ -309,8 +312,10 @@ DataFrame fast_impute(
               group_id_out[row_idx] = group_id(i);
               from_out[row_idx] = "response";
               to_out[row_idx] = "progression";
-              t_min_out[row_idx] = t_min(i);
-              t_max_out[row_idx] = t_max(i);
+              t_min_out[row_idx] = tmin_prog;
+              Rcout<<"t_min is: "<<tmin_prog<<"\n";
+              Rcout<<"from is: "<<from_out[row_idx]<<"\n";
+              t_max_out[row_idx] = tmax_prog;
               t_sot_out[row_idx] = t_sot(i);
               iter_out[row_idx] = iter + 1;
               row_idx++;
@@ -330,8 +335,9 @@ DataFrame fast_impute(
             group_id_out[row_idx] = group_id(i);
             from_out[row_idx] = "stable";
             to_out[row_idx] = "progression";
-            t_min_out[row_idx] = t_min(i);
-            t_max_out[row_idx] = t_max(i);
+            t_min_out[row_idx] = tmin;
+            Rcout<<"t_min is: "<<tmin<<"\n";
+            t_max_out[row_idx] = tmax;
             t_sot_out[row_idx] = t_sot(i);
             iter_out[row_idx] = iter + 1;
             row_idx++;
@@ -357,8 +363,9 @@ DataFrame fast_impute(
           group_id_out[row_idx] = group_id(i);
           from_out[row_idx] = "response";
           to_out[row_idx] = "progression";
-          t_min_out[row_idx] = t_min(i);
-          t_max_out[row_idx] = t_max(i);
+          t_min_out[row_idx] = tmin_prog;
+          Rcout<<"from is: "<<tmin_prog<<"\n";
+          t_max_out[row_idx] = tmax_prog;
           t_sot_out[row_idx] = t_sot(i);
           iter_out[row_idx] = iter + 1;
           row_idx++;
@@ -366,30 +373,37 @@ DataFrame fast_impute(
       }
     }
   }
-  IntegerVector subject_id_ret(row_idx);
-  IntegerVector group_id_ret(row_idx);
-  IntegerVector from_ret(row_idx);
-  IntegerVector to_ret(row_idx);
-  IntegerVector t_min_ret(row_idx);
-  IntegerVector t_max_ret(row_idx);
-  IntegerVector t_sot_ret(row_idx);
-  IntegerVector iter_ret(row_idx);
+  // IntegerVector subject_id_ret(row_idx);
+  // IntegerVector group_id_ret(row_idx);
+  // IntegerVector from_ret(row_idx);
+  // IntegerVector to_ret(row_idx);
+  // IntegerVector t_min_ret(row_idx);
+  // IntegerVector t_max_ret(row_idx);
+  // IntegerVector t_sot_ret(row_idx);
+  // IntegerVector iter_ret(row_idx);
 
-  for (int k = 0; k <= row_idx; k++){
-    subject_id_ret[k] = subject_id_out[k];
-  }
-  Rcout<<"Final look "<<subject_id_ret<<"\n";
-  Rcout<<"precut look "<<subject_id_out<<"\n";
+  // for (int k = 0; k <= row_idx; k++){
+  //   subject_id_ret[k] = subject_id_out[k];
+  //   group_id_ret[k] = group_id_out[k];
+  //   from_ret(k) = from_out(k);
+  //   to_ret[k] = to_out[k];
+  //   t_min_ret[k] = t_min_out[k];
+  //   t_max_ret[k] = t_max_out[k];
+  //   t_sot_ret[k] = t_sot_out[k];
+  //   iter_ret[k] = iter_out[k];
+  // }
+  // Rcout<<"Final look "<<subject_id_ret<<"\n";
+  // Rcout<<"precut look "<<subject_id_out<<"\n";
   // combine to return DataFrame
   DataFrame res = DataFrame::create(
-    Named("subject_id") = subject_id_ret,
-    Named("group_id") = group_id_ret,
-    Named("from") = from_ret,
-    Named("to") = to_ret,
-    Named("t_min") = t_min_ret,
-    Named("t_max") = t_max_ret,
-    Named("t_sot") = t_sot_ret,
-    Named("iter") = iter_ret
+    Named("subject_id") = subject_id_out,
+    Named("group_id") = group_id_out,
+    Named("from") = from_out,
+    Named("to") = to_out,
+    Named("t_min") = t_min_out,
+    Named("t_max") = t_max_out,
+    Named("t_sot") = t_sot_out,
+    Named("iter") = iter_out
   );
   return res;
 }
