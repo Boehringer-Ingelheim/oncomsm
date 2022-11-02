@@ -138,7 +138,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   if (nsim == 1) {
     p <- matrix(p, nrow = 1)
   }
-  res <- impute_srp_model(
+  res <- fast_impute(
     data,
     p,
     as.vector(shape[idx, , ]),
