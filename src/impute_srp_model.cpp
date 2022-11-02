@@ -373,25 +373,27 @@ DataFrame fast_impute(
       }
     }
   }
-  // IntegerVector subject_id_ret(row_idx);
-  // IntegerVector group_id_ret(row_idx);
-  // IntegerVector from_ret(row_idx);
-  // IntegerVector to_ret(row_idx);
-  // IntegerVector t_min_ret(row_idx);
-  // IntegerVector t_max_ret(row_idx);
-  // IntegerVector t_sot_ret(row_idx);
-  // IntegerVector iter_ret(row_idx);
+  IntegerVector subject_id_ret(row_idx);
+  IntegerVector group_id_ret(row_idx);
+  CharacterVector from_ret(row_idx);
+  CharacterVector to_ret(row_idx);
+  NumericVector t_min_ret(row_idx);
+  NumericVector t_max_ret(row_idx);
+  NumericVector t_sot_ret(row_idx);
+  IntegerVector iter_ret(row_idx);
 
-  // for (int k = 0; k <= row_idx; k++){
-  //   subject_id_ret[k] = subject_id_out[k];
-  //   group_id_ret[k] = group_id_out[k];
-  //   from_ret(k) = from_out(k);
-  //   to_ret[k] = to_out[k];
-  //   t_min_ret[k] = t_min_out[k];
-  //   t_max_ret[k] = t_max_out[k];
-  //   t_sot_ret[k] = t_sot_out[k];
-  //   iter_ret[k] = iter_out[k];
-  // }
+  for (int k = 0; k < row_idx; k++){
+    subject_id_ret[k] = subject_id_out[k];
+    group_id_ret[k] = group_id_out[k];
+    from_ret(k) = from_out(k);
+    to_ret(k) = to_out(k);
+    t_min_ret(k) = t_min_out(k);
+    t_max_ret(k) = t_max_out(k);
+    t_sot_ret(k) = t_sot_out(k);
+    iter_ret(k) = iter_out(k);
+  }
+  Rcout<<"group_id: "<<group_id_ret<<"\n";
+  Rcout<<"from: "<<to_ret<<"\n";
   // Rcout<<"Final look "<<subject_id_ret<<"\n";
   // Rcout<<"precut look "<<subject_id_out<<"\n";
   // combine to return DataFrame
