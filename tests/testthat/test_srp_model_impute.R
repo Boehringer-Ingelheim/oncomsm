@@ -140,5 +140,4 @@ test_that("Testing speed", { # nolint
   tbl <- sample_predictive(mdl, sample = smpl_prior, n_per_group = 1L,
                            nsim = 3, seed = 42)
 
-
 })
