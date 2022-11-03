@@ -123,21 +123,3 @@ test_that("Testing if a single indivudual can be sampled only once in a group", 
   # there should only be a single individual, single iteration
   expect_true(nrow(tbl) == 1)
 })
-
-test_that("Testing speed", { # nolint
-  mdl <- create_srp_model(
-    group_id = 1,
-    # very low chance of response -> direct progression
-    logodds_mean = logodds(0.5),
-    logodds_sd = 0.2,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 6, 9
-    ), byrow = TRUE,  nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
-  )
-  smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 500, seed = 36L)
-  tbl <- sample_predictive(mdl, sample = smpl_prior, n_per_group = 1L,
-                           nsim = 3, seed = 42)
-
-})
