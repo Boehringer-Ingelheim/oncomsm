@@ -192,35 +192,26 @@ DataFrame impute_srp_model(
       }
     }
   }
-  IntegerVector subject_id_ret(row_idx);
-  IntegerVector group_id_ret(row_idx);
-  CharacterVector from_ret(row_idx);
-  CharacterVector to_ret(row_idx);
-  NumericVector t_min_ret(row_idx);
-  NumericVector t_max_ret(row_idx);
-  NumericVector t_sot_ret(row_idx);
-  IntegerVector iter_ret(row_idx);
 
-  for (int k = 0; k < row_idx; k++){
-    subject_id_ret[k] = subject_id_out[k];
-    group_id_ret[k] = group_id_out[k];
-    from_ret(k) = from_out(k);
-    to_ret(k) = to_out(k);
-    t_min_ret(k) = t_min_out(k);
-    t_max_ret(k) = t_max_out(k);
-    t_sot_ret(k) = t_sot_out(k);
-    iter_ret(k) = iter_out(k);
-  }
+  subject_id_out = subject_id_out[Rcpp::Range(0,(row_idx-1))];
+  group_id_out = group_id_out[Rcpp::Range(0,(row_idx-1))];
+  t_min_out = t_min_out[Rcpp::Range(0,(row_idx-1))];
+  t_max_out = t_max_out[Rcpp::Range(0,(row_idx-1))];
+  t_sot_out = t_sot_out[Rcpp::Range(0,(row_idx-1))];
+  iter_out = iter_out[Rcpp::Range(0,(row_idx-1))];
+
+  to_out = to_out[Rcpp::Range(0,(row_idx-1))];
+  from_out = from_out[Rcpp::Range(0,(row_idx-1))];
   // combine to return DataFrame
   DataFrame res = DataFrame::create(
-    Named("subject_id") = subject_id_ret,
-    Named("group_id") = group_id_ret,
-    Named("from") = from_ret,
-    Named("to") = to_ret,
-    Named("t_min") = t_min_ret,
-    Named("t_max") = t_max_ret,
-    Named("t_sot") = t_sot_ret,
-    Named("iter") = iter_ret
+    Named("subject_id") = subject_id_out,
+    Named("group_id") = group_id_out,
+    Named("from") = from_out,
+    Named("to") = to_out,
+    Named("t_min") = t_min_out,
+    Named("t_max") = t_max_out,
+    Named("t_sot") = t_sot_out,
+    Named("iter") = iter_out
   );
   return res;
 }
