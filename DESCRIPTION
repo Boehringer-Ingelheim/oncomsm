@@ -9,6 +9,10 @@ Authors@R: c(
       comment = c(ORCID = "0000-0002-1140-7143")
     )
   )
+  person("Karhtik", "Ananthakrishnan",
+  role = c("ctb", "cre"),
+  email = "karthik.ananthakrishnan@boehringer-ingelheim.com"
+  )
 Description: This package implements methods to dynamically predict response 
     and progression of individuals in early oncology trials using parametric
     multi-state models and Bayesian inference.
