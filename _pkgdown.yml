@@ -5,6 +5,7 @@ template:
 development:
   mode: release
 
-structure:
-  left:  [intro, articles, reference, news]
-  right: [search, github]
+navbar:
+  structure:
+    left:  [intro, articles, reference, news]
+    right: [search, github]

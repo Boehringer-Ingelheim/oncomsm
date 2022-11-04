@@ -4,13 +4,14 @@ author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 ---
 
-```{r knitr-setup, include = FALSE}
+```{r knitr-setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
   fig.height = 7 / 1.61,
-  fig.align = "center"
+  fig.align = "center",
+  cache = TRUE
 )
 ```
 
