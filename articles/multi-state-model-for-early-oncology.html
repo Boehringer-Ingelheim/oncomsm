@@ -103,8 +103,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-2c736fcaa8dcd6ce322f" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-2c736fcaa8dcd6ce322f">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-35f13b07da646f4bbc43" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-35f13b07da646f4bbc43">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -424,7 +424,7 @@ distribution.</p>
 </h2>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.2.1 (2022-06-23)</span></span>
+<span><span class="co">#&gt; R version 4.2.2 (2022-10-31)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu (64-bit)</span></span>
 <span><span class="co">#&gt; Running under: Ubuntu 20.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -448,26 +448,26 @@ distribution.</p>
 <span><span class="co">#&gt;  [1] Rcpp_1.0.9           tidyr_1.2.1          visNetwork_2.1.2    </span></span>
 <span><span class="co">#&gt;  [4] prettyunits_1.1.1    ps_1.7.2             rprojroot_2.0.3     </span></span>
 <span><span class="co">#&gt;  [7] digest_0.6.30        utf8_1.2.2           R6_2.5.1            </span></span>
-<span><span class="co">#&gt; [10] backports_1.4.1      stats4_4.2.1         evaluate_0.17       </span></span>
+<span><span class="co">#&gt; [10] backports_1.4.1      stats4_4.2.2         evaluate_0.17       </span></span>
 <span><span class="co">#&gt; [13] highr_0.9            pillar_1.8.1         rlang_1.0.6         </span></span>
-<span><span class="co">#&gt; [16] callr_3.7.2          jquerylib_0.1.4      checkmate_2.1.0     </span></span>
+<span><span class="co">#&gt; [16] callr_3.7.3          jquerylib_0.1.4      checkmate_2.1.0     </span></span>
 <span><span class="co">#&gt; [19] rmarkdown_2.17       DiagrammeR_1.0.9     pkgdown_2.0.6       </span></span>
 <span><span class="co">#&gt; [22] labeling_0.4.2       textshaping_0.3.6    desc_1.4.2          </span></span>
 <span><span class="co">#&gt; [25] stringr_1.4.1        htmlwidgets_1.5.4    loo_2.5.1           </span></span>
-<span><span class="co">#&gt; [28] munsell_0.5.0        compiler_4.2.1       xfun_0.34           </span></span>
+<span><span class="co">#&gt; [28] munsell_0.5.0        compiler_4.2.2       xfun_0.34           </span></span>
 <span><span class="co">#&gt; [31] rstan_2.21.7         pkgconfig_2.0.3      systemfonts_1.0.4   </span></span>
 <span><span class="co">#&gt; [34] pkgbuild_1.3.1       htmltools_0.5.3      tidyselect_1.2.0    </span></span>
 <span><span class="co">#&gt; [37] tibble_3.1.8         gridExtra_2.3        codetools_0.2-18    </span></span>
 <span><span class="co">#&gt; [40] matrixStats_0.62.0   fansi_1.0.3          crayon_1.5.2        </span></span>
-<span><span class="co">#&gt; [43] withr_2.5.0          grid_4.2.1           jsonlite_1.8.3      </span></span>
+<span><span class="co">#&gt; [43] withr_2.5.0          grid_4.2.2           jsonlite_1.8.3      </span></span>
 <span><span class="co">#&gt; [46] gtable_0.3.1         lifecycle_1.0.3      magrittr_2.0.3      </span></span>
 <span><span class="co">#&gt; [49] StanHeaders_2.21.0-7 scales_1.2.1         RcppParallel_5.1.5  </span></span>
 <span><span class="co">#&gt; [52] cli_3.4.1            stringi_1.7.8        cachem_1.0.6        </span></span>
-<span><span class="co">#&gt; [55] farver_2.1.1         fs_1.5.2             bslib_0.4.0         </span></span>
+<span><span class="co">#&gt; [55] farver_2.1.1         fs_1.5.2             bslib_0.4.1         </span></span>
 <span><span class="co">#&gt; [58] ellipsis_0.3.2       ragg_1.2.4           generics_0.1.3      </span></span>
-<span><span class="co">#&gt; [61] vctrs_0.5.0          RColorBrewer_1.1-3   tools_4.2.1         </span></span>
+<span><span class="co">#&gt; [61] vctrs_0.5.0          RColorBrewer_1.1-3   tools_4.2.2         </span></span>
 <span><span class="co">#&gt; [64] glue_1.6.2           purrr_0.3.5          processx_3.8.0      </span></span>
-<span><span class="co">#&gt; [67] parallel_4.2.1       fastmap_1.1.0        yaml_2.3.6          </span></span>
+<span><span class="co">#&gt; [67] parallel_4.2.2       fastmap_1.1.0        yaml_2.3.6          </span></span>
 <span><span class="co">#&gt; [70] inline_0.3.19        colorspace_2.0-3     memoise_2.0.1       </span></span>
 <span><span class="co">#&gt; [73] knitr_1.40           patchwork_1.1.2      sass_0.4.2</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
@@ -505,7 +505,7 @@ Research</em>, July, 09622802221106720. <a href="https://doi.org/10.1177/0962280
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by Kevin Kunzmann.</p>
+<p>Developed by Kevin Kunzmann, Boehringer Ingelheim Ltd..</p>
 </div>
 
 <div class="pkgdown-footer-right">
