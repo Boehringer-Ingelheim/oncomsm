@@ -7,6 +7,14 @@ Authors@R: c(
       role = c("aut", "cre"), 
       email = "kevin.kunzmann@boehringer-ingelheim.com",
       comment = c(ORCID = "0000-0002-1140-7143")
+    ),
+    person("Karhtik", "Ananthakrishnan",
+      role = c("ctb"),
+      email = "karthik.ananthakrishnan@boehringer-ingelheim.com"
+    ),
+    person(
+      "Boehringer Ingelheim Ltd.", 
+      role = c("cph", "fnd")
     )
   )
 Description: This package implements methods to dynamically predict response 
