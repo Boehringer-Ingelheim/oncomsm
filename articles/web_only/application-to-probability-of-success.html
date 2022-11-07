@@ -36,15 +36,17 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item">
-  <a class="nav-link" href="../../reference/index.html">Reference</a>
+  <a class="nav-link" href="../../articles/oncomsm.html">Get started</a>
 </li>
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
-    <a class="dropdown-item" href="../../articles/multi-state-model-for-early-oncology.html">Multi-State Models for Oncology</a>
     <a class="dropdown-item" href="../../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
   </div>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../../reference/index.html">Reference</a>
 </li>
       </ul>
 <form class="form-inline my-2 my-lg-0" role="search">
@@ -89,7 +91,8 @@ Kunzmann</h4>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://doFuture.futureverse.org" class="external-link">doFuture</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Loading required package: foreach</span></span>
 <span><span class="fu"><a href="https://doFuture.futureverse.org/reference/registerDoFuture.html" class="external-link">registerDoFuture</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="va">multisession</span><span class="op">)</span> <span class="co"># instruct future how to run in parallel</span></span></code></pre></div>
+<span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="va">multisession</span><span class="op">)</span> <span class="co"># instruct future how to run in parallel</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span></code></pre></div>
 <p><strong>tl;dr:</strong> <em>A multi-state model allows sampling
 individual-level data. This can be used to sample future trial data from
 the prior-predictive distribution at the planning stage. This generated
@@ -378,8 +381,8 @@ errorbars corresponding to the standard error of the simulation.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] doFuture_0.12.2    foreach_1.5.2      future_1.28.0      dplyr_1.0.10      </span></span>
-<span><span class="co">#&gt; [5] ggplot2_3.3.6      oncomsm_0.1.0.9000</span></span>
+<span><span class="co">#&gt; [1] doFuture_0.12.2    foreach_1.5.2      future_1.29.0      dplyr_1.0.10      </span></span>
+<span><span class="co">#&gt; [5] ggplot2_3.4.0      oncomsm_0.1.0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] Rcpp_1.0.9           tidyr_1.2.1          listenv_0.8.0       </span></span>

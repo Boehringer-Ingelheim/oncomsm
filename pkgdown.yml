@@ -3,9 +3,9 @@ pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
   bhmbasket-integration: bhmbasket-integration.html
-  multi-state-model-for-early-oncology: multi-state-model-for-early-oncology.html
+  oncomsm: oncomsm.html
   application-to-probability-of-success: web_only/application-to-probability-of-success.html
-last_built: 2022-11-04T12:11Z
+last_built: 2022-11-07T20:32Z
 urls:
   reference: https://boehringer-ingelheim.github.io/oncomsm/reference
   article: https://boehringer-ingelheim.github.io/oncomsm/articles
