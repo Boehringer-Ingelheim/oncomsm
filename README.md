@@ -12,9 +12,10 @@
 
 **Tl;dr:** This package implements methods to dynamically predict response 
 and progression of individuals in early oncology trials using parametric
-[multi-state models](https://boehringer-ingelheim.github.io/oncomsm/articles/multi-state-model-for-early-oncology.html) and Bayesian inference. 
+[multi-state models](https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html) and Bayesian inference. 
 This allows the [dynamic computation of "probability of success"](https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html) for a wide 
 range of success criteria. 
+For instance, the [bhmbasket](https://cran.r-project.org/web/packages/bhmbasket/index.html) R package can be used to define study success based on Bayesian hierarchical models.
 
 
 ## Installation
@@ -28,7 +29,6 @@ remotes::install_github("https://github.com/Boehringer-Ingelheim/oncomsm")
 ## Documentation
 
 The package documentation is hosted [here](https://boehringer-ingelheim.github.io/oncomsm/).
-To get started, see the vignette on [multi-state models in early oncology](https://boehringer-ingelheim.github.io/oncomsm/articles/multi-state-model-for-early-oncology.html).
 
 
 ## Contributing
