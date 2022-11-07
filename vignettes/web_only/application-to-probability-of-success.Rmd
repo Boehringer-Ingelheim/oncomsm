@@ -23,6 +23,7 @@ library(future) # parallel processing
 library(doFuture)
 registerDoFuture()
 plan(multisession) # instruct future how to run in parallel
+set.seed(42L)
 ```
 
 
