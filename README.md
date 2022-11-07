@@ -15,7 +15,7 @@ and progression of individuals in early oncology trials using parametric
 [multi-state models](https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html) and Bayesian inference. 
 This allows the [dynamic computation of "probability of success"](https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html) for a wide 
 range of success criteria. 
-For instance, the [bhmbasket](https://cran.r-project.org/web/packages/bhmbasket/index.html) R package can be used to define study success based on Bayesian hierarchical models.
+For instance, the [bhmbasket](https://cran.r-project.org/web/packages/bhmbasket/index.html) R package [can be used to define study success based on Bayesian hierarchical models](https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html).
 
 
 ## Installation
