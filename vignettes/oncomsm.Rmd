@@ -4,7 +4,7 @@ author: "Kevin Kunzmann"
 bibliography: references.bib
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{multi-state-model-for-early-oncology}
+  %\VignetteIndexEntry{oncomsm}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,7 +15,8 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 7,
   fig.height = 7 / 1.61,
-  fig.align = "center"
+  fig.align = "center",
+  cache = TRUE
 )
 ```
 
