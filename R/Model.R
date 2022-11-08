@@ -2,8 +2,8 @@
 #'
 #' This is abstract class defining a standard set of methods for any implemented
 #' multi-state model.
-#' Objects of class 'Model' cannot be instantiated directly.
-#' Only objects of the respective sub-classes can.
+#' Objects of class 'Model' cannot be instantiated directly, only objects of
+#' the respective sub-classes can be.
 #'
 #' @seealso [srp_model]
 #'
@@ -11,8 +11,16 @@
 NULL
 
 
-# standard format/print methods
+#' @param x Model to format
+#' @template param-dotdotdot
+#' @rdname Model
+#' @export
 format.Model <- function(x, ...) class(x)[1]
+
+#' @param x Model to print
+#' @template param-dotdotdot
+#' @rdname Model
+#' @export
 print.Model <- function(x, ...) cat(format(x, ...), "\n")
 
 # Checks for internal consistency of object "Model"
@@ -473,10 +481,10 @@ generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
           .data$group_id,
           ~recruitment_rate[which(attr(model, "group_id") == .)]
         ),
-      t_sot = cumsum(rexp(n = n(), rate = rate))
+      t_sot = cumsum(stats::rexp(n = n(), rate = rate))
     ) %>%
     ungroup() %>%
-    select(-rate)
+    select(-.data$rate)
   # join and shift transition times accordingly
   res <- left_join(
       tbl_data,
@@ -484,8 +492,8 @@ generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
       by = c("subject_id", "group_id")
     ) %>%
     mutate(
-      t_min = t_min + t_sot,
-      t_max = t_max + t_sot
+      t_min = .data$t_min + .data$t_sot,
+      t_max = .data$t_max + .data$t_sot
     ) %>%
     mstate_to_visits(model, .)
   return(res)

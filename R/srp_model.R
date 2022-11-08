@@ -61,13 +61,15 @@ create_srp_model <- function(
 }
 
 
-#' To check the validity of input parameters to create_srp
-#'
-#' @param mdl an object of type srp_model
-#'
-#' @return True statements or corresponding parameter specific errors
-#'
-#' @importFrom checkmate assert_vector
+#' @param x SRP model to format
+#' @template param-dotdotdot
+#' @rdname srp_model
+#' @export
+format.srp_model <- function(x, ...) {
+  sprintf("srp_model<%s>", paste(attr(x, "group_id"), collapse = ","))
+}
+
+
 is_valid.srp_model <- function(mdl) { # nolint
   with(mdl, {
     checkmate::assert_vector(logodds_mean, len = length(attr(mdl, "group_id")),

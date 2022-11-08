@@ -2,6 +2,8 @@
 % Please edit documentation in R/Model.R, R/mstate_to_visit.R
 \name{Model}
 \alias{Model}
+\alias{format.Model}
+\alias{print.Model}
 \alias{sample_prior.Model}
 \alias{sample_posterior.Model}
 \alias{sample_predictive.Model}
@@ -14,6 +16,10 @@
 \alias{mstate_to_visits.Model}
 \title{An abstract multi-state model class}
 \usage{
+\method{format}{Model}(x, ...)
+
+\method{print}{Model}(x, ...)
+
 \method{sample_prior}{Model}(
   model,
   warmup = 500L,
@@ -90,6 +96,10 @@
 \method{mstate_to_visits}{Model}(model, tbl_mstate, ...)
 }
 \arguments{
+\item{x}{Model to print}
+
+\item{...}{further arguments passed to method implementations}
+
 \item{model}{a model of class "Model"}
 
 \item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
@@ -102,8 +112,6 @@ tune the hyperparameters of the MCMC algorithm.}
 \item{rstan_output}{logical, function returns raw rstan sample object if set to TRUE}
 
 \item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
-
-\item{...}{further arguments passed to method implementations}
 
 \item{data}{the (multi-state) data frame to impute further trajectories for.}
 
@@ -135,8 +143,8 @@ per group}
 \description{
 This is abstract class defining a standard set of methods for any implemented
 multi-state model.
-Objects of class 'Model' cannot be instantiated directly.
-Only objects of the respective sub-classes can.
+Objects of class 'Model' cannot be instantiated directly, only objects of
+the respective sub-classes can be.
 }
 \seealso{
 \link{srp_model}

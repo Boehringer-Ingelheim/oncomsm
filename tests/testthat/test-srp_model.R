@@ -1,7 +1,7 @@
 test_that("can create SRP model", {
 
   mdl <<- create_srp_model(
-    group_id = 1:2,
+    group_id = c("A", "B"),
     logodds_mean =  c(logodds(.5), logodds(.5)),
     logodds_sd = c(.1, .1),
     visit_spacing = c(1.2, 1.2),
@@ -11,7 +11,23 @@ test_that("can create SRP model", {
     ), byrow = TRUE,  nrow = 2, ncol = 3),
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
   )
+  # check class
   expect_true(isa(mdl, c("srp_model", "Model", "list")))
+  # check print method
+  expect_true(capture.output(print(mdl)) == "srp_model<A,B> ")
+
+  mdl <- create_srp_model(
+    group_id = "A",
+    logodds_mean =  0,
+    logodds_sd = 0.5,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE,  nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
+  )
+  # check print method
+  expect_true(capture.output(print(mdl)) == "srp_model<A> ")
 
 }) # "can create SRP model"
 
