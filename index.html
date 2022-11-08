@@ -5,10 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="This package implements methods to dynamically predict response 
-    and progression of individuals in early oncology trials using parametric
-    multi-state models and Bayesian inference.
-    This allows the dynamic computation of Probability of Success for a wide
+<meta name="description" content="This package implements methods to fit a parametric Bayesian 
+    multi-state model to tumor response data and to use the model to predict
+    probability of success on the study level.
+    The use of a multi-state model allows the dynamic computation of 
+    probability of success during an ongoing study for a wide
     range of success criteria.
     The inference is implemented using stan.">
 <title>Bayesian Multi-State Models for Early Oncology • oncomsm</title>
@@ -17,10 +18,11 @@
 <script src="deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Bayesian Multi-State Models for Early Oncology">
-<meta property="og:description" content="This package implements methods to dynamically predict response 
-    and progression of individuals in early oncology trials using parametric
-    multi-state models and Bayesian inference.
-    This allows the dynamic computation of Probability of Success for a wide
+<meta property="og:description" content="This package implements methods to fit a parametric Bayesian 
+    multi-state model to tumor response data and to use the model to predict
+    probability of success on the study level.
+    The use of a multi-state model allows the dynamic computation of 
+    probability of success during an ongoing study for a wide
     range of success criteria.
     The inference is implemented using stan.">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -81,7 +83,7 @@
 <div class="section level1">
 <div class="page-header"><h1 id="bayesian-multi-state-models-for-early-oncology">Bayesian multi-state models for early oncology<a class="anchor" aria-label="anchor" href="#bayesian-multi-state-models-for-early-oncology"></a>
 </h1></div>
-<p><strong>Tl;dr:</strong> This package implements methods to dynamically predict response and progression of individuals in early oncology trials using parametric <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html">multi-state models</a> and Bayesian inference. This allows the <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html">dynamic computation of “probability of success”</a> for a wide range of success criteria. For instance, the <a href="https://cran.r-project.org/web/packages/bhmbasket/index.html" class="external-link">bhmbasket</a> R package <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html">can be used to define study success based on Bayesian hierarchical models</a>.</p>
+<p>The R package <strong>oncomsm</strong> implements methods to dynamically predict response and progression of individuals in early oncology trials using parametric <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html">multi-state models</a> and Bayesian inference. This allows the <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html">dynamic computation of “probability of success”</a> for a wide range of success criteria. For instance, the <a href="https://cran.r-project.org/web/packages/bhmbasket/index.html" class="external-link">bhmbasket</a> R package <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html">can be used to define study success based on Bayesian hierarchical models</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>

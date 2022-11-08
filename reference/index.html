@@ -51,7 +51,7 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="package-documentation">Package documentation<a class="anchor" aria-label="anchor" href="#package-documentation"></a></h2>
       
       
 
@@ -63,59 +63,25 @@
 
       <dl><dt>
           
-          <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute_trial(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">generate_visit_data(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_pfs_rate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">mstate_to_visits(<i>&lt;Model&gt;</i>)</a></code> 
-        </dt>
-        <dd>An abstract multi-state model class</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_visit_data.html">generate_visit_data()</a></code> 
-        </dt>
-        <dd>Generate Visit data from a multi-state model</dd>
-      </dl><dl><dt>
-          
-          <code><a href="impute_predictive.html">impute_predictive()</a></code> 
-        </dt>
-        <dd>Impute data from predictive distribution</dd>
-      </dl><dl><dt>
-          
-          <code><a href="impute_trial.html">impute_trial()</a></code> 
-        </dt>
-        <dd>Impute data from predictive distribution</dd>
-      </dl><dl><dt>
-          
-          <code><a href="is_valid.srp_model.html">is_valid(<i>&lt;srp_model&gt;</i>)</a></code> 
-        </dt>
-        <dd>To check the validity of input parameters to create_srp</dd>
-      </dl><dl><dt>
-          
-          <code><a href="logodds.html">logodds()</a></code> 
-        </dt>
-        <dd>Log-odds function</dd>
-      </dl><dl><dt>
-          
-          <code><a href="mstate_to_visits.html">mstate_to_visits()</a></code> 
-        </dt>
-        <dd>Convert data from multi-state to visit format</dd>
-      </dl><dl><dt>
-          
           <code><a href="oncomsm-package.html">oncomsm-package</a></code> <code><a href="oncomsm-package.html">oncomsm</a></code> 
         </dt>
         <dd>The oncomsm package.</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
           
-          <code><a href="parameter_sample_to_tibble.html">parameter_sample_to_tibble()</a></code> 
+          <code><a href="sample_prior.html">sample_prior()</a></code> 
         </dt>
-        <dd>Convert stanfit sample to data table</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plot_mstate.html">plot_mstate()</a></code> 
-        </dt>
-        <dd>Swimmer-like plot of multi-state data</dd>
-      </dl><dl><dt>
-          
-          <code><a href="sample_pfs_rate.html">sample_pfs_rate()</a></code> 
-        </dt>
-        <dd>Sample from the progression-free-survival rate</dd>
+        <dd>Sample model prior parameters</dd>
       </dl><dl><dt>
           
           <code><a href="sample_posterior.html">sample_posterior()</a></code> 
@@ -128,21 +94,95 @@
         <dd>Sample data from predictive distribution of a model</dd>
       </dl><dl><dt>
           
-          <code><a href="sample_prior.html">sample_prior()</a></code> 
+          <code><a href="impute_predictive.html">impute_predictive()</a></code> 
         </dt>
-        <dd>Sample model prior parameters</dd>
+        <dd>Impute data from predictive distribution</dd>
       </dl><dl><dt>
           
-          <code><a href="srp_model.html">mstate_to_visits(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">create_srp_model()</a></code> <code><a href="srp_model.html">plot_mstate(<i>&lt;srp_model&gt;</i>)</a></code> 
+          <code><a href="impute_trial.html">impute_trial()</a></code> 
+        </dt>
+        <dd>Impute data from predictive distribution</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_visit_data.html">generate_visit_data()</a></code> 
+        </dt>
+        <dd>Generate Visit data from a multi-state model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="abstract-model-interface">Abstract model interface<a class="anchor" aria-label="anchor" href="#abstract-model-interface"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="Model.html">format(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">print(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute_trial(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">generate_visit_data(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_pfs_rate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">mstate_to_visits(<i>&lt;Model&gt;</i>)</a></code> 
+        </dt>
+        <dd>An abstract multi-state model class</dd>
+      </dl></div><div class="section level2">
+      <h2 id="stable-response-progression-srp-model">Stable-Response-Progression (SRP) model<a class="anchor" aria-label="anchor" href="#stable-response-progression-srp-model"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="srp_model.html">mstate_to_visits(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">create_srp_model()</a></code> <code><a href="srp_model.html">format(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">plot_mstate(<i>&lt;srp_model&gt;</i>)</a></code> 
         </dt>
         <dd>A Stable-Response-Progression Model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="utility-functions">Utility functions<a class="anchor" aria-label="anchor" href="#utility-functions"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="logodds.html">logodds()</a></code> 
+        </dt>
+        <dd>Log-odds function</dd>
       </dl><dl><dt>
           
           <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code> 
         </dt>
         <dd>Convert longitudinal visit data to time-to-event data</dd>
+      </dl><dl><dt>
+          
+          <code><a href="mstate_to_visits.html">mstate_to_visits()</a></code> 
+        </dt>
+        <dd>Convert data from multi-state to visit format</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_mstate.html">plot_mstate()</a></code> 
+        </dt>
+        <dd>Swimmer-like plot of multi-state data</dd>
+      </dl><dl><dt>
+          
+          <code><a href="parameter_sample_to_tibble.html">parameter_sample_to_tibble()</a></code> 
+        </dt>
+        <dd>Convert stanfit sample to data table</dd>
+      </dl><dl><dt>
+          
+          <code><a href="sample_pfs_rate.html">sample_pfs_rate()</a></code> 
+        </dt>
+        <dd>Sample from the progression-free-survival rate</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
