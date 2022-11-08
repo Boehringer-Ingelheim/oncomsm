@@ -17,10 +17,11 @@ Authors@R: c(
       role = c("cph", "fnd")
     )
   )
-Description: This package implements methods to dynamically predict response 
-    and progression of individuals in early oncology trials using parametric
-    multi-state models and Bayesian inference.
-    This allows the dynamic computation of Probability of Success for a wide
+Description: This package implements methods to fit a parametric Bayesian 
+    multi-state model to tumor response data and to use the model to predict
+    probability of success on the study level.
+    The use of a multi-state model allows the dynamic computation of 
+    probability of success during an ongoing study for a wide
     range of success criteria.
     The inference is implemented using stan.
 License: Apache License 2.0 | file LICENSE
@@ -62,8 +63,7 @@ Suggests:
     future,
     furrr,
     doFuture,
-    rjags,
-    xfun
+    rjags
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://boehringer-ingelheim.github.io/oncomsm/, https://github.com/Boehringer-Ingelheim/oncomsm

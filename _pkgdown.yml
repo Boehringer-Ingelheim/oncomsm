@@ -9,3 +9,30 @@ navbar:
   structure:
     left:  [intro, articles, reference, news]
     right: [search, github]
+
+reference:
+- title: "Package documentation"
+  contents:
+  - oncomsm
+- title: "Functions"
+  contents:
+  - sample_prior
+  - sample_posterior
+  - sample_predictive
+  - impute_predictive
+  - impute_trial
+  - generate_visit_data
+- title: "Abstract model interface"
+  contents:
+  - Model
+- title: "Stable-Response-Progression (SRP) model"
+  contents:
+  - srp_model
+- title: "Utility functions"
+  contents:
+  - logodds
+  - visits_to_mstate
+  - mstate_to_visits
+  - plot_mstate
+  - parameter_sample_to_tibble
+  - sample_pfs_rate

@@ -4,6 +4,7 @@
 \alias{mstate_to_visits.srp_model}
 \alias{srp_model}
 \alias{create_srp_model}
+\alias{format.srp_model}
 \alias{plot_mstate.srp_model}
 \title{A Stable-Response-Progression Model}
 \usage{
@@ -21,6 +22,8 @@ create_srp_model(
   shape_min = matrix(0.99, nrow = length(group_id), ncol = 3),
   shape_max = matrix(1.01, nrow = length(group_id), ncol = 3)
 )
+
+\method{format}{srp_model}(x, ...)
 
 \method{plot_mstate}{srp_model}(
   model,
@@ -69,6 +72,8 @@ Weibull distribution per group/transition}
 
 \item{shape_max}{matrix of upper boundaries of the uniform prior of the
 Weibull distribution per group/transition}
+
+\item{x}{SRP model to format}
 
 \item{data}{a data table with multi-state data}
 

@@ -79,7 +79,9 @@ is_success <- function(data, nsim = 250) {
     group_by(group_id, subject_id) %>%
     summarize(responder = any(to == "response"), .groups = "drop_last") %>%
     summarize(r = sum(responder), n = n(), .groups = "drop") %>%
-    {bhmbasket::createTrial(.$n, .$r)}
+    {
+      bhmbasket::createTrial(.$n, .$r)
+    }
   # define Berry model in bhmbasket
   prms_berry <- bhmbasket::setPriorParametersBerry(
     mu_mean   = bhmbasket::logit(0.25),
@@ -140,7 +142,7 @@ tbl_results <- tbl_prior_predictive %>%
       .options = furrr::furrr_options(seed = TRUE)
     )
   ) %>%
-  select(-data) %>% 
+  select(-data) %>%
   tidyr::unnest(res)
 
 tbl_results

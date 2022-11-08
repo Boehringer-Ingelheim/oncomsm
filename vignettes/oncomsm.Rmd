@@ -172,7 +172,8 @@ mdl <- create_srp_model(
   # the visit interval
   visit_spacing = c(1.2, 1.2)
 )
-# TODO: implement a nice summary / print function here
+
+print(mdl)
 ```
 
 The model assumptions can be visualized by sampling from the prior.
