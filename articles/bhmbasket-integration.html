@@ -109,6 +109,9 @@ success criteria.</em></p>
 <span>  median_time_to_next_event_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">3</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  visit_spacing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.2</span>, <span class="fl">1.2</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="defining-success">Defining ‘success’<a class="anchor" aria-label="anchor" href="#defining-success"></a>
+</h2>
 <p>The <code>bhmbasket</code> package implements dynamic borrowing
 between arms in basket trials via Bayesian hierarchical models (BHMs).
 Here, we demonstrate how <code>oncomsm</code> and the prior specified in
@@ -151,6 +154,10 @@ the BHM that the response rate is larger than <span class="math inline">\(0.3\)<
 <span>    success <span class="op">=</span> <span class="va">res</span><span class="op">$</span><span class="va">scenario_1</span><span class="op">$</span><span class="va">quantiles_list</span><span class="op">$</span><span class="va">berry</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">5</span>, <span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span> <span class="op">&gt;=</span> <span class="fl">.3</span></span>
 <span>  <span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="sample-from-the-prior-predictive">Sample from the prior predictive<a class="anchor" aria-label="anchor" href="#sample-from-the-prior-predictive"></a>
+</h2>
 <p>The Probability of Success at the planning stage can be computed by
 sampling from the prior-predictive distribution an then applying the
 defined success criterion.</p>
@@ -200,6 +207,10 @@ further processing on a per-dataset basis.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     9 <span style="color: #949494;">&lt;tibble [148 × 7]&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>    10 <span style="color: #949494;">&lt;tibble [168 × 7]&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># … with 240 more rows</span></span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="apply-success-criterion-and-calculate-pos">Apply success criterion and calculate PoS<a class="anchor" aria-label="anchor" href="#apply-success-criterion-and-calculate-pos"></a>
+</h2>
 <p>The success criterion can then be applied to each of the resampled
 data sets.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -242,7 +253,9 @@ success rate.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.228</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.628</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.84</span></span></code></pre></div>
-  </main>
+</div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

@@ -328,7 +328,7 @@ errorbars corresponding to the standard error of the simulation.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># wrap the steps to calculate PoS into a function</span></span>
 <span><span class="va">pos</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tbl</span>, <span class="va">nsim</span> <span class="op">=</span> <span class="fl">50L</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">tbl_posterior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/impute_trial.html">impute_trial</a></span><span class="op">(</span></span>
+<span>  <span class="va">tbl_posterior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/impute.html">impute</a></span><span class="op">(</span></span>
 <span>      <span class="va">mdl</span>, <span class="va">tbl</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">40L</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2L</span><span class="op">)</span>, nsim <span class="op">=</span> <span class="va">nsim</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">iter</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/nest.html" class="external-link">nest</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -389,7 +389,7 @@ errorbars corresponding to the standard error of the simulation.</p>
 <span><span class="co">#&gt;  [4] prettyunits_1.1.1    ps_1.7.2             rprojroot_2.0.3     </span></span>
 <span><span class="co">#&gt;  [7] digest_0.6.30        utf8_1.2.2           parallelly_1.32.1   </span></span>
 <span><span class="co">#&gt; [10] R6_2.5.1             backports_1.4.1      stats4_4.2.2        </span></span>
-<span><span class="co">#&gt; [13] evaluate_0.17        highr_0.9            pillar_1.8.1        </span></span>
+<span><span class="co">#&gt; [13] evaluate_0.18        highr_0.9            pillar_1.8.1        </span></span>
 <span><span class="co">#&gt; [16] rlang_1.0.6          uuid_1.1-0           callr_3.7.3         </span></span>
 <span><span class="co">#&gt; [19] jquerylib_0.1.4      checkmate_2.1.0      rmarkdown_2.17      </span></span>
 <span><span class="co">#&gt; [22] pkgdown_2.0.6        labeling_0.4.2       textshaping_0.3.6   </span></span>
