@@ -19,16 +19,15 @@ reference:
   - sample_prior
   - sample_posterior
   - sample_predictive
-  - impute_predictive
-  - impute_trial
+  - impute
   - generate_visit_data
 - title: "Abstract model interface"
   contents:
   - Model
-- title: "Stable-Response-Progression (SRP) model"
+- title: "SRP model"
   contents:
   - srp_model
-- title: "Utility functions"
+- title: "Other"
   contents:
   - logodds
   - visits_to_mstate

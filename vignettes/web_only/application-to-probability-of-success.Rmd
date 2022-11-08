@@ -254,7 +254,7 @@ standard error of the simulation.
 ```{r, warning=FALSE}
 # wrap the steps to calculate PoS into a function
 pos <- function(tbl, nsim = 50L) {
-  tbl_posterior_predictive <- impute_trial(
+  tbl_posterior_predictive <- impute(
       mdl, tbl, rep(40L, 2), rep(1, 2L), nsim = nsim) %>%
     group_by(iter) %>%
     tidyr::nest()

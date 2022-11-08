@@ -7,8 +7,7 @@
 \alias{sample_prior.Model}
 \alias{sample_posterior.Model}
 \alias{sample_predictive.Model}
-\alias{impute_predictive.Model}
-\alias{impute_trial.Model}
+\alias{impute.Model}
 \alias{parameter_sample_to_tibble.Model}
 \alias{plot_mstate.Model}
 \alias{generate_visit_data.Model}
@@ -52,26 +51,15 @@
   ...
 )
 
-\method{impute_predictive}{Model}(
+\method{impute}{Model}(
   model,
   data,
-  sample = NULL,
-  nsim = 1000L,
-  nsim_parameters = 1000L,
-  warmup_parameters = 250L,
-  seed = NULL,
-  ...
-)
-
-\method{impute_trial}{Model}(
-  model,
-  data,
-  n_per_group,
-  recruitment_rates,
+  n_per_group = NULL,
+  recruitment_rates = NULL,
   now = NULL,
   sample = NULL,
   nsim = 250L,
-  nsim_parameters = 500L,
+  nsim_parameters = 1000L,
   warmup_parameters = 250L,
   seed = NULL,
   ...

@@ -61,6 +61,9 @@ mdl <- create_srp_model(
 )
 ```
 
+
+## Defining 'success'
+
 The `bhmbasket` package implements dynamic borrowing between arms in
 basket trials via Bayesian hierarchical models (BHMs).
 Here, we demonstrate how `oncomsm` and the prior specified in `mdl` can be used
@@ -106,6 +109,9 @@ is_success <- function(data, nsim = 250) {
 }
 ```
 
+
+## Sample from the prior predictive 
+
 The Probability of Success at the planning stage can be computed by sampling from
 the prior-predictive distribution an then applying the defined success criterion.
 
@@ -131,6 +137,8 @@ tbl_prior_predictive <- tbl_prior_predictive %>%
 
 tbl_prior_predictive
 ```
+
+## Apply success criterion and calculate PoS
 
 The success criterion can then be applied to each of the resampled data sets.
 

@@ -244,7 +244,7 @@ test_that("can sample from posterior predictive", {
     filter(iter == 1) %>%
     select(-iter)
 
-  impute_predictive(mdl, data = tbl_data, nsim = 10)
+  impute(mdl, data = tbl_data, nsim = 10)
 
   expect_true(TRUE) # TODO: implement check
 
@@ -258,7 +258,7 @@ test_that("impute remainder of trial from interim data", {
   tbl_data1 <- sample_predictive(mdl, c(20, 20), nsim = 1) %>%
     select(-iter)
   # impute another 20/group conditional on observed data
-  tbl_data2 <- impute_trial(mdl, tbl_data1, c(40, 40),
+  tbl_data2 <- impute(mdl, tbl_data1, c(40, 40),
                             recruitment_rates = c(1, 1), nsim = 25)
   expect_true(
     tbl_data2 %>% group_by(subject_id, group_id, iter) %>% n_groups() ==
