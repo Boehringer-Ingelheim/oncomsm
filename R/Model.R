@@ -221,7 +221,7 @@ impute.Model <- function(
   if (is.null(sample)) {
     sample <- sample_posterior(
       model, data = data, rstan_output = TRUE, seed = seed,
-      warmup = warmup_parameters, nsim = nsim_parameters, ...
+      warmup = warmup_parameters, nsim = nsim_parameters
     )
   }
   if (is.null(now)) {
@@ -269,7 +269,7 @@ impute.Model <- function(
   }
   tbl_tmp <- bind_rows(data, tbl_to_be_recruited)
   res <- .impute(model = model, data = tbl_tmp, parameter_sample = sample,
-                 nsim = nsim, seed = seed)
+                 nsim = nsim, seed = seed, ...)
   return(res)
 }
 
