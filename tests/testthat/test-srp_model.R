@@ -148,13 +148,14 @@ test_that("can sample from prior", {
 
 
 
-test_that("can sample from posterior", {
+test_that("posterior shifts as expected", {
 
   tbl_data <- sample_predictive(
       mdl,
       n_per_group = c(20, 20),
       nsim = 1,
-      seed = 42L
+      seed = 42L,
+      p = c(0.1, 0.9)
     ) %>%
     select(-iter)
 
