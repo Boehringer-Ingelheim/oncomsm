@@ -257,6 +257,26 @@ The generated data can also be visualized in swimmer plots.
 plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
 ```
 
+It is also possible to simulate from the prior predictive distribution while
+fixing some of the parameter values.
+Fixing parameter values can be interpreted as conditioning on some or all of
+the parameters.
+For instance one could set the response probabilities to fixed values of $0.1$
+and $0.9$:
+
+```{r prior-predictive-fixed}
+sample_predictive(
+    mdl,
+    sample = smpl_prior,
+    p = c(0.1, 0.9),
+    n_per_group = c(30L, 30L),
+    nsim = 100,
+    seed = 3423423
+  ) %>% 
+  filter(from == "stable") %>%
+  group_by(group_id) %>%
+  summarize(p_response = sum(to == "response") / n())
+```
 
 
 ## Building a visit data set

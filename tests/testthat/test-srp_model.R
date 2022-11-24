@@ -148,70 +148,14 @@ test_that("can sample from prior", {
 
 
 
-test_that("can generate data from SRP model", {
-
-  tbl_prior_predictive1 <<- sample_predictive(
-    mdl,
-    n_per_group = c(20, 20),
-    nsim = 100,
-    seed = 42L
-  )
-
-  expect_true(
-    tbl_prior_predictive1 %>%
-      group_by(group_id) %>%
-      summarize(n = length(unique(subject_id))) %>%
-      pull(n) %>%
-      {
-        . == c(20, 20)
-      } %>%
-      all()
-  )
-
-  p <- tbl_prior_predictive1 %>% # we throw together iterations to get better estimate # nolint
-    filter(from == "stable") %>%
-    group_by(group_id, to) %>%
-    summarize(n = length(unique(subject_id)), .groups = "drop_last") %>%
-    mutate(p = n / sum(n)) %>%
-    ungroup() %>%
-    arrange(group_id, to) %>%
-    pull(p)
-
-  expect_true(all(abs(p - 0.5) < .01))
-
-})
-
-
-
-test_that("prior predictive seed works", {
-
-  tbl_prior_predictive2 <- sample_predictive(
-    mdl,
-    n_per_group = c(20, 20),
-    nsim = 100,
-    seed = 42L
-  )
-  expect_true(all(tbl_prior_predictive1 == tbl_prior_predictive2))
-
-})
-
-
-
-test_that("can generate visit data from SRP model", {
-
-  generate_visit_data(mdl, n_per_group = c(20, 20),
-                      recruitment_rate = c(.1, 5), seed = 112341)
-
-  expect_true(TRUE) # TODO: implement check
-
-})
-
-
-
 test_that("can sample from posterior", {
 
-  tbl_data <- tbl_prior_predictive1 %>%
-    filter(iter == 1) %>%
+  tbl_data <- sample_predictive(
+      mdl,
+      n_per_group = c(20, 20),
+      nsim = 1,
+      seed = 42L
+    ) %>%
     select(-iter)
 
   p_obs <- tbl_data %>%
@@ -233,36 +177,5 @@ test_that("can sample from posterior", {
     p_obs < 0.5 & p < 0.5 ~ TRUE,
     TRUE ~ FALSE
   )))
-
-})
-
-
-
-test_that("can sample from posterior predictive", {
-
-  tbl_data <- tbl_prior_predictive1 %>%
-    filter(iter == 1) %>%
-    select(-iter)
-
-  impute(mdl, data = tbl_data, nsim = 10)
-
-  expect_true(TRUE) # TODO: implement check
-
-})
-
-
-
-test_that("impute remainder of trial from interim data", {
-
-  # sample some data
-  tbl_data1 <- sample_predictive(mdl, c(20, 20), nsim = 1) %>%
-    select(-iter)
-  # impute another 20/group conditional on observed data
-  tbl_data2 <- impute(mdl, tbl_data1, c(40, 40),
-                            recruitment_rates = c(1, 1), nsim = 25)
-  expect_true(
-    tbl_data2 %>% group_by(subject_id, group_id, iter) %>% n_groups() ==
-      40 * 25 * 2
-  )
 
 })

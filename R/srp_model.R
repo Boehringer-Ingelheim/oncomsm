@@ -105,23 +105,58 @@ is_valid.srp_model <- function(mdl) { # nolint
 }
 
 # see Model.R
-.impute.srp_model <- function(model, data, nsim, parameter_sample, # nolint
-                              seed = NULL, ...) {
+.impute.srp_model <- function(model, data, nsim, parameter_sample = NULL, # nolint
+                              seed = NULL, p = NULL, shape = NULL,
+                              scale = NULL, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  stopifnot(isa(parameter_sample, "stanfit"))
+  n_groups <- length(attr(model, "group_id"))
+  # make sure that either parameter sample or p, scale, shape are given
+  if (!is.null(parameter_sample)) {
+    stopifnot(isa(parameter_sample, "stanfit"))
+    n_params_sample <- parameter_sample@sim$iter - parameter_sample@sim$warmup
+  } else {
+    # p, scale, and shape must be given
+    if (is.null(p) || is.null(shape) || is.null(scale)) {
+      stop("if no parameter sample is given all of p, scale, shape must be given") # nolint
+    }
+    if (length(p) != n_groups) stop()
+    if (all(dim(shape) != c(n_groups, 3))) stop()
+    if (all(dim(scale) != c(n_groups, 3))) stop()
+  }
   # extract subject and group id levels for conversion to and back from integer
   subject_id_levels <- unique(as.character(data$subject_id))
   group_id_levels <- attr(model, "group_id") # important to maintain ordering
-  # extract parameter arrays from stanfit object
-  # p[i,j] is probability for ith sample for jth group
-  p <- rstan::extract(parameter_sample, "p")[[1]]
-  # scale[i,j,k] is the scale value for ith sample in jth group for
-  # k-th transition (k being 1. stable-> response, 2. stable -> progression,
-  # 3. response -> progression)
-  scale <- rstan::extract(parameter_sample, "scale")[[1]]
-  shape <- rstan::extract(parameter_sample, "shape")[[1]]
+  if (is.null(p)) {
+    # extract parameter arrays from stanfit object
+    # p[i,j] is probability for ith sample for jth group
+    p <- rstan::extract(parameter_sample, "p")[[1]]
+  } else {
+    # expand fixed parameters to same format as rstan parameters
+    p <- t(array(p, dim = c(n_groups, n_params_sample)))
+  }
+  if (is.null(scale)) {
+    # scale[i,j,k] is the scale value for ith sample in jth group for
+    # k-th transition (k being 1. stable-> response, 2. stable -> progression,
+    # 3. response -> progression)
+    scale <- rstan::extract(parameter_sample, "scale")[[1]]
+  } else {
+    # need to add one dimension (iterations to fit format)
+    scale <- aperm(
+      array(scale, dim = c(n_groups, 3, n_params_sample)),
+      c(3, 1, 2)
+    )
+  }
+  if (is.null(shape)) {
+    shape <- rstan::extract(parameter_sample, "shape")[[1]]
+  } else {
+    # need to add one dimension (iterations to fit format)
+    shape <- aperm(
+      array(shape, dim = c(n_groups, 3, n_params_sample)),
+      c(3, 1, 2)
+    )
+  }
   # extract visit_spacing
   visit_spacing <- attr(model, "visit_spacing")
   # sorting the samples and changing type to integer for groups and subj id
@@ -133,16 +168,10 @@ is_valid.srp_model <- function(mdl) { # nolint
       group_id = as.integer(factor(.data$group_id, levels = group_id_levels))
     )
   # sub/re-sample parameters
-  n_params_sample <- dim(p)[1]
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
-  p <- p[idx, , drop = FALSE]
-  # Converting p to a single row matrix
-  if (nsim == 1) {
-    p <- matrix(p, nrow = 1)
-  }
   res <- impute_srp_model(
     data,
-    p,
+    p[idx, , drop = FALSE],
     as.vector(shape[idx, , ]),
     as.vector(scale[idx, , ]),
     visit_spacing,
