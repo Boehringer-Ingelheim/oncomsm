@@ -18,6 +18,8 @@ create_srp_model(
   median_time_to_next_event_mean,
   median_time_to_next_event_sd = matrix(0.01, nrow = length(group_id), ncol = 3),
   visit_spacing,
+  recruitment_rate = rep(1, length(group_id)),
+  max_time = 10 * 12,
   logodds_min = rep(logodds(0.001), length(group_id)),
   logodds_max = rep(logodds(0.999), length(group_id)),
   shape_min = matrix(0.99, nrow = length(group_id), ncol = 3),
@@ -27,8 +29,8 @@ create_srp_model(
 \method{format}{srp_model}(x, ...)
 
 \method{plot_mstate}{srp_model}(
-  model,
   data,
+  model,
   now = max(tbl_mstate$t_max),
   relative_to_sot = TRUE,
   ...

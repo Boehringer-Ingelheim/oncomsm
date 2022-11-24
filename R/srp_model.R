@@ -40,6 +40,8 @@ create_srp_model <- function(
   median_time_to_next_event_mean,
   median_time_to_next_event_sd = matrix(0.01, nrow = length(group_id), ncol = 3),
   visit_spacing,
+  recruitment_rate = rep(1, length(group_id)), # TODO document and remove default
+  max_time = 10*12, # maximal follow up time since start of trial
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
   shape_min = matrix(.99, nrow = length(group_id), ncol = 3),
@@ -52,6 +54,8 @@ create_srp_model <- function(
   attr(mdl, "group_id") <- as.character(group_id) # assert type
   attr(mdl, "states") <- c("stable", "response", "progression")
   attr(mdl, "visit_spacing") <- as.array(visit_spacing)
+  attr(mdl, "recruitment_rate") <- as.array(recruitment_rate)
+  attr(mdl, "max_time") <- as.array(max_time)
   attr(mdl, "stanmodel") <- stanmodels[["srp_model"]]
   attr(mdl, "parameter_names") <- c("p", "shape", "scale",
                                     "median_time_to_next_event")
@@ -107,7 +111,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 # see Model.R
 .impute.srp_model <- function(model, data, nsim, parameter_sample = NULL, # nolint
                               seed = NULL, p = NULL, shape = NULL,
-                              scale = NULL, ...) {
+                              scale = NULL, as_mstate = FALSE, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -157,42 +161,34 @@ is_valid.srp_model <- function(mdl) { # nolint
       c(3, 1, 2)
     )
   }
-  # extract visit_spacing
-  visit_spacing <- attr(model, "visit_spacing")
   # sorting the samples and changing type to integer for groups and subj id
   data <- data %>%
-    arrange(.data$t_sot, .data$subject_id, (.data$t_min + .data$t_max) / 2) %>%
-    mutate(
-      subject_id = as.integer(factor(as.character(.data$subject_id),
-                                     levels = subject_id_levels)),
-      group_id = as.integer(factor(.data$group_id, levels = group_id_levels))
+    arrange(.data$subject_id, .data$t) %>%
+    mutate( # convert group_id to properly ordered factor
+      group_id = factor(.data$group_id, levels = group_id_levels)
     )
-  # sub/re-sample parameters
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
-  res <- impute_srp_model(
-    data,
-    p[idx, , drop = FALSE],
-    as.vector(shape[idx, , ]),
-    as.vector(scale[idx, , ]),
-    visit_spacing,
-    nsim,
-    as.integer(length(group_id_levels))
-  ) %>%
-  arrange(.data$subject_id, .data$iter) %>%
-  as_tibble()
-  # Mapping back from integer to character type for effective recognition
-  # of groups
-  res <- res %>%
-    mutate(
-      subject_id = as.character(
-        factor(.data$subject_id, levels = seq_along(subject_id_levels),
-               labels = subject_id_levels)
-      ),
-      group_id = as.character(
-        factor(.data$group_id, levels = seq_along(group_id_levels),
-               labels = group_id_levels)
+  sample_once <- function(iter) {
+    # extract a set of parameters
+    response_probabilities <- p[idx[iter], , drop = FALSE]
+    shapes <- shape[idx[iter], , ]
+    scales <- scale[idx[iter], , ]
+    # sample
+    res <- f(data, response_probabilities, shapes, scales,
+        visit_spacing = attr(model, "visit_spacing"),
+        max_time = attr(model, "max_time")
+      ) %>%
+      as_tibble() %>%
+      mutate(
+        group_id = as.character(.data$group_id)
       )
-    )
+    if (as_mstate) {
+      res <- visits_to_mstate(res, model)
+    }
+    res <- mutate(res, iter = as.integer(iter))
+    return(res)
+  }
+  res <- purrr::map_df(1:nsim, sample_once)
   return(res)
 }
 
@@ -214,20 +210,26 @@ is_valid.srp_model <- function(mdl) { # nolint
 
 
 # helper to create all-missing standata for model
-.emptydata.srp_model <- function(model, n_per_group) { # nolint
+.emptydata.srp_model <- function(model, n_per_group, seed = NULL) { # nolint
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   n <- sum(n_per_group)
-  tibble(
-    subject_id = 1:n,
-    group_id = attr(model, "group_id")[rep(seq_len(length(n_per_group)),
-                                           times = n_per_group)],
-    from = rep("stable", n),
-    to = rep(NA, n),
-    # assume everyone is recruited at zero
-    # only t_min/max - t_sot is relevant anyhow
-    t_min = rep(0, n),
-    t_max = rep(Inf, n),
-    t_sot = rep(0, n)
-  )
+  group_ids <- attr(model, "group_id")
+  rr <- attr(model, "recruitment_rate")
+  res <- tibble()
+  for (i in seq_along(group_ids)) {
+    subject_ids <- sprintf("generated_subject_%06i",
+                           (nrow(res) + 1):(nrow(res) + n_per_group[i]))
+    recruitment_times <- cumsum(rexp(n_per_group[i], rate = rr[i]))
+    res <- bind_rows(res, tibble(
+      subject_id = subject_ids,
+      group_id = group_ids[i],
+      t = recruitment_times,
+      state = "stable" # first visits are always stable
+    ))
+  }
+  return(res)
 }
 
 
@@ -294,7 +296,7 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
 #' @inheritParams plot_mstate
 #' @name srp_model
 #' @export
-plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # nolint
+plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # nolint
                                   relative_to_sot = TRUE, ...) {
 
   starting_state <- attr(model, "states")[1]

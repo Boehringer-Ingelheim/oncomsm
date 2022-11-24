@@ -144,7 +144,8 @@ sample_posterior.Model <- function(
 #'
 #' @export
 sample_predictive <- function(model, n_per_group, sample, nsim,
-                              nsim_parameters, warmup_parameters, seed, ...) {
+                              nsim_parameters, warmup_parameters, seed,
+                              as_mstate, ...) {
   UseMethod("sample_predictive")
 }
 
@@ -159,16 +160,21 @@ sample_predictive.Model <- function(
   nsim_parameters = 1000L,
   warmup_parameters = 250,
   seed = NULL,
+  as_mstate = FALSE,
   ...
 ) {
-  if (is.null(sample)) {
-    sample <- sample_prior(
-      model, rstan_output = TRUE, seed = seed,
-      warmup = warmup_parameters, nsim = nsim_parameters
-    )
+  if (!is.null(seed)) {
+    set.seed(seed)
   }
-  .impute(model = model, data = .emptydata(model, n_per_group),
-          parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
+  if (is.null(sample)) {
+    sample <- sample_prior(model, rstan_output = TRUE,
+                           warmup = warmup_parameters, nsim = nsim_parameters)
+  }
+  # construct an empty data set
+  data <- .emptydata(model, n_per_group)
+  # call model-specific imputation method
+  .impute(model = model, data = data, parameter_sample = sample, now = 0,
+          nsim = nsim, as_mstate = as_mstate, ...)
 }
 
 
@@ -299,6 +305,7 @@ impute.Model <- function(
 ) {
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
+  # check whether data is in visit format
   # combine prior information with data for stan
   stan_data <- c(
     as.list(model), # hyperparameters
@@ -365,12 +372,12 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 
 # create a data set with no observed data
-.emptydata <- function(model, n_per_group) {
+.emptydata <- function(model, n_per_group, seed) {
   UseMethod(".emptydata")
 }
 
 # helper to create all-missing standata for model
-.emptydata.Model <- function(model, n_per_group) { #nolint
+.emptydata.Model <- function(model, n_per_group, seed = NULL) { #nolint
   stop("not implemented")
 }
 
@@ -401,14 +408,14 @@ data2standata.Model <- function(model, data) {
 #' @template param-dotdotdot
 #'
 #' @export
-plot_mstate <- function(model, data, now, relative_to_sot, ...) {
-  UseMethod("plot_mstate")
+plot_mstate <- function(data, model, now, relative_to_sot, ...) {
+  UseMethod("plot_mstate", object = model)
 }
 
 #' @inheritParams plot_mstate
 #' @name Model
 #' @export
-plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
+plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
   stop("not implemented")
 }
 

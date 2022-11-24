@@ -49,6 +49,7 @@
   nsim_parameters = 1000L,
   warmup_parameters = 250,
   seed = NULL,
+  as_mstate = FALSE,
   ...
 )
 
@@ -68,7 +69,7 @@
 
 \method{parameter_sample_to_tibble}{Model}(model, sample, ...)
 
-\method{plot_mstate}{Model}(model, data, now, relative_to_sot, ...)
+\method{plot_mstate}{Model}(data, model, now, relative_to_sot, ...)
 
 \method{generate_visit_data}{Model}(model, n_per_group, recruitment_rate, seed = NULL, ...)
 

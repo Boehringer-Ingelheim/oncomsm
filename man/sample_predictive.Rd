@@ -12,6 +12,7 @@ sample_predictive(
   nsim_parameters,
   warmup_parameters,
   seed,
+  as_mstate,
   ...
 )
 }

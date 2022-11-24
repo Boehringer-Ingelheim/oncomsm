@@ -148,7 +148,7 @@ mdl <- create_srp_model(
   group_id = c("control", "intervention"),
   # per-group logodds of response|stable
   logodds_mean = c(logodds(.25), logodds(.5)),
-  logodds_sd = c(.75, .75),
+  logodds_sd = c(.01, .01),
   # m[i,j] is the median time to next event for group i and transition j
   median_time_to_next_event = matrix(c(
     3, 2, 6,
@@ -162,11 +162,11 @@ mdl <- create_srp_model(
   # uniform prior over the shape parameter, difficult to identify,
   # better keep it tight to avoid issues with the sampler
   shape_min = matrix(
-    .75,
+    1.5,
     byrow = TRUE, nrow = 2, ncol = 3
   ),
   shape_max = matrix(
-    2,
+    2.5,
     byrow = TRUE, nrow = 2, ncol = 3
   ),
   # the visit interval
@@ -211,7 +211,7 @@ function of the "progression or death" event.
 ```{r plotting-the-prior}
 smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
 
-plot(mdl, dt = c(0, 36), sample = smpl_prior)
+# plot(mdl, dt = c(0, 36), sample = smpl_prior)
 ```
 
 
@@ -229,6 +229,8 @@ tbl_prior_predictive <- sample_predictive(
   nsim = 100,
   seed = 3423423
 )
+
+print(tbl_prior_predictive, n = 25)
 ```
 
 We can then run some quick checks on the sampled data, e.g., the observed 
@@ -236,25 +238,55 @@ response rates.
 
 ```{r}
 tbl_prior_predictive %>%
-  filter(from == "stable") %>%
-  group_by(group_id) %>%
-  summarize(p_response = sum(to == "response") / n())
+  group_by(group_id, iter, subject_id) %>% 
+  summarize(
+    responder = any(state == "response"),
+    .groups = "drop"
+  ) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    p_response = mean(responder),
+    se = sd(responder) / sqrt(n())
+  )
 ```
 
-A crude approximation of the median transition times can be obtained from the
-midpoints of the censoring intervals. 
+A crude approximation of the median transition times can be compared with the
+prior means. 
 
 ```{r}
 tbl_prior_predictive %>%
-  filter(from == "stable") %>%
+  distinct(subject_id, iter, state, .keep_all = TRUE) %>% 
+  group_by(iter, group_id, subject_id) %>% 
+  summarize(
+    dt = t - lag(t),
+    from = lag(state),
+    to = state, 
+    .groups = "drop"
+  ) %>% 
+  filter(to != "stable") %>%
   group_by(group_id, from, to) %>%
-  summarize(t_jump_approx = median(t_min + t_max) / 2, .groups = "drop")
+  summarize(
+    `median transition time` = median(dt),
+    .groups = "drop"
+  )
 ```
 
-The generated data can also be visualized in swimmer plots.
+By default, the prior predictive distribution is given in terms of panel visit
+data.
+The data can be transformed to interval-censored multi-state representation.
 
 ```{r plot-preior-predictive, fig.height=6}
-plot_mstate(mdl, tbl_prior_predictive %>% filter(iter == 1))
+tbl_mstate <- tbl_prior_predictive %>% 
+  filter(iter == 1) %>% 
+  visits_to_mstate(mdl)
+
+tbl_mstate
+```
+
+The multi-state data can be visualized in swimmer plots.
+
+```{r plot-preior-predictive, fig.height=6}
+plot_mstate(tbl_mstate, mdl)
 ```
 
 It is also possible to simulate from the prior predictive distribution while
@@ -273,94 +305,73 @@ sample_predictive(
     nsim = 100,
     seed = 3423423
   ) %>% 
-  filter(from == "stable") %>%
-  group_by(group_id) %>%
-  summarize(p_response = sum(to == "response") / n())
-```
-
-
-## Building a visit data set
-
-Usually, data will come in the form of individual visits, not yet in the
-form of interval censored transitions.
-We can mimic this for the sake of example by converting one of our
-prior predictive samples to visit data.
-Note that the conversion is not exact since the mstate format does not contain
-information about potential visits between the interval boundaries.
-
-```{r}
-tbl_visits <- tbl_prior_predictive %>%
-  filter(iter == 1) %>%
-  mstate_to_visits(mdl, .)
-
-print(tbl_visits)
-```
-
-Next, we add recruitment times assuming an overall recruitment rate of 
-3 per month.
-
-```{r, fig.height=6}
-recruitment_rate_overall <- 3
-# sample from poisson process
-set.seed(31532)
-tbl_sot <- tbl_visits %>%
-  select(
-    subject_id,
-    group_id
-  ) %>%
-  distinct() %>%
-  arrange(runif(n())) %>% # permute groups
-  mutate(
-    # poisson recruitment process
-    t_sot = cumsum(rexp(n = n(), rate = recruitment_rate_overall))
+  group_by(group_id, iter, subject_id) %>% 
+  summarize(
+    responder = any(state == "response"),
+    .groups = "drop"
+  ) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    p_response = mean(responder),
+    se = sd(responder) / sqrt(n())
   )
-
-# add to visit times
-tbl_visits <- tbl_visits %>%
-  left_join(tbl_sot, by = c("subject_id", "group_id")) %>%
-  mutate(t = t + t_sot) # shift event times accordingly
-
-# convert back to mstate format and plot
-tbl_visits %>%
-  visits_to_mstate(start_state = "stable", absorbing_states = "progression") %>%
-  plot_mstate(mdl, ., relative_to_sot = FALSE)
 ```
+
 
 
 ## A hypothetical interim analysis
 
-If we now cut the data at 15 months after the first SoT, we can imitate a
-hypothetical interim analysis.
+First, we sample a single data set under extreme response probabilities that
+deviate from the chosen prior.
+The data can then be curtailed to a hypothetical interim time-point simply by
+filtering the visit time-points.
+
+```{r}
+tbl_data_interim <- sample_predictive(
+    mdl,
+    sample = smpl_prior,
+    p = c(0.2, 0.8),
+    n_per_group = c(30L, 30L),
+    nsim = 1,
+    seed = 42L
+  ) %>% 
+  filter(
+    t <= 15
+  )
+``` 
+
+The censoring in the interim data can be visualized in a swimmer plot again.
 
 ```{r, fig.height=6}
-tbl_visits_interim <- tbl_visits %>%
-  filter(t <= 15)
-
-# convert to mstate plot
-tbl_mstate_interim <- visits_to_mstate(
-  tbl_visits_interim,
-  start_state = "stable",
-  absorbing_states = "progression",
-  now = 15
-)
-plot_mstate(mdl, tbl_mstate_interim, relative_to_sot = FALSE, now = 15)
+tbl_data_interim %>% 
+  visits_to_mstate(mdl, now = 15) %>% 
+  plot_mstate(mdl, relative_to_sot = FALSE, now = 15)
 ```
 
-We can check the observed response rates. 
-Careful, due to the different time-to-event these will be biased.
+We can check the observed response rates again.
+Due to censoring at the interim time point, the response rate estimate is biased.
 
 ```{r}
-# estimate of the response rates (biased due to missing!)
-tbl_mstate_interim %>%
-  filter(from == "stable", !is.na(to)) %>%
-  group_by(group_id) %>%
-  summarize(p_response = sum(to == "response") / n())
+tbl_data_interim %>%
+  group_by(group_id, iter, subject_id) %>% 
+  summarize(
+    responder = any(state == "response"),
+    .groups = "drop"
+  ) %>% 
+  group_by(group_id) %>% 
+  summarize(
+    p_response = mean(responder),
+    se = sd(responder) / sqrt(n())
+  )
 ```
 
-We can now do inference by drawing sample from the posterior distribution.
+Instead, one can now do inference by drawing sample from the posterior
+distribution this will account for censoring.
+Since the data conflicts with the prior, the posterior mass will move 
+in the direction of the observed response rates.
 
 ```{r}
-smpl_posterior <- sample_posterior(mdl, tbl_mstate_interim, seed = 76947)
+smpl_posterior <- sample_posterior(mdl, tbl_data_interim, seed = 76947)
 
 plot(mdl, dt = c(0, 36), sample = smpl_posterior)
 

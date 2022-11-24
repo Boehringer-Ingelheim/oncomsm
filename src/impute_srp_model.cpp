@@ -59,11 +59,6 @@ DataFrame f(
   IntegerVector        group_out (n_rows_max);
   NumericVector            t_out (n_rows_max);
   CharacterVector      state_out (n_rows_max);
-  // set first entries
-  subject_id_out(0) = subject_id(0);
-       group_out(0) = group(0);
-           t_out(0) = t(0);
-       state_out(0) = state(0);
   int row_idx = 0; // indicator recording rows-used in output
   // iterate over number of samples to draw
   float t_first_visit = t(0);
@@ -106,18 +101,17 @@ DataFrame f(
       sample = ((state(i) == "stable") || (state(i) == "response"));
     }
     // copy existing data
-    row_idx += 1;
     subject_id_out(row_idx) = subject_id(i);
     group_out(row_idx) = group(i);
     t_out(row_idx) = t(i);
     state_out(row_idx) = state(i);
+    row_idx += 1;
     // handle forward sampling if required
     if (sample) {
       // 1. determine response status
       if (state(i) == "stable") { // still undecided, sample
-        Rcout << "subject: " << subject_id(i) << "\n";
         p_response = conditional_response_probability_srp(
-          t(i), response_probabilities(g), shapes(g, 0), shapes(g, 1),
+          t(i) - t_first_visit, response_probabilities(g), shapes(g, 0), shapes(g, 1),
           scales(g, 0), scales(g, 1));
         response = R::rbinom(1, p_response);
         dt_response_interval = {t(i) - t_first_visit, INFINITY};
@@ -135,7 +129,7 @@ DataFrame f(
                                        INFINITY) + dt_response;
       } else {
         // 3c. non-responder - sample progression directly
-        dt_response = INFINITY; // no shift, see below
+        dt_response = 0.0; // no shift, see below
         dt_progression = rtruncweibull(shapes(g, 1), scales(g, 1),
                                        t(i) - t_first_visit,
                                        INFINITY);
@@ -145,18 +139,24 @@ DataFrame f(
       dt = visit_spacing(g);
       while (tt + dt < max_time) { // check whether there is enough time for another visit
         tt += dt;
-        row_idx += 1;
         subject_id_out(row_idx) = subject_id(i);
         group_out(row_idx) = g + 1;
         t_out(row_idx) = tt;
         if (tt < t_first_visit + dt_response) {
           state_out(row_idx) = "stable";
+        } else {
+          if (tt < t_first_visit + dt_progression) {
+            if (response) {
+              state_out(row_idx) = "response";
+            } else {
+              state_out(row_idx) = "stable";
+            }
+          } else {
+            state_out(row_idx) = "progression";
+          }
         }
-        if (tt >= t_first_visit + dt_response && tt < t_first_visit + dt_progression) {
-          state_out(row_idx) = "response";
-        }
-        if (tt >= t_first_visit + dt_progression) {
-          state_out(row_idx) = "progression";
+        row_idx += 1;
+        if (state_out(row_idx - 1) == "progression") {
           break; // no need to sample multiple visits form absorbing state
         }
       } // end while
@@ -170,7 +170,7 @@ DataFrame f(
     } // end if(sample)
   } // end for
   // reduce to used memory only
-  Rcpp::Range range = Rcpp::Range(0, row_idx);
+  Rcpp::Range range = Rcpp::Range(0, row_idx - 1);
   subject_id_out = subject_id_out[range];
        group_out = group_out[range];
            t_out = t_out[range];
