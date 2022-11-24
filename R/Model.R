@@ -500,3 +500,43 @@ sample_pfs_rate.Model <- function(
 ) {
   stop("not implemented")
 }
+
+
+
+#' Convert cross sectional visit data to time-to-event data
+#'
+#' This function assumes that the visit density is high enough to not miss any
+#' transient state jumps.
+#'
+#' @param tbl_visits visit data in long format
+#' @param model a multi-state model object
+#' @param now time point since start of trial (might be later than last
+#'   recorded visit)
+#' @param eof_indicator state name indicating (exactly observed) end of
+#'   follow up.
+#'
+#' @return A data frame
+#'
+#' @export
+visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
+                             eof_indicator = "EOF") {
+  if (!inherits(tbl_visits, "data.frame")) {
+    stop("'tbl_visits' must be a data.frame")
+  } else {
+    assertthat::assert_that(
+      inherits(tbl_visits$subject_id, "character"),
+      inherits(tbl_visits$group_id, "character"),
+      inherits(tbl_visits$t, "numeric"),
+      inherits(tbl_visits$state, "character")
+    )
+  }
+  UseMethod("visits_to_mstate", object = model)
+}
+
+#' @inheritParams visits_to_mstate
+#' @rdname Model
+#' @export
+visits_to_mstate.Model <- function(tbl_visits, model, now = max(tbl_visits$t),
+                                   eof_indicator = "EOF") {
+  stop("not implemented")
+}

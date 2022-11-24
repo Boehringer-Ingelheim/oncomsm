@@ -6,6 +6,7 @@
 \alias{create_srp_model}
 \alias{format.srp_model}
 \alias{plot_mstate.srp_model}
+\alias{visits_to_mstate.srp_model}
 \title{A Stable-Response-Progression Model}
 \usage{
 \method{mstate_to_visits}{srp_model}(model, tbl_mstate, ...)
@@ -13,9 +14,9 @@
 create_srp_model(
   group_id,
   logodds_mean,
-  logodds_sd,
+  logodds_sd = rep(0.01, length(group_id)),
   median_time_to_next_event_mean,
-  median_time_to_next_event_sd,
+  median_time_to_next_event_sd = matrix(0.01, nrow = length(group_id), ncol = 3),
   visit_spacing,
   logodds_min = rep(logodds(0.001), length(group_id)),
   logodds_max = rep(logodds(0.999), length(group_id)),
@@ -31,6 +32,13 @@ create_srp_model(
   now = max(tbl_mstate$t_max),
   relative_to_sot = TRUE,
   ...
+)
+
+\method{visits_to_mstate}{srp_model}(
+  tbl_visits,
+  model,
+  now = max(tbl_visits$t),
+  eof_indicator = "EOF"
 )
 }
 \arguments{
@@ -81,6 +89,11 @@ Weibull distribution per group/transition}
 
 \item{relative_to_sot}{Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual}
+
+\item{tbl_visits}{visit data in long format}
+
+\item{eof_indicator}{state name indicating (exactly observed) end of
+follow up.}
 }
 \description{
 Create a new instance of an SRP model

@@ -12,6 +12,7 @@
 \alias{plot_mstate.Model}
 \alias{generate_visit_data.Model}
 \alias{sample_pfs_rate.Model}
+\alias{visits_to_mstate.Model}
 \alias{mstate_to_visits.Model}
 \title{An abstract multi-state model class}
 \usage{
@@ -81,6 +82,13 @@
   ...
 )
 
+\method{visits_to_mstate}{Model}(
+  tbl_visits,
+  model,
+  now = max(tbl_visits$t),
+  eof_indicator = "EOF"
+)
+
 \method{mstate_to_visits}{Model}(model, tbl_mstate, ...)
 }
 \arguments{
@@ -125,6 +133,11 @@ of trial or the start of treatment for each individual}
 per group}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
+
+\item{tbl_visits}{visit data in long format}
+
+\item{eof_indicator}{state name indicating (exactly observed) end of
+follow up.}
 
 \item{tbl_mstate}{a data table in multi-state format. TODO: explain}
 }

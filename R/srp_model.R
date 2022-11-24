@@ -36,9 +36,9 @@
 create_srp_model <- function(
   group_id,
   logodds_mean,
-  logodds_sd,
+  logodds_sd = rep(0.01, length(group_id)),
   median_time_to_next_event_mean,
-  median_time_to_next_event_sd,
+  median_time_to_next_event_sd = matrix(0.01, nrow = length(group_id), ncol = 3),
   visit_spacing,
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
@@ -406,6 +406,92 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # no
       legend.position = "right"
     )
 
+}
+
+
+
+#' @inheritParams visits_to_mstate
+#' @name srp_model
+#' @export
+visits_to_mstate.srp_model <- function(tbl_visits, model,
+                                       now = max(tbl_visits$t),
+                                       eof_indicator = "EOF") {
+  # make sure everything is sorted
+  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t)
+
+  tbl_mstate <- list()
+
+  subject_id_lagged <- 0L
+  state_lagged <- 0L
+  t_sot <- 0 # start of treatment
+  for (i in seq_len(nrow(tbl_visits))) {
+    if (tbl_visits$subject_id[i] != subject_id_lagged || i == 1) {
+      # switch to new subject
+      subject_id_lagged <- tbl_visits$subject_id[i]
+      state_lagged <- "stable"
+      t_sot <- tbl_visits$t[i]
+      if (tbl_visits$state[i] != state_lagged) {
+        # record jump
+        stop(sprintf(
+          "first visit must be in starting state; subject_id=%s, state=%s",
+          tbl_visits$subject_id[i],
+          tbl_visits$state[i]
+        ))
+      }
+    }
+    # handle jumps
+    if (tbl_visits$state[i] != state_lagged) {
+      if (tbl_visits$state[i] == eof_indicator) { # record eof
+        tbl_mstate <- bind_rows(tbl_mstate, tibble(
+          subject_id = tbl_visits$subject_id[i],
+          group_id = tbl_visits$group_id[i],
+          from = state_lagged,
+          to = NA,
+          t_min = tbl_visits$t[i],
+          # - Inf indicates censoring and end of follow up
+          # (event can no longer be observed)
+          t_max = -Inf,
+          t_sot = t_sot
+        ))
+        state_lagged <- tbl_visits$state[i]
+      } else { # record jump
+        tbl_mstate <- bind_rows(tbl_mstate, tibble(
+          subject_id = tbl_visits$subject_id[i],
+          group_id = tbl_visits$group_id[i],
+          from = state_lagged,
+          to = tbl_visits$state[i],
+          t_min = tbl_visits$t[i - 1],
+          t_max = tbl_visits$t[i],
+          t_sot = t_sot
+        ))
+      }
+      # updated current state
+      state_lagged <- tbl_visits$state[i]
+    }
+    # handle non-eof censoring
+    censored <- FALSE
+    if (!(tbl_visits$state[i] %in% c("progression", eof_indicator))) {
+      if (i < nrow(tbl_visits)) {
+        if (tbl_visits$subject_id[i] != tbl_visits$subject_id[i + 1]) {
+          censored <- TRUE
+        }
+      } else {
+        censored <- TRUE
+      }
+    }
+    if (censored) {
+      tbl_mstate <- bind_rows(tbl_mstate, tibble(
+        subject_id = tbl_visits$subject_id[i],
+        group_id = tbl_visits$group_id[i],
+        from = tbl_visits$state[i],
+        to = NA,
+        t_min = now,
+        t_max = Inf,
+        t_sot = t_sot
+      ))
+    }
+  }
+  return(tbl_mstate)
 }
 
 
