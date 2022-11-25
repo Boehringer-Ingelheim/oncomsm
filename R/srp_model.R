@@ -20,7 +20,12 @@
 #'   the Weibull transition probabilities, the (i,j)-th entry is the i-th group
 #'   median time to next event for transition j
 #'   (1=stable-response, 2=stable-progression, 3=response-progression)
-#' @param visit_spacing vector of time differences between visits per group
+#' @param visit_spacing vector of time differences between visits per group,
+#' only relevant for sampling from the predictive distribution
+#' @param recruitment_rate vector with per-group recruitment rates,
+#' only relevant for sampling from the predictive distribution
+#' @param max_time maximal overall runtime from first visit,
+#' only relevant for sampling from the predictive distribution
 #' @param logodds_min lower boundary on the log-odds per group
 #' @param logodds_max upper boundary on the log-odds per group
 #' @param shape_min matrix of lower boundaries of the uniform prior of the

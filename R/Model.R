@@ -143,6 +143,7 @@ sample_posterior.Model <- function(
 #'
 #' @return TODO:
 #'
+#' @rdname Model
 #' @export
 sample_predictive <- function(model, n_per_group, sample, nsim,
                               nsim_parameters, warmup_parameters, seed,
@@ -150,7 +151,6 @@ sample_predictive <- function(model, n_per_group, sample, nsim,
   UseMethod("sample_predictive")
 }
 
-#'
 #' @rdname Model
 #' @export
 sample_predictive.Model <- function(

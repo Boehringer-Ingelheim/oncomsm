@@ -6,6 +6,7 @@
 \alias{print.Model}
 \alias{sample_prior.Model}
 \alias{sample_posterior.Model}
+\alias{sample_predictive}
 \alias{sample_predictive.Model}
 \alias{impute.Model}
 \alias{parameter_sample_to_tibble.Model}
@@ -36,6 +37,18 @@
   seed = NULL,
   rstan_output = TRUE,
   pars = attr(model, "parameter_names"),
+  ...
+)
+
+sample_predictive(
+  model,
+  n_per_group,
+  sample,
+  nsim,
+  nsim_parameters,
+  warmup_parameters,
+  seed,
+  as_mstate,
   ...
 )
 
@@ -106,16 +119,15 @@ tune the hyperparameters of the MCMC algorithm.}
 
 \item{data}{the (multi-state) data frame to impute further trajectories for.}
 
-\item{n_per_group}{the number of individuals per group to be recruited.}
+\item{n_per_group}{integer vector with number of individuals per group.}
 
-\item{sample}{a stanfit object containing samples. These parameter samples
-represent the parameter distribution over which the predictive distribution
-averages. Technically, the parameters are resampled with replacement from
-this sample to match the desired number of imputations.}
+\item{sample}{a stanfit object with samples from the respective model.}
 
 \item{nsim_parameters}{integer, number of parameter samples}
 
 \item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
+
+\item{as_mstate}{return data in multi-state forma, see \code{\link[=visits_to_mstate]{visits_to_mstate()}}}
 
 \item{recruitment_rates}{the per-group recruitment rates.}
 
@@ -130,6 +142,9 @@ of trial or the start of treatment for each individual}
 
 \item{eof_indicator}{state name indicating (exactly observed) end of
 follow up.}
+}
+\value{
+TODO:
 }
 \description{
 This is abstract class defining a standard set of methods for any implemented
