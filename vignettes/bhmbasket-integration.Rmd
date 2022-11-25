@@ -80,8 +80,14 @@ is_success <- function(data, nsim = 250) {
   # convert data to bhmbasket format (multi-state to binary counts)
   data <- data %>%
     group_by(group_id, subject_id) %>%
-    summarize(responder = any(to == "response"), .groups = "drop_last") %>%
-    summarize(r = sum(responder), n = n(), .groups = "drop") %>%
+    summarize(
+      responder = any(state == "response"),
+      .groups = "drop_last"
+    ) %>% 
+    summarize(
+      r = sum(responder),
+      n = n(),
+    ) %>%
     {
       bhmbasket::createTrial(.$n, .$r)
     }
