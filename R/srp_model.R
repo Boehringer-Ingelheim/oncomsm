@@ -223,7 +223,7 @@ is_valid.srp_model <- function(mdl) { # nolint
       next
     }
     subject_ids <- get_identifier(n = n_per_group[i])
-    recruitment_times <- cumsum(rexp(n_per_group[i], rate = rr[i]))
+    recruitment_times <- cumsum(stats::rexp(n_per_group[i], rate = rr[i]))
     res <- bind_rows(res, tibble(
       subject_id = subject_ids,
       group_id = group_ids[i],

@@ -31,6 +31,8 @@ sample_predictive(
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
+\item{as_mstate}{return data in multi-state forma, see \code{\link[=visits_to_mstate]{visits_to_mstate()}}}
+
 \item{...}{further arguments passed to method implementations}
 }
 \value{

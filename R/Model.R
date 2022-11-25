@@ -138,6 +138,7 @@ sample_posterior.Model <- function(
 #' @template param-nsim_parameters
 #' @template param-warmup_parameters
 #' @template param-seed
+#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
 #' @template param-dotdotdot
 #'
 #' @return TODO:
@@ -488,12 +489,10 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
   if (!inherits(tbl_visits, "data.frame")) {
     stop("'tbl_visits' must be a data.frame")
   } else {
-    assertthat::assert_that(
-      inherits(tbl_visits$subject_id, "character"),
-      inherits(tbl_visits$group_id, "character"),
-      inherits(tbl_visits$t, "numeric"),
-      inherits(tbl_visits$state, "character")
-    )
+    checkmate::test_true(inherits(tbl_visits$subject_id, "character"))
+    checkmate::test_true(inherits(tbl_visits$group_id, "character"))
+    checkmate::test_true(inherits(tbl_visits$t, "numeric"))
+    checkmate::test_true(inherits(tbl_visits$state, "character"))
   }
   UseMethod("visits_to_mstate", object = model)
 }
