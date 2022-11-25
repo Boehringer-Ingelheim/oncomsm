@@ -52,10 +52,10 @@ $t$ after the start of the trial.
 Let $\tau$ be the stopping time of the trial, 
 e.g., the time point when all $n$ individuals have been recruited and 
 have reached their minimal follow-up.
-The final decision whether or not the trial is considered a success can then
-be modeled as a function $\phi: \mathbb{D} \to \{0,1\}$ with 
+The final decision on 'go' can then be modeled as a function
+$\phi: \mathbb{D} \to \{0,1\}$ with 
 
-$$\phi(D_\tau)=1 :\Leftrightarrow D_\tau\ \text{is considered a success}\ . $$
+$$\phi(D_\tau)=1 :\Leftrightarrow D_\tau\ \ \text{leads to 'go'}\ . $$
 
 Let $\theta$ be a vector of parameters for a generative model that allows to
 sample data $D_\tau|\theta$.
@@ -116,7 +116,7 @@ plot(mdl, dt = c(0, 36), sample = smpl_prior, n_grid = 25)
 ```
 
 
-## A composite ORR and PFS12 success criterion
+## A composite ORR and PFS12 'go' criterion
 
 Assume that a 'go' is defined as a combination of a sufficiently high
 response rate and a sufficiently high progression-free-survival rate at 12
@@ -146,7 +146,7 @@ go <- function(data, nsim = 200L) {
   res <- tbl_pfs_orr %>% # apply decision criterion
     group_by(group_id) %>%
     summarize(
-      success = mean(pfs >= 0.5 & orr >= 0.3) >= 0.8
+      go = mean(pfs >= 0.5 & orr >= 0.3) >= 0.8
     )
   return(res)
 }
@@ -200,8 +200,8 @@ res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dorng% {
 tbl_pr_go <- bind_rows(res, .id = "iter") %>%
   group_by(group_id) %>%
   summarize(
-    `Pr[go]` = mean(success),
-    se  = sd(success) / sqrt(n())
+    `Pr[go]` = mean(go),
+    se  = sd(go) / sqrt(n())
   )
 
 print(tbl_pr_go)
@@ -225,7 +225,7 @@ and thus the probability of 'go'.
 ```{r}
 tbl_data <- sample_predictive(
     mdl,
-    p = c(0.5, 0.29), ## conflicting prior expectation
+    p = c(0.65, 0.45), ## conflicting prior expectation
     n_per_group = c(40L, 40L), 
     nsim = 1,
     seed = 23849
@@ -267,7 +267,7 @@ pr_go <- function(tbl, nsim) {
     ) %>%
     group_by(iter) %>%
     tidyr::nest()
-  # determine for each sampled trial whether it ends in a success
+  # determine for each sampled trial whether it ends in a 'go'
   res <- foreach(i = 1:nsim) %dorng% {
     go(tbl_posterior_predictive$data[[i]])
   }
@@ -287,10 +287,10 @@ The number of simulations is the main factor in determining the runtime of the
 program besides the number of samples drawn from the posterior distribution to
 evaluate the decision criterion.
 
-```{r}
+```{r simulate}
 tbl_pr_go_over_time <- tbl_data_interims %>%
   mutate(
-    res = purrr::map(data, pr_go, nsim = 100L)
+    res = purrr::map(data, pr_go, nsim = 25L)
   ) %>%
   tidyr::unnest(res)
 
@@ -306,7 +306,42 @@ ggplot(tbl_pr_go_over_time) +
   geom_errorbar(aes(ymin = `Pr[go]` - se, ymax = `Pr[go]` + se, 
                     color = group_id), width = 1) +
   geom_line(aes(y = `Pr[go]`, color = group_id), alpha = 0.33) +
+  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) + 
   scale_y_continuous(breaks = seq(0, 1, by = 0.1), limits = c(0, 1))
+```
+
+This can be compared to the number of available responses, progressions, and
+stable individuals at each time point.
+
+```{r}
+f <- function(tbl) {
+  tbl %>% 
+  group_by(group_id, subject_id) %>% 
+  summarize(
+    responder = any(state == "response") && all(state != "progression"),
+    progressor = any(state == "progression"),
+    stable = all(state == "stable"),
+    .groups = "drop_last"
+  ) %>% 
+  summarize(
+    response = sum(responder),
+    progression = sum(progressor),
+    stable = sum(stable)
+  )
+}
+
+tbl <- tibble(
+    t_interim = tbl_data_interims$t_interim,
+    summary = purrr::map(tbl_data_interims$data, f)
+  ) %>% 
+  unnest(summary)
+
+tidyr::pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>% 
+  ggplot() +
+    aes(t_interim, value, color = event, linetype = group_id) +
+    geom_line() +
+    scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) + 
+    scale_y_continuous("", breaks = seq(0, 30, by = 5))
 ```
 
 

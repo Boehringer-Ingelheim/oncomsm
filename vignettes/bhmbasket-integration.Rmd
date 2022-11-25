@@ -62,7 +62,7 @@ mdl <- create_srp_model(
 ```
 
 
-## Defining 'success'
+## Defining 'go' decision
 
 The `bhmbasket` package implements dynamic borrowing between arms in
 basket trials via Bayesian hierarchical models (BHMs).
@@ -108,7 +108,7 @@ go <- function(data, nsim = 250) {
     n_mcmc_iterations     = nsim,
     verbose               = FALSE
   ))
-  # success if posterior quantile of response rate is sufficiently large
+  # 'go' if posterior quantile of response rate is sufficiently large
   return(tibble(
     group_id = attr(mdl, "group_id"),
     go = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
@@ -119,8 +119,8 @@ go <- function(data, nsim = 250) {
 
 ## Sample from the prior predictive 
 
-The Probability of Success at the planning stage can be computed by sampling from
-the prior-predictive distribution an then applying the defined success criterion.
+The probability of 'go' at the planning stage can be computed by sampling from
+the prior-predictive distribution an then applying the defined 'go' criterion.
 
 ```{r, warning=FALSE}
 tbl_prior_predictive <- sample_predictive(
