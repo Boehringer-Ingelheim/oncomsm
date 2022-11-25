@@ -12,7 +12,6 @@ test_that("Testing that fixed seed works", {
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 3, ncol = 3)
   )
   smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 500, seed = 36L)
-
   tbl1 <- sample_predictive(mdl, sample = smpl_prior,
                             n_per_group = c(1L, 0L, 1L), nsim = 20, seed = 423)
   tbl2 <- sample_predictive(mdl, sample = smpl_prior,
@@ -31,49 +30,58 @@ test_that("Testing that fixed seed works", {
 
 
 test_that("Testing marginal calibration of sampling from the prior", {
+  # to test that the response probability is properly calibrated, all factors
+  # need to be taken into account.
+  # The discrete visit spacing can lead to missing a few responses if the
+  # transition to progression happens within a visit interval.
+  # To minimize this effect, a shape > 1, small visit interval, and long
+  # time from response->progression is used
   mdl <- create_srp_model(
     group_id = 1,
     logodds_mean = 0,
     logodds_sd = .01, # low sd means we basically sample from a fixed parameter
-    visit_spacing = 1.2,
+    visit_spacing = 0.1,
     median_time_to_next_event = matrix(c(
-        3, 3, 6
+        3, 3, 24
       ), byrow = TRUE,  nrow = 1, ncol = 3),
     median_time_to_next_event_sd = matrix(0.01, byrow = TRUE, nrow = 1,
-                                          ncol = 3)
+                                          ncol = 3),
+    max_time = 12*50 # large t to avoid limiting effects
   )
   smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 1000, seed = 36L)
   tbl_prior_predictive <- sample_predictive(mdl, sample = smpl_prior,
-                                            n_per_group = 1L, nsim = 1000,
-                                            seed = 342)
+                                            n_per_group = 1, nsim = 1e3,
+                                            p = 0.5, # sample under fixed value
+                                            seed = 6563)
   # test that observed response rate is close enough to 0.5 (logodds(0.5) = 0)
-  tbl_observed_rr <- tbl_prior_predictive %>%
-    group_by(subject_id, iter) %>%
-    summarise(
-      responder = any(to == "response"),
+  res_test <- tbl_prior_predictive %>%
+    group_by(iter, subject_id) %>%
+    summarize(
+      responder = any(state == "response"),
       .groups = "drop"
     ) %>%
-    summarise(
-      p_hat = mean(responder),
-      p_se = sd(responder) / sqrt(n())
-    )
-  # allow for 2 standard errors:
-  expect_true(with(tbl_observed_rr, abs(p_hat - 0.5) < 5 * p_se))
+    {binom.test(sum(.$responder), nrow(.), p = 0.5)}
+  expect_true(res_test$p.value >= 0.01)
   # check calibration of times to next event, use midpoints of intervals as
   # approximation
   # work out the theoretical mean given scale = 1 and specified median = 3
   # (see mdl definition and https://en.wikipedia.org/wiki/Weibull_distribution)
   theoretical_means <- mdl$median_time_to_next_event_mean / log(2) * gamma(2)
-  # Theoretical mean time to event for response -> progression computed from
-  # the initial stable state
-  theoretical_means[3] <- theoretical_means[3] + theoretical_means[2]
-  # check that stable to response timings are roughly calibrated, use midpoints
-  # of intervals
+  # check that stable to response timings are roughly calibrated
   tbl_means <- tbl_prior_predictive %>%
-    group_by(from, to) %>%
-    summarise(
-      mean_hat = mean((t_min + t_max) / 2),
-      mean_se = sd((t_min + t_max) / 2) / sqrt(n()),
+    distinct(subject_id, iter, state, .keep_all = TRUE) %>%
+    group_by(iter, group_id, subject_id) %>%
+    summarize(
+      dt = t - lag(t),
+      from = lag(state),
+      to = state,
+      .groups = "drop"
+    ) %>%
+    filter(to != "stable") %>%
+    group_by(group_id, from, to) %>%
+    summarize(
+      estimated_mean = mean(dt),
+      se = sd(dt) / sqrt(n()),
       .groups = "drop"
     ) %>%
     mutate(
@@ -85,84 +93,49 @@ test_that("Testing marginal calibration of sampling from the prior", {
     )
   # testing for comparison with theoretical mean, allowing for estimation error
   expect_true(all(with(tbl_means,
-    abs(mean_hat - theoretical_mean) <= 3 * mean_se
+    abs(estimated_mean - theoretical_mean) <= 2 * se
   )))
-})
-
-
-
-test_that("Testing marginal calibration of sampling from the fixed p", {
-  mdl <- create_srp_model(
-    group_id = 1,
-    logodds_mean = 0,
-    logodds_sd = .01, # low sd means we basically sample from a fixed parameter
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE,  nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(0.01, byrow = TRUE, nrow = 1,
-                                          ncol = 3)
-  )
-  smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 1000, seed = 36L)
-  # sample setting to different response probabilities
-  for (p_true in c(0.1, 0.25, 0.75, 0.9)) {
-    tbl_prior_predictive <- sample_predictive(mdl, sample = smpl_prior,
-                                              p = p_true, n_per_group = 1L,
-                                              nsim = 1e2, seed = 342)
-    # test that observed response rate is close enough to true rate
-    res <- tbl_prior_predictive %>%
-      group_by(subject_id, iter) %>%
-      summarise(
-        responder = any(to == "response"),
-        .groups = "drop"
-      ) %>%
-      {binom.test(x = sum(.$responder), n = nrow(.), p = p_true)} # nolint
-    expect_true(res$p.value > 0.01)
-  }
-  # check for two groups
+  # check for two groups ------------------------------------------------------
   mdl <- create_srp_model(
     group_id = 1:2,
-    logodds_mean = rep(0, 2),
-    logodds_sd = rep(0.01, 2),
-    visit_spacing = rep(1.2, 2),
+    logodds_mean = logodds(c(.33, .8)),
+    logodds_sd = rep(0.1, 2),
+    visit_spacing = rep(0.2, 2),
+    max_time = 12*50,
     median_time_to_next_event = matrix(c(
-      3, 3, 6,
-      3, 3, 6
+      3, 3, 12,
+      3, 3, 12
     ), byrow = TRUE,  nrow = 2, ncol = 3),
-    median_time_to_next_event_sd = matrix(0.01, byrow = TRUE,
+    median_time_to_next_event_sd = matrix(1, byrow = TRUE,
                                           nrow = 2, ncol = 3)
   )
   smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 1000, seed = 36L)
   tbl <- sample_predictive(mdl, sample = smpl_prior,
-                           n_per_group = c(1L, 1L), nsim = 1e2, seed = 423,
-                           p = c(0.1, 0.9))
+                           n_per_group = c(1L, 1L), nsim = 1e3, seed = 423)
   # test that observed response rate is close enough to true rate
-  res <- tbl %>%
-    group_by(group_id, subject_id, iter) %>%
-    summarise(
-      responder = any(to == "response"),
+  res_test <- tbl %>%
+    filter(group_id == "1") %>%
+    group_by(iter, subject_id) %>%
+    summarize(
+      responder = any(state == "response"),
       .groups = "drop"
     ) %>%
-    group_by(group_id) %>%
-    tidyr::nest() %>%
-    mutate(
-      p_true = case_when(group_id == "1" ~ 0.1, group_id == "2" ~ 0.9)
+    {binom.test(sum(.$responder), nrow(.), p = 0.33)}
+  expect_true(res_test$p.value >= 0.01)
+  res_test <- tbl %>%
+    filter(group_id == "2") %>%
+    group_by(iter, subject_id) %>%
+    summarize(
+      responder = any(state == "response"),
+      .groups = "drop"
     ) %>%
-    mutate(
-      p_value = purrr::map2_dbl(data, p_true,
-                         ~binom.test(x = sum(..1$responder), n = nrow(..1),
-                                     p = ..2)$p.value)
-    )
-  expect_true(all(res$p_value > 0.01))
-})
-
-
-
-test_that("Testing marginal calibration of sampling from the fixed scale", {
+    {binom.test(sum(.$responder), nrow(.), p = .8)}
+  expect_true(res_test$p.value >= 0.01)
+  # Testing marginal calibration of sampling from the fixed scale -------------
   mdl <- create_srp_model(
     group_id = 1,
     logodds_mean = 0,
-    logodds_sd = .01,
+    logodds_sd = .1,
     visit_spacing = 1.2,
     median_time_to_next_event = matrix(c(
       3, 3, 6
@@ -183,16 +156,22 @@ test_that("Testing marginal calibration of sampling from the fixed scale", {
   # work out the theoretical mean given scale = 1 and true scale
   # (see https://en.wikipedia.org/wiki/Weibull_distribution)
   theoretical_means <- scale_true * gamma(1 + 1 / 1) # shape is one
-  # Theoretical mean time to event for response -> progression computed from
-  # the initial stable state
-  theoretical_means[3] <- theoretical_means[3] + theoretical_means[2]
   # check that stable to response timings are roughly calibrated, use midpoints
   # of intervals
   tbl_means <- tbl_prior_predictive %>%
-    group_by(from, to) %>%
-    summarise(
-      mean_hat = mean((t_min + t_max) / 2),
-      mean_se = sd((t_min + t_max) / 2) / sqrt(n()),
+    distinct(subject_id, iter, state, .keep_all = TRUE) %>%
+    group_by(iter, group_id, subject_id) %>%
+    summarize(
+      dt = t - lag(t),
+      from = lag(state),
+      to = state,
+      .groups = "drop"
+    ) %>%
+    filter(to != "stable") %>%
+    group_by(group_id, from, to) %>%
+    summarize(
+      estimated_mean = mean(dt),
+      se = sd(dt) / sqrt(n()),
       .groups = "drop"
     ) %>%
     mutate(
@@ -204,34 +183,8 @@ test_that("Testing marginal calibration of sampling from the fixed scale", {
     )
   # testing for comparison with theoretical mean, allowing for estimation error
   expect_true(all(with(tbl_means,
-                       abs(mean_hat - theoretical_mean) <= 3 * mean_se
+                       abs(estimated_mean - theoretical_mean) <= 2 * se
   )))
-})
-
-
-
-test_that("Testing short time response->progression (within same visit interval)", { # nolint
-  mdl <- create_srp_model(
-    group_id = 1,
-    logodds_mean = 0,
-    logodds_sd = 0.5,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 0.1, 6
-    ), byrow = TRUE,  nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 1, ncol = 3)
-  )
-  smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 500, seed = 36L)
-  tbl <- sample_predictive(mdl, sample = smpl_prior, n_per_group = 5L,
-                           nsim = 100, seed = 3423423)
-  # count how often the two jumps occur in the same visit interval
-  # should not happen, since one would then combine them into a direct
-  # transition between the two endpoints
-  n_double_jumps <- tbl %>%
-    group_by(iter, subject_id) %>%
-    filter(t_min == lag(t_min) & t_max == lag(t_max)) %>%
-    nrow()
-  expect_true(n_double_jumps == 0)
 })
 
 
@@ -252,26 +205,33 @@ test_that("Testing if a single indivdual can be sampled only once in a group", {
   tbl <- sample_predictive(mdl, sample = smpl_prior, n_per_group = 1L,
                            nsim = 1, seed = 42)
   # there should only be a single individual, single iteration
-  expect_true(nrow(tbl) == 1)
+  expect_true(length(unique(tbl$subject_id)) == 1)
 })
 
 
-
-test_that("can generate visit data from SRP model", {
+test_that("Testing sampling multiple individuals", {
   mdl <- create_srp_model(
-    group_id = c("A", "B"),
-    logodds_mean =  c(logodds(.5), logodds(.5)),
-    logodds_sd = c(.1, .1),
-    visit_spacing = c(1.2, 1.2),
+    group_id = 1:2,
+    logodds_mean = logodds(c(.33, .8)),
+    logodds_sd = rep(0.1, 2),
+    visit_spacing = rep(0.2, 2),
+    max_time = 12*50,
     median_time_to_next_event = matrix(c(
       3, 3, 6,
       3, 3, 6
     ), byrow = TRUE,  nrow = 2, ncol = 3),
-    median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
+    median_time_to_next_event_sd = matrix(0.1, byrow = TRUE,
+                                          nrow = 2, ncol = 3)
   )
-  generate_visit_data(mdl, n_per_group = c(20, 20),
-                      recruitment_rate = c(.1, 5), seed = 112341)
-  expect_true(TRUE) # TODO: implement check
+  smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 500, seed = 36L)
+  tbl <- sample_predictive(mdl, sample = smpl_prior, n_per_group = c(20L, 40L),
+                           nsim = 5, seed = 42)
+  tmp <- tbl %>%
+    distinct(group_id, subject_id, iter, .keep_all = TRUE) %>%
+    group_by(group_id, subject_id) %>%
+    summarize(niter = n(), .groups = "drop")
+  expect_true(nrow(tmp) == 60L)
+  expect_true(all(tmp$niter == 5L))
 })
 
 
@@ -279,7 +239,7 @@ test_that("can generate visit data from SRP model", {
 test_that("impute remainder of trial from interim data", {
   mdl <- create_srp_model(
     group_id = c("A", "B"),
-    logodds_mean =  c(logodds(.5), logodds(.5)),
+    logodds_mean =  c(0, 0),
     logodds_sd = c(.1, .1),
     visit_spacing = c(1.2, 1.2),
     median_time_to_next_event = matrix(c(
@@ -289,13 +249,13 @@ test_that("impute remainder of trial from interim data", {
     median_time_to_next_event_sd = matrix(1, byrow = TRUE,  nrow = 2, ncol = 3)
   )
   # sample some data
-  tbl_data1 <- sample_predictive(mdl, c(20, 20), nsim = 1) %>%
-    select(-iter)
+  tbl_data1 <- sample_predictive(mdl, c(20, 20), nsim = 1, seed = 43L,
+                                 nsim_parameters = 1500L)
   # impute another 20/group conditional on observed data
-  tbl_data2 <- impute(mdl, tbl_data1, c(40, 40),
-                      recruitment_rates = c(1, 1), nsim = 25)
+  tbl_data2 <- impute(mdl, tbl_data1, c(40, 40), nsim = 25, seed = 4453L)
   expect_true(
-    tbl_data2 %>% group_by(subject_id, group_id, iter) %>% n_groups() ==
-      40 * 25 * 2
+    tbl_data2 %>%
+      group_by(subject_id, group_id, iter) %>%
+      n_groups() == 40 * 25 * 2
   )
 })

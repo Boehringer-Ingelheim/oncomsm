@@ -90,20 +90,8 @@ test_that("private function is_valid throws correct errors", {
 })
 
 
-test_that("can create empty standata for SRP model", {
-
-  lst_standata <- oncomsm:::data2standata.srp_model(
-    mdl, oncomsm:::.nodata.srp_model(mdl)
-  )
-
-  expect_true(TRUE) # TODO: implement check
-
-})
-
-
 
 test_that("can convert data to standata for SRP model", {
-
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id,    ~t,        ~state,
           "1",         "1",     0,      "stable",
@@ -119,64 +107,53 @@ test_that("can convert data to standata for SRP model", {
           "1",         "3",     4,    "response",
           "1",         "3",   4.25,         "EOF"
   )
-  tbl_mstate <- visits_to_mstate(
-    tbl_visits,
-    start_state = "stable",
-    absorbing_states = c("progression")
-  )
-  lst_standata <- oncomsm:::data2standata.srp_model(mdl, tbl_mstate)
-
+  tbl_mstate <- visits_to_mstate(tbl_visits, mdl)
+  lst_standata <- oncomsm:::data2standata.srp_model(tbl_mstate, mdl)
   expect_true(TRUE) # TODO: implement check
-
 })
 
 
 
 test_that("can sample from prior", {
-
   smpl_prior <- sample_prior(mdl, seed = 1414322)
-
   p <- parameter_sample_to_tibble(mdl, smpl_prior) %>%
     filter(parameter == "p") %>%
     group_by(group_id) %>%
     summarize(mean = mean(value)) %>%
     pull(mean)
-
   expect_true(all(abs(p - 0.5) < .01))
-
 })
 
 
 
 test_that("posterior shifts as expected", {
-
   tbl_data <- sample_predictive(
       mdl,
       n_per_group = c(20, 20),
       nsim = 1,
       seed = 42L,
       p = c(0.1, 0.9)
-    ) %>%
-    select(-iter)
-
+    )
   p_obs <- tbl_data %>%
-    filter(from == "stable") %>%
+    group_by(group_id, iter, subject_id) %>%
+    summarize(
+      responder = any(state == "response"),
+      .groups = "drop"
+    ) %>%
     group_by(group_id) %>%
-    summarize(p = mean(to == "response")) %>%
-    pull(p)
-
+    summarize(
+      p_response = mean(responder)
+    ) %>%
+    pull(p_response)
   smpl_posterior <- sample_posterior(mdl, tbl_data)
-
   p <- parameter_sample_to_tibble(mdl, smpl_posterior) %>%
     filter(parameter == "p") %>%
     group_by(group_id) %>%
     summarize(mean = mean(value)) %>%
     pull(mean)
-
   expect_true(all(case_when(
     p_obs > 0.5 & p > 0.5 ~ TRUE,
     p_obs < 0.5 & p < 0.5 ~ TRUE,
     TRUE ~ FALSE
   )))
-
 })

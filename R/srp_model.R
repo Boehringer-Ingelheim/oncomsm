@@ -171,8 +171,8 @@ is_valid.srp_model <- function(mdl) { # nolint
   sample_once <- function(iter) {
     # extract a set of parameters
     response_probabilities <- p[idx[iter], , drop = FALSE]
-    shapes <- shape[idx[iter], , ]
-    scales <- scale[idx[iter], , ]
+    shapes <- matrix(shape[idx[iter], , ], ncol = 3)
+    scales <- matrix(scale[idx[iter], , ], ncol = 3)
     # sample
     res <- f(data, response_probabilities, shapes, scales,
         visit_spacing = attr(model, "visit_spacing"),
@@ -219,8 +219,10 @@ is_valid.srp_model <- function(mdl) { # nolint
   rr <- attr(model, "recruitment_rate")
   res <- tibble()
   for (i in seq_along(group_ids)) {
-    subject_ids <- sprintf("generated_subject_%06i",
-                           (nrow(res) + 1):(nrow(res) + n_per_group[i]))
+    if (n_per_group[i] < 1) {
+      next
+    }
+    subject_ids <- get_identifier(n = n_per_group[i])
     recruitment_times <- cumsum(rexp(n_per_group[i], rate = rr[i]))
     res <- bind_rows(res, tibble(
       subject_id = subject_ids,
@@ -235,7 +237,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 
 
 # convert time to event data to stan data list
-data2standata.srp_model <- function(model, data) { # nolint
+data2standata.srp_model <- function(data, model) { # nolint
   lst_stan_data <- data %>%
     mutate(
       group_id = as.integer(factor(.data$group_id,

@@ -73,12 +73,8 @@ test_that("can plot mstate data for SRP model", {
           "1",         "3",   4.25,         "EOF"
     )
 
-  tbl_mstate <- visits_to_mstate(
-    tbl_visits,
-    start_state = "stable",
-    absorbing_states = c("progression")
-  )
-  plt <- plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
+  tbl_mstate <- visits_to_mstate(tbl_visits, mdl)
+  plt <- plot_mstate(tbl_mstate, mdl, relative_to_sot = FALSE)
   vdiffr::expect_doppelganger("plot_mstate.srp_model_1", plt)
 
   # two groups
@@ -108,12 +104,8 @@ test_that("can plot mstate data for SRP model", {
           "2",         "3",     4,    "response",
           "2",         "3",   4.25,         "EOF"
   )
-  tbl_mstate <- visits_to_mstate(
-    tbl_visits,
-    start_state = "stable",
-    absorbing_states = c("progression")
-  )
-  plt <- plot_mstate(mdl, tbl_mstate, relative_to_sot = FALSE)
+  tbl_mstate <- visits_to_mstate(tbl_visits, mdl)
+  plt <- plot_mstate(tbl_mstate, mdl, relative_to_sot = FALSE)
   vdiffr::expect_doppelganger("plot_mstate.srp_model_2", plt)
 
 })

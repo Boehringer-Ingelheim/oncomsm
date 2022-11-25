@@ -63,7 +63,7 @@ DataFrame f(
   // iterate over number of samples to draw
   float t_first_visit = t(0);
   NumericVector dt_response_interval = {NA_REAL, NA_REAL};
-  int g = group(0) - 1; // group - 1 (index into parameter arrays)
+  int g; // group - 1 (index into parameter arrays)
   double p_response;
   bool response;
   double dt_response;
@@ -108,6 +108,7 @@ DataFrame f(
     row_idx += 1;
     // handle forward sampling if required
     if (sample) {
+      g = group(i) - 1;
       // 1. determine response status
       if (state(i) == "stable") { // still undecided, sample
         p_response = conditional_response_probability_srp(
@@ -140,7 +141,7 @@ DataFrame f(
       while (tt + dt < max_time) { // check whether there is enough time for another visit
         tt += dt;
         subject_id_out(row_idx) = subject_id(i);
-        group_out(row_idx) = g + 1;
+        group_out(row_idx) = group(i);
         t_out(row_idx) = tt;
         if (tt < t_first_visit + dt_response) {
           state_out(row_idx) = "stable";
@@ -160,14 +161,15 @@ DataFrame f(
           break; // no need to sample multiple visits form absorbing state
         }
       } // end while
-      // reset counters for new subject
-      // (if we needed to sample we next visit is new subject)
-      if (i < df.nrows() - 1) {
+    } // end if(sample)
+    // reset counters for new subject
+    // (if we needed to sample we next visit is new subject)
+    if (i < df.nrows() - 2) {
+      if (subject_id(i) != subject_id(i + 1)) {
         t_first_visit = t(i + 1);
         dt_response_interval = {NA_REAL, NA_REAL};
-        g = group(i + 1) - 1; // g is C++ index starting from 0
       }
-    } // end if(sample)
+    }
   } // end for
   // reduce to used memory only
   Rcpp::Range range = Rcpp::Range(0, row_idx - 1);

@@ -214,7 +214,7 @@ impute.Model <- function(
   model,
   data,
   n_per_group = NULL,
-  recruitment_rates = NULL,
+  recruitment_rates = attr(model, "recruitment_rate"),
   now = NULL,
   sample = NULL,
   nsim = 250L,
@@ -223,6 +223,9 @@ impute.Model <- function(
   seed = NULL,
   ...
 ) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   group_ids <- attr(model, "group_id")
   if (is.null(sample)) {
     sample <- sample_posterior(
@@ -232,7 +235,7 @@ impute.Model <- function(
   }
   if (is.null(now)) {
     # convert to visits and take the last time point
-    now <- max(mstate_to_visits(model, data)$t)
+    now <- max(data$t)
   }
   if (is.null(n_per_group)) {
     # no new individuals
@@ -248,7 +251,12 @@ impute.Model <- function(
       stop("recruitment_rates must be specified")
     }
   }
-  tbl_to_be_recruited <- list()
+  tbl_to_recruit <- tibble(
+    subject_id = character(0L),
+    group_id = character(0L),
+    t = numeric(0L),
+    state = character(0L)
+  )
   for (i in seq_along(group_ids)) {
     n_recruited <- data %>%
       filter(.data$group_id == group_ids[i]) %>%
@@ -259,24 +267,24 @@ impute.Model <- function(
     if (n_to_be_recruited < 0) {
       stop("data contains more individuals than specified in n_per_group")
     }
+    ids_to_exclude <- c(tbl_to_recruit$subject_id, unique(data$subject_id))
     if (n_to_be_recruited > 0) {
-      tbl_to_be_recruited <- rbind(tbl_to_be_recruited, tibble(
-          group_id = group_ids[i],
-          subject_id = uuid::UUIDgenerate(n = n_to_be_recruited),
-          t_sot = now +
-            cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i])),
-          from = "stable",
-          to = NA_character_,
-          t_min = .data$t_sot + 1 / 30,
-          t_max = Inf # right censored
-        )) %>%
-        arrange(.data$t_sot)
+      subject_ids <- get_identifier(n = n_to_be_recruited,
+                                    exclude = ids_to_exclude)
+      recruitment_times <- now +
+        cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i]))
+      tbl_to_recruit <- bind_rows(tbl_to_recruit, tibble(
+        subject_id = subject_ids,
+        group_id = group_ids[i],
+        t = recruitment_times,
+        state = "stable" # first visits are always stable
+      ))
     }
   }
-  tbl_tmp <- bind_rows(data, tbl_to_be_recruited)
-  res <- .impute(model = model, data = tbl_tmp, parameter_sample = sample,
+  tbl_data <- bind_rows(data, tbl_to_recruit)
+  res <- .impute(model = model, data = tbl_data, parameter_sample = sample,
                  nsim = nsim, seed = seed, ...)
-  return(res)
+  return(res) # problem with forward sampling?
 }
 
 # must be implemented by "Model" subclass
@@ -296,6 +304,7 @@ impute.Model <- function(
 .sample.Model <- function( # nolint
   model,
   data = NULL,
+  now = NULL,
   warmup = 250L,
   nsim = 1000L,
   seed = NULL,
@@ -305,17 +314,16 @@ impute.Model <- function(
 ) {
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
-  # check whether data is in visit format
+  if (is.null(data)) {
+    data <- .nodata(model)
+  } else {
+    if (is.null(now)) {
+      now <- max(data$t)
+    }
+    data <- visits_to_mstate(data, model, now)
+  }
   # combine prior information with data for stan
-  stan_data <- c(
-    as.list(model), # hyperparameters
-    data2standata(model, if (is.null(data)) {
-      .nodata(model)
-      }else {
-        data
-        }
-    ) # data
-  )
+  stan_data <- c(as.list(model), data2standata(data, model))
   # global seed affects permutation of extracted parameters if not set
   set.seed(seed)
   # sample
@@ -386,12 +394,12 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 
 # generic for digesting data into rstan-ready list
-data2standata <- function(model, data, ...) {
-  UseMethod("data2standata")
+data2standata <- function(data, model, ...) {
+  UseMethod("data2standata", model)
 }
 
 # convert time to event data to stan data list
-data2standata.Model <- function(model, data) {
+data2standata.Model <- function(data, model) {
   stop("not implemented")
 }
 
@@ -440,6 +448,7 @@ generate_visit_data <- function(model, n_per_group, recruitment_rate, ...) {
 #' @export
 generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
                                       seed = NULL, ...) {
+  warning("deprecated")
   tbl_data <- sample_predictive(model, n_per_group = n_per_group, nsim = 1,
                                 seed = seed) %>% select(-"iter", -"t_sot")
   tbl_recruitment_times <- tbl_data %>%

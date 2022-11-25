@@ -57,7 +57,7 @@
   model,
   data,
   n_per_group = NULL,
-  recruitment_rates = NULL,
+  recruitment_rates = attr(model, "recruitment_rate"),
   now = NULL,
   sample = NULL,
   nsim = 250L,

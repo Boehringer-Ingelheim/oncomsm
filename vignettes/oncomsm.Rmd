@@ -147,8 +147,8 @@ mdl <- create_srp_model(
   # names of the arms/groups
   group_id = c("control", "intervention"),
   # per-group logodds of response|stable
-  logodds_mean = c(logodds(.25), logodds(.5)),
-  logodds_sd = c(.01, .01),
+  logodds_mean = c(logodds(.4), logodds(.6)),
+  logodds_sd = c(1, 1),
   # m[i,j] is the median time to next event for group i and transition j
   median_time_to_next_event = matrix(c(
     3, 2, 6,
@@ -157,16 +157,6 @@ mdl <- create_srp_model(
   # fixed standard deviation of the prior for all median times
   median_time_to_next_event_sd = matrix(
     1,
-    byrow = TRUE, nrow = 2, ncol = 3
-  ),
-  # uniform prior over the shape parameter, difficult to identify,
-  # better keep it tight to avoid issues with the sampler
-  shape_min = matrix(
-    1.5,
-    byrow = TRUE, nrow = 2, ncol = 3
-  ),
-  shape_max = matrix(
-    2.5,
     byrow = TRUE, nrow = 2, ncol = 3
   ),
   # the visit interval
@@ -209,9 +199,9 @@ time point and the curve of PFS rate over time corresponds to the survival
 function of the "progression or death" event.
 
 ```{r plotting-the-prior}
-smpl_prior <- sample_prior(mdl, warmup = 500, nsim = 2000, seed = 36L)
+smpl_prior <- sample_prior(mdl, seed = 36L)
 
-# plot(mdl, dt = c(0, 36), sample = smpl_prior)
+plot(mdl, dt = c(0, 36), sample = smpl_prior)
 ```
 
 
@@ -227,7 +217,7 @@ tbl_prior_predictive <- sample_predictive(
   sample = smpl_prior,
   n_per_group = c(30L, 30L),
   nsim = 100,
-  seed = 3423423
+  seed = 342
 )
 
 print(tbl_prior_predictive, n = 25)
@@ -273,9 +263,10 @@ tbl_prior_predictive %>%
 
 By default, the prior predictive distribution is given in terms of panel visit
 data.
-The data can be transformed to interval-censored multi-state representation.
+The data can be transformed to interval-censored multi-state representation,
+(here only first sampled trial).
 
-```{r plot-preior-predictive, fig.height=6}
+```{r convert-to-mstate}
 tbl_mstate <- tbl_prior_predictive %>% 
   filter(iter == 1) %>% 
   visits_to_mstate(mdl)
@@ -371,7 +362,7 @@ Since the data conflicts with the prior, the posterior mass will move
 in the direction of the observed response rates.
 
 ```{r}
-smpl_posterior <- sample_posterior(mdl, tbl_data_interim, seed = 76947)
+smpl_posterior <- sample_posterior(mdl, tbl_data_interim, seed = 43L)
 
 plot(mdl, dt = c(0, 36), sample = smpl_posterior)
 
