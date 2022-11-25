@@ -429,57 +429,6 @@ plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
 
 
 
-#' Generate Visit data from a multi-state model
-#'
-#' @template param-model
-#' @template param-n_per_group
-#' @param recruitment_rate numeric vector with the monthly recruitment rates
-#' per group
-#' @template param-dotdotdot
-#'
-#' @export
-generate_visit_data <- function(model, n_per_group, recruitment_rate, ...) {
-  UseMethod("generate_visit_data")
-}
-
-#' @inheritParams generate_visit_data
-#' @template param-seed
-#' @rdname Model
-#' @export
-generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
-                                      seed = NULL, ...) {
-  warning("deprecated")
-  tbl_data <- sample_predictive(model, n_per_group = n_per_group, nsim = 1,
-                                seed = seed) %>% select(-"iter", -"t_sot")
-  tbl_recruitment_times <- tbl_data %>%
-    select("subject_id", "group_id") %>%
-    distinct() %>%
-    group_by(.data$group_id) %>%
-    mutate( # poisson recruitment process
-      rate = purrr::map_dbl(
-          .data$group_id,
-          ~recruitment_rate[which(attr(model, "group_id") == .)]
-        ),
-      t_sot = cumsum(stats::rexp(n = n(), rate = .data$rate))
-    ) %>%
-    ungroup() %>%
-    select(-"rate")
-  # join and shift transition times accordingly
-  res <- left_join(
-      tbl_data,
-      tbl_recruitment_times,
-      by = c("subject_id", "group_id")
-    ) %>%
-    mutate(
-      t_min = .data$t_min + .data$t_sot,
-      t_max = .data$t_max + .data$t_sot
-    ) %>%
-    mstate_to_visits(model, .)
-  return(res)
-}
-
-
-
 #' Sample from the progression-free-survival rate
 #'
 #' Progression-free-survival rate at time t (PFS-t rate) is a function of the

@@ -90,17 +90,17 @@ This parametric family encompasses the exponential distribution with constant
 transition rates as special cases but also allows increasing or decreasing 
 hazards over time.
 
-Let $\tau_{S}$ be the transition time from the "stable" state and
-$\tau_{R}$ the transition tome from the "response" state (also "sojourn" times).
+Let $T_{S}$ be the transition time from the "stable" state and
+$T_{R}$ the transition tome from the "response" state (also "sojourn" times).
 Let further $R$ be a binary random variable with $R=1$ if a response occurs, 
 then the model can be specified as:
 
 $$
 \begin{align}
 R &\sim \operatorname{Bernoulli}(p) \\
-\tau_{S} \,|\, R = 1 &\sim \operatorname{Weibull}(k[1], \lambda[1]) \\
-\tau_{S} \,|\, R = 0 &\sim \operatorname{Weibull}(k[2], \lambda[2]) \\
-\tau_{R}             &\sim \operatorname{Weibull}(k[3], \lambda[3])
+T_{S} \,|\, R = 1 &\sim \operatorname{Weibull}(k_1, \lambda_1) \\
+T_{S} \,|\, R = 0 &\sim \operatorname{Weibull}(k_2, \lambda_2) \\
+T_{R}             &\sim \operatorname{Weibull}(k_3, \lambda_3)
 \end{align}
 $$
 where $k$ is the vector of shape- and $\lambda$ the vector of scale parameters.
@@ -109,7 +109,7 @@ $i\in\{1,2,3\}$ as indicated in the above figure and let $F_i(t)$ the
 corresponding CDF.
 This model implies that 
 $$
-\operatorname{Pr}\big[\,\tau_{S} > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_2(t))\\
+\operatorname{Pr}\big[\,T_{S} > t \,\big]  = p\cdot(1 - F_1(t))  + (1 - p)\cdot(1 - F_2(t))\\
 $$
 hence, it can be seen as a mixture model. 
 

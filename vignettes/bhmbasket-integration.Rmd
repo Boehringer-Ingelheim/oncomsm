@@ -41,8 +41,8 @@ plan(multisession) # instruct future how to run in parallel
 
 **tl;dr:** *The [`bhmbasket`](https://cran.r-project.org/web/packages/bhmbasket/index.html) 
 package implements Bayesian hierarchical methods for basket trials with binary endpoints.
-Although `oncomsm` does not support hierarchical modelling, `bhmbasket` can be 
-used to define success criteria.*
+Although `oncomsm` does not support hierarchical modelling,
+`bhmbasket` can be used to define 'go' criteria based on hierarchical models.*
 
 Start by defining a prior specification for a multi-group trial.
 
@@ -67,15 +67,16 @@ mdl <- create_srp_model(
 The `bhmbasket` package implements dynamic borrowing between arms in
 basket trials via Bayesian hierarchical models (BHMs).
 Here, we demonstrate how `oncomsm` and the prior specified in `mdl` can be used
-to derive probability of success based on a `bhmbasket` analysis. 
+to derive probability of 'go' based on a `bhmbasket` analysis. 
 We use the "Berry" type model for analysis of the response data and use a
-posterior $0.25$ quantile of the response rate above $0.3$ to declare success.
-This means that an individual arm is considered successful if there is a $0.75$
+posterior $0.25$ quantile of the response probability above $0.3$ to declare
+'go'.
+This means that an individual arm is further developed if there is a $0.75$
 posterior probability according to the BHM that the response rate is larger 
 than $0.3$.
 
 ```{r}
-is_success <- function(data, nsim = 250) {
+go <- function(data, nsim = 250) {
   set.seed(2340239L)
   # convert data to bhmbasket format (multi-state to binary counts)
   data <- data %>%
@@ -110,7 +111,7 @@ is_success <- function(data, nsim = 250) {
   # success if posterior quantile of response rate is sufficiently large
   return(tibble(
     group_id = attr(mdl, "group_id"),
-    success = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
+    go = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
   ))
 }
 ```
@@ -144,15 +145,15 @@ tbl_prior_predictive <- tbl_prior_predictive %>%
 tbl_prior_predictive
 ```
 
-## Apply success criterion and calculate PoS
+## Calculate probability of 'go'
 
-The success criterion can then be applied to each of the resampled data sets.
+The 'go' criterion can then be applied to each of the resampled data sets.
 
 ```{r}
 tbl_results <- tbl_prior_predictive %>%
   mutate(
     res = furrr::future_map(
-      data, is_success,
+      data, go,
       .options = furrr::furrr_options(seed = TRUE)
     )
   ) %>%
@@ -162,12 +163,12 @@ tbl_results <- tbl_prior_predictive %>%
 tbl_results
 ```
 
-Finally, Probability of Success can be computed as the average success rate.
+Finally, probability of 'go' can be computed as the average 'go' rate.
 
 ```{r}
 tbl_results %>%
   group_by(group_id) %>%
   summarize(
-    PoS = mean(success)
+    `Pr[go]` = mean(go)
   )
 ```
