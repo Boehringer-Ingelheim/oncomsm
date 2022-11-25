@@ -228,12 +228,12 @@ response rates.
 
 ```{r}
 tbl_prior_predictive %>%
-  group_by(group_id, iter, subject_id) %>% 
+  group_by(group_id, iter, subject_id) %>%
   summarize(
     responder = any(state == "response"),
     .groups = "drop"
-  ) %>% 
-  group_by(group_id) %>% 
+  ) %>%
+  group_by(group_id) %>%
   summarize(
     p_response = mean(responder),
     se = sd(responder) / sqrt(n())
@@ -245,14 +245,14 @@ prior means.
 
 ```{r}
 tbl_prior_predictive %>%
-  distinct(subject_id, iter, state, .keep_all = TRUE) %>% 
-  group_by(iter, group_id, subject_id) %>% 
+  distinct(subject_id, iter, state, .keep_all = TRUE) %>%
+  group_by(iter, group_id, subject_id) %>%
   summarize(
     dt = t - lag(t),
     from = lag(state),
-    to = state, 
+    to = state,
     .groups = "drop"
-  ) %>% 
+  ) %>%
   filter(to != "stable") %>%
   group_by(group_id, from, to) %>%
   summarize(
@@ -267,8 +267,8 @@ The data can be transformed to interval-censored multi-state representation,
 (here only first sampled trial).
 
 ```{r convert-to-mstate}
-tbl_mstate <- tbl_prior_predictive %>% 
-  filter(iter == 1) %>% 
+tbl_mstate <- tbl_prior_predictive %>%
+  filter(iter == 1) %>%
   visits_to_mstate(mdl)
 
 tbl_mstate
@@ -295,13 +295,13 @@ sample_predictive(
     n_per_group = c(30L, 30L),
     nsim = 100,
     seed = 3423423
-  ) %>% 
-  group_by(group_id, iter, subject_id) %>% 
+  ) %>%
+  group_by(group_id, iter, subject_id) %>%
   summarize(
     responder = any(state == "response"),
     .groups = "drop"
-  ) %>% 
-  group_by(group_id) %>% 
+  ) %>%
+  group_by(group_id) %>%
   summarize(
     p_response = mean(responder),
     se = sd(responder) / sqrt(n())
@@ -325,7 +325,7 @@ tbl_data_interim <- sample_predictive(
     n_per_group = c(30L, 30L),
     nsim = 1,
     seed = 42L
-  ) %>% 
+  ) %>%
   filter(
     t <= 15
   )
@@ -334,8 +334,8 @@ tbl_data_interim <- sample_predictive(
 The censoring in the interim data can be visualized in a swimmer plot again.
 
 ```{r, fig.height=6}
-tbl_data_interim %>% 
-  visits_to_mstate(mdl, now = 15) %>% 
+tbl_data_interim %>%
+  visits_to_mstate(mdl, now = 15) %>%
   plot_mstate(mdl, relative_to_sot = FALSE, now = 15)
 ```
 
@@ -344,12 +344,12 @@ Due to censoring at the interim time point, the response rate estimate is biased
 
 ```{r}
 tbl_data_interim %>%
-  group_by(group_id, iter, subject_id) %>% 
+  group_by(group_id, iter, subject_id) %>%
   summarize(
     responder = any(state == "response"),
     .groups = "drop"
-  ) %>% 
-  group_by(group_id) %>% 
+  ) %>%
+  group_by(group_id) %>%
   summarize(
     p_response = mean(responder),
     se = sd(responder) / sqrt(n())

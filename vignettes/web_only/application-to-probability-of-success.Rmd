@@ -227,7 +227,7 @@ and thus the probability of 'go'.
 tbl_data <- sample_predictive(
     mdl,
     p = c(0.65, 0.45), ## conflicting prior expectation
-    n_per_group = c(40L, 40L), 
+    n_per_group = c(40L, 40L),
     nsim = 1,
     seed = 23849
   )
@@ -304,10 +304,10 @@ corresponding to the standard error of the simulation.
 ```{r}
 ggplot(tbl_pr_go_over_time) +
   aes(t_interim) +
-  geom_errorbar(aes(ymin = `Pr[go]` - se, ymax = `Pr[go]` + se, 
+  geom_errorbar(aes(ymin = `Pr[go]` - se, ymax = `Pr[go]` + se,
                     color = group_id), width = 1) +
   geom_line(aes(y = `Pr[go]`, color = group_id), alpha = 0.33) +
-  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) + 
+  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
   scale_y_continuous(breaks = seq(0, 1, by = 0.1), limits = c(0, 1))
 ```
 
@@ -316,14 +316,14 @@ stable individuals at each time point.
 
 ```{r}
 f <- function(tbl) {
-  tbl %>% 
-  group_by(group_id, subject_id) %>% 
+  tbl %>%
+  group_by(group_id, subject_id) %>%
   summarize(
     responder = any(state == "response") && all(state != "progression"),
     progressor = any(state == "progression"),
     stable = all(state == "stable"),
     .groups = "drop_last"
-  ) %>% 
+  ) %>%
   summarize(
     response = sum(responder),
     progression = sum(progressor),
@@ -334,10 +334,10 @@ f <- function(tbl) {
 tbl <- tibble(
     t_interim = tbl_data_interims$t_interim,
     summary = purrr::map(tbl_data_interims$data, f)
-  ) %>% 
+  ) %>%
   unnest(summary)
 
-pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>% 
+pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>%
   ggplot() +
     aes(t_interim, value, color = event, linetype = group_id) +
     geom_line() +

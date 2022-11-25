@@ -43,10 +43,10 @@ create_srp_model <- function(
   logodds_mean,
   logodds_sd = rep(0.01, length(group_id)),
   median_time_to_next_event_mean,
-  median_time_to_next_event_sd = matrix(0.01, nrow = length(group_id), ncol = 3),
+  median_time_to_next_event_sd = matrix(0.1, nrow = length(group_id), ncol = 3),
   visit_spacing,
-  recruitment_rate = rep(1, length(group_id)), # TODO document and remove default
-  max_time = 10*12, # maximal follow up time since start of trial
+  recruitment_rate = rep(1, length(group_id)),
+  max_time = 10 * 12,
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
   shape_min = matrix(.99, nrow = length(group_id), ncol = 3),
