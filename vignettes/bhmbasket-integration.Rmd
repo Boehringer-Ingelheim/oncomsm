@@ -84,7 +84,7 @@ go <- function(data, nsim = 250) {
     summarize(
       responder = any(state == "response"),
       .groups = "drop_last"
-    ) %>% 
+    ) %>%
     summarize(
       r = sum(responder),
       n = n(),

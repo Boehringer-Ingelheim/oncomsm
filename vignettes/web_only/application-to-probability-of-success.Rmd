@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 library(oncomsm)
 library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
+library(tidyr)
 library(future) # parallel processing
 library(doFuture)
 library(doRNG) # parallel safe random number generation
@@ -336,11 +337,11 @@ tbl <- tibble(
   ) %>% 
   unnest(summary)
 
-tidyr::pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>% 
+pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>% 
   ggplot() +
     aes(t_interim, value, color = event, linetype = group_id) +
     geom_line() +
-    scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) + 
+    scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
     scale_y_continuous("", breaks = seq(0, 30, by = 5))
 ```
 
