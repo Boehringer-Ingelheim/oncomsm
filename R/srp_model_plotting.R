@@ -138,6 +138,7 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
 #' @template param-seed
 #' @template param-nsim
 #' @template param-warmup
+#' @template param-dt-params
 #'
 #' @rdname srp_model
 #' @export
@@ -268,6 +269,7 @@ plot_response_probability.srp_model <- function(model,
 #' @template param-seed
 #' @template param-nsim
 #' @template param-warmup
+#' @template param-dt-params
 #'
 #' @rdname srp_model
 #' @export
@@ -325,11 +327,11 @@ plot_pfs.srp_model <- function(model,
 #' @param x the model to plot
 #' @template param-parameter_sample
 #' @template param-seed
-#' @param dt_interval optional, fixed plotting limits in time since first visit
-#' @param dt_n_grid optional, plotting resolution along time scale
-#' @param dt_expand optional, expansion factor for the upper limit of the
-#' automatically determine plotting interval
 #' @template param-nsim
+#' @template param-warmup
+#' @template param-nuts_control
+#' @template param-dt-params
+#' @template param-dotdotdot
 #'
 #' @rdname srp_model
 #' @export

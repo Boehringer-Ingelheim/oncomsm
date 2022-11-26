@@ -36,7 +36,6 @@ Imports:
     Rcpp,
     rstan (>= 2.18),
     rlang (>= 0.4),
-    tibble (>= 3.1),
     magrittr (>= 2.0), 
     dplyr (>= 1.0),
     tidyr (>= 1.1),
@@ -47,7 +46,6 @@ Imports:
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
-    RcppEigen (>= 0.3),
     rstan (>= 2.18),
     StanHeaders (>= 2.18)
 SystemRequirements: GNU make

@@ -178,12 +178,18 @@ tune the hyperparameters of the MCMC algorithm.}
 \item{relative_to_sot}{Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual}
 
-\item{dt_interval}{optional, fixed plotting limits in time since first visit}
+\item{nuts_control}{control parameters for NUTS algorithm see \code{\link[rstan:stan]{rstan::stan()}}}
 
-\item{dt_n_grid}{optional, plotting resolution along time scale}
+\item{dt_interval}{numeric vector of length two with minimal and maximal
+time (relative to individual first visit) to use for plotting}
 
-\item{dt_expand}{optional, expansion factor for the upper limit of the
-automatically determine plotting interval}
+\item{dt_n_grid}{number of grid points to use when automatically choosing
+plotting interval}
+
+\item{dt_expand}{expansion factor for upper plotting limit when using
+automatic interval detection}
+
+\item{dt_grid}{numeric vector of time points to use for plotting}
 }
 \description{
 Create a new instance of an SRP model
