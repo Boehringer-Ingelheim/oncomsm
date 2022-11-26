@@ -38,41 +38,40 @@ is_valid.Model <- function(model) {
 #' Sample model parameters from the model prior distribution.
 #'
 #' @template param-model
-#' @template param-warmup
 #' @template param-nsim
 #' @template param-seed
-#' @template param-rstan_output
-#' @template param-pars
 #' @template param-dotdotdot
 #'
-#' @return A tibble with columns iter (integer), parameter (character),
-#' group_id (character), and value (numeric) with the parameter samples in long
-#' format or (if rstan_output == TRUE) a rstanfit object.
+#' @return a rstanfit object with the sampled prior parameters
+#'
+#' @seealso [parameter_sample_to_tibble()]
 #'
 #' @export
-sample_prior <- function(model, warmup, nsim, seed, rstan_output, pars, ...) {
+sample_prior <- function(model, nsim, seed, ...) {
   UseMethod("sample_prior")
 }
 
 #' @inheritParams sample_prior
+#' @template param-warmup
+#' @template param-pars
+#' @template param-nuts_control
+#'
 #' @rdname Model
 #' @export
 sample_prior.Model <- function(
   model,
-  warmup = 500L,
   nsim = 2000L,
   seed = NULL,
-  rstan_output = TRUE,
+  warmup = 500L,
   pars = attr(model, "parameter_names"),
+  nuts_control = list(),
   ...
 ) {
   res <- .sample(
     model, data = NULL,
-    warmup = warmup, nsim = nsim, seed = seed, pars = pars, ...
+    warmup = warmup, nsim = nsim, seed = seed, pars = pars,
+    nuts_control = nuts_control, ...
   )
-  if (rstan_output == FALSE) { # convert to tibble representation
-    res <- parameter_sample_to_tibble(model, res)
-  }
   return(res)
 }
 
@@ -86,42 +85,41 @@ sample_prior.Model <- function(
 #'
 #' @template param-model
 #' @template param-data-condition
-#' @template param-warmup
 #' @template param-nsim
 #' @template param-seed
-#' @template param-rstan_output
-#' @template param-pars
 #' @template param-dotdotdot
 #'
-#' @return A tibble with columns iter (integer), parameter (character),
-#' group_id (character), and value (numeric) with the parameter samples in long
-#' format or (if rstan_output == TRUE) a rstanfit object.
+#' @return A rstanfit object with posterior samples.
+#'
+#' @seealso [parameter_sample_to_tibble()]
 #'
 #' @export
-sample_posterior <- function(model, data, warmup, nsim, seed, rstan_output,
-                             pars, ...) {
+sample_posterior <- function(model, data, nsim, seed, ...) {
   UseMethod("sample_posterior")
 }
 
+#' @inheritParams sample_posterior
+#' @template param-warmup
+#' @template param-nuts_control
+#' @template param-pars
+#'
 #' @rdname Model
 #' @export
 sample_posterior.Model <- function(
   model,
   data,
-  warmup = 500L,
   nsim = 2000L,
   seed = NULL,
-  rstan_output = TRUE,
+  warmup = 500L,
+  nuts_control = list(),
   pars = attr(model, "parameter_names"),
   ...
 ) {
   res <- .sample(
     model, data = data,
-    warmup = warmup, nsim = nsim, seed = seed, pars = pars, ...
+    warmup = warmup, nsim = nsim, seed = seed, pars = pars,
+    nuts_control = nuts_control, ...
   )
-  if (rstan_output == FALSE) { # convert to tibble representation
-    res <- parameter_sample_to_tibble(model, res)
-  }
   return(res)
 }
 
@@ -135,22 +133,21 @@ sample_posterior.Model <- function(
 #' @template param-n_per_group
 #' @template param-sample
 #' @template param-nsim
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
 #' @template param-seed
-#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
 #' @template param-dotdotdot
 #'
 #' @return TODO:
 #'
 #' @export
-sample_predictive <- function(model, n_per_group, sample, nsim,
-                              nsim_parameters, warmup_parameters, seed,
-                              as_mstate, ...) {
+sample_predictive <- function(model, n_per_group, sample, nsim, seed, ...) {
   UseMethod("sample_predictive")
 }
 
-#' @param as_mstate return in multi-state format
+#' @inheritParams sample_predictive
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
+#' @template param-nuts_control
 #'
 #' @rdname Model
 #' @export
@@ -159,18 +156,20 @@ sample_predictive.Model <- function(
   n_per_group,
   sample = NULL,
   nsim = 100L,
+  seed = NULL,
   nsim_parameters = 1000L,
   warmup_parameters = 250,
-  seed = NULL,
   as_mstate = FALSE,
+  nuts_control = list(),
   ...
 ) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
   if (is.null(sample)) {
-    sample <- sample_prior(model, rstan_output = TRUE,
-                           warmup = warmup_parameters, nsim = nsim_parameters)
+    sample <- sample_prior(model,
+                           warmup = warmup_parameters, nsim = nsim_parameters,
+                           nuts_control = nuts_control)
   }
   # construct an empty data set
   data <- .emptydata(model, n_per_group)
@@ -188,41 +187,42 @@ sample_predictive.Model <- function(
 #' @template param-model
 #' @param data the (multi-state) data frame to impute further trajectories for.
 #' @param n_per_group the number of individuals per group to be recruited.
-#' @param recruitment_rates the per-group recruitment rates.
 #' @param now exact time point relative to start of the trial
-#' @param sample a stanfit object containing samples. These parameter samples
-#'   represent the parameter distribution over which the predictive distribution
-#'   averages. Technically, the parameters are resampled with replacement from
-#'   this sample to match the desired number of imputations.
 #' @template param-nsim
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
 #' @template param-seed
 #' @template param-dotdotdot
 #'
 #' @return a data frame with imputed version of the input data.
 #'
 #' @export
-impute <- function(model, data, n_per_group, recruitment_rates, now,
-                   sample, nsim, nsim_parameters, warmup_parameters,
-                   seed, ...) {
+impute <- function(model, data, nsim, n_per_group, now, seed, ... ) {
   UseMethod("impute")
 }
 
 #' @inheritParams impute
+#' @param recruitment_rates vector of recruitment rates
+#' @param sample a stanfit object containing samples. These parameter samples
+#'   represent the parameter distribution over which the predictive distribution
+#'   averages. Technically, the parameters are resampled with replacement from
+#'   this sample to match the desired number of imputations.
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @template param-nuts_control
+#'
 #' @rdname Model
 #' @export
 impute.Model <- function(
   model,
   data,
+  nsim,
   n_per_group = NULL,
-  recruitment_rates = attr(model, "recruitment_rate"),
   now = NULL,
+  seed = NULL,
+  recruitment_rates = attr(model, "recruitment_rate"),
   sample = NULL,
-  nsim = 250L,
   nsim_parameters = 1000L,
   warmup_parameters = 250L,
-  seed = NULL,
+  nuts_control = list(),
   ...
 ) {
   if (!is.null(seed)) {
@@ -230,13 +230,13 @@ impute.Model <- function(
   }
   group_ids <- attr(model, "group_id")
   if (is.null(sample)) {
-    sample <- sample_posterior(
-      model, data = data, rstan_output = TRUE, seed = seed,
-      warmup = warmup_parameters, nsim = nsim_parameters
-    )
+    sample <- sample_posterior(model,
+                               data = data, seed = seed,
+                               warmup = warmup_parameters,
+                               nsim = nsim_parameters,
+                               nuts_control = nuts_control)
   }
-  if (is.null(now)) {
-    # convert to visits and take the last time point
+  if (is.null(now)) { # convert to visits and take the last time point
     now <- max(data$t)
   }
   if (is.null(n_per_group)) {
@@ -312,6 +312,7 @@ impute.Model <- function(
   seed = NULL,
   pars = attr(model, "parameter_names"),
   refresh = 0L,
+  nuts_control = list(),
   ...
 ) {
   if (is.null(seed)) # generate seed if none was specified
@@ -334,7 +335,9 @@ impute.Model <- function(
     data = stan_data,
     chains = 1L, cores = 1L,
     iter = warmup + nsim, warmup = warmup,
-    seed = seed, pars = pars, refresh = refresh, ...
+    seed = seed, pars = pars, refresh = refresh,
+    control = nuts_control,
+    ...
   )
   return(res)
 }

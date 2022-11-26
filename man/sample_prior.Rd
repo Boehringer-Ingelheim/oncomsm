@@ -4,29 +4,23 @@
 \alias{sample_prior}
 \title{Sample model prior parameters}
 \usage{
-sample_prior(model, warmup, nsim, seed, rstan_output, pars, ...)
+sample_prior(model, nsim, seed, ...)
 }
 \arguments{
 \item{model}{a model of class "Model"}
-
-\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.}
 
 \item{nsim}{number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
-\item{rstan_output}{logical, function returns raw rstan sample object if set to TRUE}
-
-\item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
-
 \item{...}{further arguments passed to method implementations}
 }
 \value{
-A tibble with columns iter (integer), parameter (character),
-group_id (character), and value (numeric) with the parameter samples in long
-format or (if rstan_output == TRUE) a rstanfit object.
+a rstanfit object with the sampled prior parameters
 }
 \description{
 Sample model parameters from the model prior distribution.
+}
+\seealso{
+\code{\link[=parameter_sample_to_tibble]{parameter_sample_to_tibble()}}
 }

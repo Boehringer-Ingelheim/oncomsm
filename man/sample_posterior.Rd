@@ -4,7 +4,7 @@
 \alias{sample_posterior}
 \title{Sample model posterior parameters}
 \usage{
-sample_posterior(model, data, warmup, nsim, seed, rstan_output, pars, ...)
+sample_posterior(model, data, nsim, seed, ...)
 }
 \arguments{
 \item{model}{a model of class "Model"}
@@ -15,24 +15,18 @@ If both are Inf, the individual has not and will never experience the event.
 If dt1 < Inf but dt2 == Inf the individual is still at risk.
 "t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.}
 
-\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.}
-
 \item{nsim}{number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
-\item{rstan_output}{logical, function returns raw rstan sample object if set to TRUE}
-
-\item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
-
 \item{...}{further arguments passed to method implementations}
 }
 \value{
-A tibble with columns iter (integer), parameter (character),
-group_id (character), and value (numeric) with the parameter samples in long
-format or (if rstan_output == TRUE) a rstanfit object.
+A rstanfit object with posterior samples.
 }
 \description{
 Posterior sample model of the parameters conditional on a data set.
+}
+\seealso{
+\code{\link[=parameter_sample_to_tibble]{parameter_sample_to_tibble()}}
 }
