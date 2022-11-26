@@ -161,7 +161,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
       binom.test(sum(.$responder), nrow(.), p = .8)
     } # nolint
   expect_true(res_test$p.value >= 0.01)
-  # Testing marginal calibration of sampling from the fixed scale -------------
+  # Testing marginal calibration of sampling from the fixed shape & scale -----
   mdl <- create_srp_model(
     group_id = 1,
     logodds_mean = 0,
@@ -171,25 +171,26 @@ test_that("Testing marginal calibration of sampling from the prior", {
       3, 3, 6
     ), byrow = TRUE, nrow = 1, ncol = 3),
     median_time_to_next_event_sd = matrix(0.01,
-      byrow = TRUE, nrow = 1,
-      ncol = 3
+                                          byrow = TRUE, nrow = 1,
+                                          ncol = 3
     )
   )
   # shape is implicitly set to 1
   smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 1000, seed = 36L)
-  scale_true <- matrix(c(10, 10, 10), nrow = 1)
+  scale_true <- 10
+  shape_true <- 1
   # sample setting to different response probabilities
   tbl_prior_predictive <- sample_predictive(mdl,
-    sample = smpl_prior,
-    scale = scale_true,
-    n_per_group = 1L, nsim = 1e3,
-    seed = 342
-  )
+                                            sample = smpl_prior,
+                                            scale = matrix(scale_true, ncol = 1, nrow = 3),
+                                            shape = matrix(shape_true, ncol = 1, nrow = 3),
+                                            n_per_group = 1L, nsim = 1e3,
+                                            seed = 342)
   # check calibration of times to next event, use midpoints of intervals as
   # approximation
   # work out the theoretical mean given scale = 1 and true scale
   # (see https://en.wikipedia.org/wiki/Weibull_distribution)
-  theoretical_means <- scale_true * gamma(1 + 1 / 1) # shape is one
+  theoretical_means <- rep(scale_true * gamma(1 + 1 / shape_true), 3)
   # check that stable to response timings are roughly calibrated, use midpoints
   # of intervals
   tbl_means <- tbl_prior_predictive %>%
@@ -220,6 +221,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     tbl_means,
     abs(estimated_mean - theoretical_mean) <= 2 * se
   )))
+  message("\n\rTODO: Test calibration for more shapes / scales")
 })
 
 
