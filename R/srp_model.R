@@ -138,13 +138,13 @@ is_valid.srp_model <- function(mdl) { # nolint
     n_params_sample <- parameter_sample@sim$iter - parameter_sample@sim$warmup
   } else {
     # p, scale, and shape must be given
-    if (is.null(p) || is.null(shape) || is.null(scale)) {
+    if (is.null(p) || is.null(shape) || is.null(scale)) { # nocov start
       stop("if no parameter sample is given all of p, scale, shape must be given") # nolint
     }
     if (length(p) != n_groups) stop()
     if (all(dim(shape) != c(n_groups, 3))) stop()
     if (all(dim(scale) != c(n_groups, 3))) stop()
-  }
+  } # nocov end
   # extract subject and group id levels for conversion to and back from integer
   subject_id_levels <- unique(as.character(data$subject_id))
   group_id_levels <- attr(model, "group_id") # important to maintain ordering
