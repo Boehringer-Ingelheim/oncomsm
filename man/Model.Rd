@@ -117,6 +117,8 @@ this sample to match the desired number of imputations.}
 
 \item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
 
+\item{as_mstate}{return in multi-state format}
+
 \item{recruitment_rates}{the per-group recruitment rates.}
 
 \item{now}{exact time point relative to start of the trial}

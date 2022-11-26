@@ -150,6 +150,8 @@ sample_predictive <- function(model, n_per_group, sample, nsim,
   UseMethod("sample_predictive")
 }
 
+#' @param as_mstate return in multi-state format
+#'
 #' @rdname Model
 #' @export
 sample_predictive.Model <- function(
