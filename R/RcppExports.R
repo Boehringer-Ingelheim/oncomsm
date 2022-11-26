@@ -9,7 +9,3 @@ f <- function(df, response_probabilities, shapes, scales, visit_spacing, max_tim
     .Call(`_oncomsm_f`, df, response_probabilities, shapes, scales, visit_spacing, max_time)
 }
 
-impute_srp_model <- function(df, p, shape_vec, scale_vec, visit_spacing, n_sim, n_groups) {
-    .Call(`_oncomsm_impute_srp_model`, df, p, shape_vec, scale_vec, visit_spacing, n_sim, n_groups)
-}
-
