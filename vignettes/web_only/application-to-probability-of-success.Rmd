@@ -113,7 +113,7 @@ One can now sample from the prior and visualize the prior assumptions.
 ```{r sample-from-prios}
 smpl_prior <- sample_prior(mdl, seed = 6835L)
 
-plot(mdl, dt = c(0, 36), sample = smpl_prior, n_grid = 25)
+plot(mdl, parameter_sample = smpl_prior)
 ```
 
 

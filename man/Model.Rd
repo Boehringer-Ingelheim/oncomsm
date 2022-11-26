@@ -10,7 +10,7 @@
 \alias{impute.Model}
 \alias{parameter_sample_to_tibble.Model}
 \alias{plot_mstate.Model}
-\alias{sample_pfs_rate.Model}
+\alias{compute_pfs.Model}
 \alias{visits_to_mstate.Model}
 \title{An abstract multi-state model class}
 \usage{
@@ -71,15 +71,7 @@
 
 \method{plot_mstate}{Model}(data, model, now, relative_to_sot, ...)
 
-\method{sample_pfs_rate}{Model}(
-  model,
-  t,
-  sample = NULL,
-  warmup = 500L,
-  nsim = 2000L,
-  seed = NULL,
-  ...
-)
+\method{compute_pfs}{Model}(model, t, parameter_sample, ...)
 
 \method{visits_to_mstate}{Model}(
   tbl_visits,
@@ -133,6 +125,8 @@ this sample to match the desired number of imputations.}
 of trial or the start of treatment for each individual}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
+
+\item{parameter_sample}{a stanfit object with samples from the respective model.}
 
 \item{tbl_visits}{visit data in long format}
 

@@ -442,32 +442,22 @@ plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
 #'
 #' @template param-model
 #' @param t a vector of time-points at which the PFS rate should be computed
-#' @template param-sample
-#' @template param-warmup
-#' @template param-nsim
-#' @template param-seed
+#' @template param-parameter_sample
 #' @template param-dotdotdot
 #'
 #' @return a data frame with samples of PFS rates at each of the time points
 #' in the vector t.
 #'
 #' @export
-sample_pfs_rate <- function(model, t, sample, warmup, nsim, seed, ...) {
-  UseMethod("sample_pfs_rate")
+compute_pfs <- function(model, t, parameter_sample, ...) {
+  UseMethod("compute_pfs")
 }
 
-#' @inheritParams sample_pfs_rate
+#' @inheritParams compute_pfs
+#'
 #' @rdname Model
 #' @export
-sample_pfs_rate.Model <- function(
-  model,
-  t, # PFS_r is 1 - Pr[progression or death before time t]
-  sample = NULL,
-  warmup = 500L,
-  nsim = 2000L,
-  seed = NULL,
-  ...
-) {
+compute_pfs.Model <- function(model, t, parameter_sample, ...) {
   stop("not implemented") # nocov
 }
 
