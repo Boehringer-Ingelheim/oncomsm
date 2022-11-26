@@ -189,11 +189,11 @@ is_valid.srp_model <- function(mdl) { # nolint
     response_probabilities <- p[idx[iter], , drop = FALSE]
     shapes <- matrix(shape[idx[iter], , ], ncol = 3)
     scales <- matrix(scale[idx[iter], , ], ncol = 3)
-    # sample
-    res <- f(data, response_probabilities, shapes, scales,
-      visit_spacing = attr(model, "visit_spacing"),
-      max_time = attr(model, "max_time")
-    ) %>%
+    # sample using C++ implementation
+    res <- impute_srp_model(data, response_probabilities, shapes, scales,
+        visit_spacing = attr(model, "visit_spacing"),
+        max_time = attr(model, "max_time")
+      ) %>%
       as_tibble() %>%
       mutate(
         group_id = as.character(.data$group_id)

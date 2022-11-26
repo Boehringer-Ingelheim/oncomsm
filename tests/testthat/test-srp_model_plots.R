@@ -39,6 +39,10 @@ test_that("default plotting works as intended", {
   vdiffr::expect_doppelganger("plot.srp_model_2", plt)
   # check that plotting without sample works
   plot(mdl)
+  # check that plotting sub functions work (output is subsumed in plot())
+  plot_pfs(mdl, dt_grid = c(.5, 5, 12))
+  plot_transition_times(mdl, dt_grid = c(.5, 5, 12))
+  plot_response_probability(mdl)
 })
 
 

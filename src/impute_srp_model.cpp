@@ -31,7 +31,7 @@ double conditional_response_probability_srp(
 
 
 // [[Rcpp::export]]
-DataFrame f(
+DataFrame impute_srp_model(
     DataFrame df, // must be sorted by subject and t within subject
     NumericVector response_probabilities,
     NumericMatrix shapes,
