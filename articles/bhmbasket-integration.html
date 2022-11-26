@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">oncomsm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
-    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
+    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of 'go'</a>
   </div>
 </li>
 <li class="nav-item">
@@ -94,7 +94,7 @@ Kunzmann</h4>
 package implements Bayesian hierarchical methods for basket trials with
 binary endpoints. Although <code>oncomsm</code> does not support
 hierarchical modelling, <code>bhmbasket</code> can be used to define
-success criteria.</em></p>
+‘go’ criteria based on hierarchical models.</em></p>
 <p>Start by defining a prior specification for a multi-group trial.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/srp_model.html">create_srp_model</a></span><span class="op">(</span></span>
@@ -110,25 +110,31 @@ success criteria.</em></p>
 <span>  visit_spacing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.2</span>, <span class="fl">1.2</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="defining-success">Defining ‘success’<a class="anchor" aria-label="anchor" href="#defining-success"></a>
+<h2 id="defining-go-decision">Defining ‘go’ decision<a class="anchor" aria-label="anchor" href="#defining-go-decision"></a>
 </h2>
 <p>The <code>bhmbasket</code> package implements dynamic borrowing
 between arms in basket trials via Bayesian hierarchical models (BHMs).
 Here, we demonstrate how <code>oncomsm</code> and the prior specified in
-<code>mdl</code> can be used to derive probability of success based on a
+<code>mdl</code> can be used to derive probability of ‘go’ based on a
 <code>bhmbasket</code> analysis. We use the “Berry” type model for
-analysis of the response data and use a posterior <span class="math inline">\(0.25\)</span> quantile of the response rate above
-<span class="math inline">\(0.3\)</span> to declare success. This means
-that an individual arm is considered successful if there is a <span class="math inline">\(0.75\)</span> posterior probability according to
+analysis of the response data and use a posterior <span class="math inline">\(0.25\)</span> quantile of the response probability
+above <span class="math inline">\(0.3\)</span> to declare ‘go’. This
+means that an individual arm is further developed if there is a <span class="math inline">\(0.75\)</span> posterior probability according to
 the BHM that the response rate is larger than <span class="math inline">\(0.3\)</span>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">is_success</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span>, <span class="va">nsim</span> <span class="op">=</span> <span class="fl">250</span><span class="op">)</span> <span class="op">{</span></span>
+<code class="sourceCode R"><span><span class="va">go</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span>, <span class="va">nsim</span> <span class="op">=</span> <span class="fl">250</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2340239L</span><span class="op">)</span></span>
 <span>  <span class="co"># convert data to bhmbasket format (multi-state to binary counts)</span></span>
 <span>  <span class="va">data</span> <span class="op">&lt;-</span> <span class="va">data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span>, <span class="va">subject_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>responder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="va">to</span> <span class="op">==</span> <span class="st">"response"</span><span class="op">)</span>, .groups <span class="op">=</span> <span class="st">"drop_last"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">responder</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, .groups <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
+<span>      responder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="va">state</span> <span class="op">==</span> <span class="st">"response"</span><span class="op">)</span>,</span>
+<span>      .groups <span class="op">=</span> <span class="st">"drop_last"</span></span>
+<span>    <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
+<span>      r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">responder</span><span class="op">)</span>,</span>
+<span>      n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="op">{</span></span>
 <span>      <span class="fu">bhmbasket</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bhmbasket/man/createTrial.html" class="external-link">createTrial</a></span><span class="op">(</span><span class="va">.</span><span class="op">$</span><span class="va">n</span>, <span class="va">.</span><span class="op">$</span><span class="va">r</span><span class="op">)</span></span>
 <span>    <span class="op">}</span></span>
@@ -148,21 +154,21 @@ the BHM that the response rate is larger than <span class="math inline">\(0.3\)<
 <span>    n_mcmc_iterations     <span class="op">=</span> <span class="va">nsim</span>,</span>
 <span>    verbose               <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="co"># success if posterior quantile of response rate is sufficiently large</span></span>
+<span>  <span class="co"># 'go' if posterior quantile of response rate is sufficiently large</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    group_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="st">"group_id"</span><span class="op">)</span>,</span>
-<span>    success <span class="op">=</span> <span class="va">res</span><span class="op">$</span><span class="va">scenario_1</span><span class="op">$</span><span class="va">quantiles_list</span><span class="op">$</span><span class="va">berry</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">5</span>, <span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span> <span class="op">&gt;=</span> <span class="fl">.3</span></span>
+<span>    go <span class="op">=</span> <span class="va">res</span><span class="op">$</span><span class="va">scenario_1</span><span class="op">$</span><span class="va">quantiles_list</span><span class="op">$</span><span class="va">berry</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">5</span>, <span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span> <span class="op">&gt;=</span> <span class="fl">.3</span></span>
 <span>  <span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="sample-from-the-prior-predictive">Sample from the prior predictive<a class="anchor" aria-label="anchor" href="#sample-from-the-prior-predictive"></a>
 </h2>
-<p>The Probability of Success at the planning stage can be computed by
+<p>The probability of ‘go’ at the planning stage can be computed by
 sampling from the prior-predictive distribution an then applying the
-defined success criterion.</p>
+defined ‘go’ criterion.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">40L</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>    nsim <span class="op">=</span> <span class="fl">250L</span>,</span>
@@ -170,20 +176,20 @@ defined success criterion.</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl_prior_predictive</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 41,638 × 8</span></span></span>
-<span><span class="co">#&gt;    subject_id group_id from     to          t_min t_max t_sot  iter</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 1          A        stable   progression   0     1.2     0     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 1          A        stable   progression   2.4   3.6     0     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 1          A        stable   response      3.6   4.8     0     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 1          A        response progression  15.6  16.8     0     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 1          A        stable   response      6     7.2     0     4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 1          A        response progression  12    13.2     0     4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 1          A        stable   progression   6     7.2     0     5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 1          A        stable   progression   8.4   9.6     0     6</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 1          A        stable   response      3.6   4.8     0     7</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1          A        response progression  18    19.2     0     7</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 41,628 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 466,848 × 5</span></span></span>
+<span><span class="co">#&gt;    subject_id group_id     t state     iter</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00153525 C         26.9 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00153525 C         28.1 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00153525 C         29.3 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00153525 C         30.5 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00153525 C         31.7 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00153525 C         32.9 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00153525 C         34.1 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00153525 C         35.3 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID00153525 C         36.5 stable       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID00153525 C         37.7 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 466,838 more rows</span></span></span></code></pre></div>
 <p>Next, the data can be nested by iteration (resample) fo facilitate
 further processing on a per-dataset basis.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -194,30 +200,30 @@ further processing on a per-dataset basis.</p>
 <span></span>
 <span><span class="va">tbl_prior_predictive</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 250 × 2</span></span></span>
-<span><span class="co">#&gt;     iter data              </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>            </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1 <span style="color: #949494;">&lt;tibble [174 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     2 <span style="color: #949494;">&lt;tibble [153 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     3 <span style="color: #949494;">&lt;tibble [172 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     4 <span style="color: #949494;">&lt;tibble [161 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     5 <span style="color: #949494;">&lt;tibble [179 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     6 <span style="color: #949494;">&lt;tibble [162 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     7 <span style="color: #949494;">&lt;tibble [193 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     8 <span style="color: #949494;">&lt;tibble [152 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     9 <span style="color: #949494;">&lt;tibble [148 × 7]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>    10 <span style="color: #949494;">&lt;tibble [168 × 7]&gt;</span></span></span>
+<span><span class="co">#&gt;     iter data                </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>              </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1 <span style="color: #949494;">&lt;tibble [1,790 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     2 <span style="color: #949494;">&lt;tibble [1,838 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     3 <span style="color: #949494;">&lt;tibble [1,513 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     4 <span style="color: #949494;">&lt;tibble [1,731 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     5 <span style="color: #949494;">&lt;tibble [1,743 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     6 <span style="color: #949494;">&lt;tibble [1,882 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     7 <span style="color: #949494;">&lt;tibble [1,482 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     8 <span style="color: #949494;">&lt;tibble [1,775 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     9 <span style="color: #949494;">&lt;tibble [1,977 × 4]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>    10 <span style="color: #949494;">&lt;tibble [2,082 × 4]&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># … with 240 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="apply-success-criterion-and-calculate-pos">Apply success criterion and calculate PoS<a class="anchor" aria-label="anchor" href="#apply-success-criterion-and-calculate-pos"></a>
+<h2 id="calculate-probability-of-go">Calculate probability of ‘go’<a class="anchor" aria-label="anchor" href="#calculate-probability-of-go"></a>
 </h2>
-<p>The success criterion can then be applied to each of the resampled
-data sets.</p>
+<p>The ‘go’ criterion can then be applied to each of the resampled data
+sets.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_results</span> <span class="op">&lt;-</span> <span class="va">tbl_prior_predictive</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    res <span class="op">=</span> <span class="fu">furrr</span><span class="fu">::</span><span class="fu"><a href="https://furrr.futureverse.org/reference/future_map.html" class="external-link">future_map</a></span><span class="op">(</span></span>
-<span>      <span class="va">data</span>, <span class="va">is_success</span>,</span>
+<span>      <span class="va">data</span>, <span class="va">go</span>,</span>
 <span>      .options <span class="op">=</span> <span class="fu">furrr</span><span class="fu">::</span><span class="fu"><a href="https://furrr.futureverse.org/reference/furrr_options.html" class="external-link">furrr_options</a></span><span class="op">(</span>seed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -226,33 +232,33 @@ data sets.</p>
 <span></span>
 <span><span class="va">tbl_results</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 750 × 3</span></span></span>
-<span><span class="co">#&gt;     iter group_id success</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1 A        FALSE  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     1 B        TRUE   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     1 C        TRUE   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     2 A        FALSE  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     2 B        FALSE  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     2 C        FALSE  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     3 A        TRUE   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     3 B        TRUE   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     3 C        TRUE   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>     4 A        FALSE  </span></span>
+<span><span class="co">#&gt;     iter group_id go   </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1 A        TRUE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     1 B        FALSE</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     1 C        TRUE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     2 A        FALSE</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     2 B        FALSE</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     2 C        TRUE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     3 A        FALSE</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     3 B        TRUE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     3 C        TRUE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>     4 A        FALSE</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># … with 740 more rows</span></span></span></code></pre></div>
-<p>Finally, Probability of Success can be computed as the average
-success rate.</p>
+<p>Finally, probability of ‘go’ can be computed as the average ‘go’
+rate.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tbl_results</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
-<span>    PoS <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">success</span><span class="op">)</span></span>
+<span>    `Pr[go]` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">go</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
-<span><span class="co">#&gt;   group_id   PoS</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.228</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.628</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.84</span></span></code></pre></div>
+<span><span class="co">#&gt;   group_id `Pr[go]`</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A           0.224</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B           0.604</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C           0.864</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

@@ -31,9 +31,6 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/Model.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/generate_visit_data.html</loc>
-  </url>
-  <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/impute.html</loc>
   </url>
   <url>
@@ -41,9 +38,6 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/logodds.html</loc>
-  </url>
-  <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/mstate_to_visits.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/oncomsm-package.html</loc>
@@ -59,9 +53,6 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_posterior.html</loc>
-  </url>
-  <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_predictive.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_prior.html</loc>

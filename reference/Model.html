@@ -16,7 +16,7 @@ the respective sub-classes can be."><!-- mathjax --><script src="https://cdnjs.c
     
     <a class="navbar-brand me-2" href="../index.html">oncomsm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@ the respective sub-classes can be."><!-- mathjax --><script src="https://cdnjs.c
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
-    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
+    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of 'go'</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -54,7 +54,7 @@ the respective sub-classes can be."><!-- mathjax --><script src="https://cdnjs.c
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>An abstract multi-state model class</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Boehringer-Ingelheim/oncomsm/blob/HEAD/R/Model.R" class="external-link"><code>R/Model.R</code></a>, <a href="https://github.com/Boehringer-Ingelheim/oncomsm/blob/HEAD/R/mstate_to_visit.R" class="external-link"><code>R/mstate_to_visit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Boehringer-Ingelheim/oncomsm/blob/HEAD/R/Model.R" class="external-link"><code>R/Model.R</code></a></small>
       <div class="d-none name"><code>Model.Rd</code></div>
     </div>
 
@@ -96,8 +96,20 @@ the respective sub-classes can be.</p>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">sample_predictive</span><span class="op">(</span></span>
+<span>  <span class="va">model</span>,</span>
+<span>  <span class="va">n_per_group</span>,</span>
+<span>  <span class="va">sample</span>,</span>
+<span>  <span class="va">nsim</span>,</span>
+<span>  <span class="va">nsim_parameters</span>,</span>
+<span>  <span class="va">warmup_parameters</span>,</span>
+<span>  <span class="va">seed</span>,</span>
+<span>  <span class="va">as_mstate</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu"><a href="sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
+<span><span class="fu">sample_predictive</span><span class="op">(</span></span>
 <span>  <span class="va">model</span>,</span>
 <span>  <span class="va">n_per_group</span>,</span>
 <span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -105,6 +117,7 @@ the respective sub-classes can be.</p>
 <span>  nsim_parameters <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  warmup_parameters <span class="op">=</span> <span class="fl">250</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  as_mstate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -113,7 +126,7 @@ the respective sub-classes can be.</p>
 <span>  <span class="va">model</span>,</span>
 <span>  <span class="va">data</span>,</span>
 <span>  n_per_group <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  recruitment_rates <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  recruitment_rates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"recruitment_rate"</span><span class="op">)</span>,</span>
 <span>  now <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">250L</span>,</span>
@@ -127,10 +140,7 @@ the respective sub-classes can be.</p>
 <span><span class="fu"><a href="parameter_sample_to_tibble.html">parameter_sample_to_tibble</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">sample</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span>, <span class="va">now</span>, <span class="va">relative_to_sot</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu"><a href="generate_visit_data.html">generate_visit_data</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">n_per_group</span>, <span class="va">recruitment_rate</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">model</span>, <span class="va">now</span>, <span class="va">relative_to_sot</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="sample_pfs_rate.html">sample_pfs_rate</a></span><span class="op">(</span></span>
@@ -144,7 +154,12 @@ the respective sub-classes can be.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu"><a href="mstate_to_visits.html">mstate_to_visits</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">tbl_mstate</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span></span>
+<span>  <span class="va">tbl_visits</span>,</span>
+<span>  <span class="va">model</span>,</span>
+<span>  now <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tbl_visits</span><span class="op">$</span><span class="va">t</span><span class="op">)</span>,</span>
+<span>  eof_indicator <span class="op">=</span> <span class="st">"EOF"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -187,14 +202,11 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>n_per_group</dt>
-<dd><p>the number of individuals per group to be recruited.</p></dd>
+<dd><p>integer vector with number of individuals per group.</p></dd>
 
 
 <dt>sample</dt>
-<dd><p>a stanfit object containing samples. These parameter samples
-represent the parameter distribution over which the predictive distribution
-averages. Technically, the parameters are resampled with replacement from
-this sample to match the desired number of imputations.</p></dd>
+<dd><p>a stanfit object with samples from the respective model.</p></dd>
 
 
 <dt>nsim_parameters</dt>
@@ -203,6 +215,10 @@ this sample to match the desired number of imputations.</p></dd>
 
 <dt>warmup_parameters</dt>
 <dd><p>integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.</p></dd>
+
+
+<dt>as_mstate</dt>
+<dd><p>return data in multi-state forma, see <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code></p></dd>
 
 
 <dt>recruitment_rates</dt>
@@ -218,19 +234,25 @@ this sample to match the desired number of imputations.</p></dd>
 of trial or the start of treatment for each individual</p></dd>
 
 
-<dt>recruitment_rate</dt>
-<dd><p>numeric vector with the monthly recruitment rates
-per group</p></dd>
-
-
 <dt>t</dt>
 <dd><p>a vector of time-points at which the PFS rate should be computed</p></dd>
 
 
-<dt>tbl_mstate</dt>
-<dd><p>a data table in multi-state format. TODO: explain</p></dd>
+<dt>tbl_visits</dt>
+<dd><p>visit data in long format</p></dd>
+
+
+<dt>eof_indicator</dt>
+<dd><p>state name indicating (exactly observed) end of
+follow up.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p>TODO:</p>
+    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><a href="srp_model.html">srp_model</a></p></div>

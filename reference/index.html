@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">oncomsm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
-    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
+    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of 'go'</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -89,19 +89,14 @@
         <dd>Sample model posterior parameters</dd>
       </dl><dl><dt>
           
-          <code><a href="sample_predictive.html">sample_predictive()</a></code> 
+          <code><a href="Model.html">format(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">print(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive()</a></code> <code><a href="Model.html">impute(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_pfs_rate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">visits_to_mstate(<i>&lt;Model&gt;</i>)</a></code> 
         </dt>
-        <dd>Sample data from predictive distribution of a model</dd>
+        <dd>An abstract multi-state model class</dd>
       </dl><dl><dt>
           
           <code><a href="impute.html">impute()</a></code> 
         </dt>
         <dd>Impute data from predictive distribution</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_visit_data.html">generate_visit_data()</a></code> 
-        </dt>
-        <dd>Generate Visit data from a multi-state model</dd>
       </dl></div><div class="section level2">
       <h2 id="abstract-model-interface">Abstract model interface<a class="anchor" aria-label="anchor" href="#abstract-model-interface"></a></h2>
       
@@ -115,7 +110,7 @@
 
       <dl><dt>
           
-          <code><a href="Model.html">format(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">print(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">generate_visit_data(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_pfs_rate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">mstate_to_visits(<i>&lt;Model&gt;</i>)</a></code> 
+          <code><a href="Model.html">format(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">print(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive()</a></code> <code><a href="Model.html">impute(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_pfs_rate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">visits_to_mstate(<i>&lt;Model&gt;</i>)</a></code> 
         </dt>
         <dd>An abstract multi-state model class</dd>
       </dl></div><div class="section level2">
@@ -131,7 +126,7 @@
 
       <dl><dt>
           
-          <code><a href="srp_model.html">mstate_to_visits(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">create_srp_model()</a></code> <code><a href="srp_model.html">format(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">plot_mstate(<i>&lt;srp_model&gt;</i>)</a></code> 
+          <code><a href="srp_model.html">create_srp_model()</a></code> <code><a href="srp_model.html">format(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">plot_mstate(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">visits_to_mstate(<i>&lt;srp_model&gt;</i>)</a></code> 
         </dt>
         <dd>A Stable-Response-Progression Model</dd>
       </dl></div><div class="section level2">
@@ -154,12 +149,7 @@
           
           <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code> 
         </dt>
-        <dd>Convert longitudinal visit data to time-to-event data</dd>
-      </dl><dl><dt>
-          
-          <code><a href="mstate_to_visits.html">mstate_to_visits()</a></code> 
-        </dt>
-        <dd>Convert data from multi-state to visit format</dd>
+        <dd>Convert cross sectional visit data to time-to-event data</dd>
       </dl><dl><dt>
           
           <code><a href="plot_mstate.html">plot_mstate()</a></code> 
