@@ -166,7 +166,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     group_id = 1,
     logodds_mean = 0,
     logodds_sd = .1,
-    visit_spacing = 1.2,
+    visit_spacing = 0.1, # want this small to reduce discretization bias
     median_time_to_next_event = matrix(c(
       3, 3, 6
     ), byrow = TRUE, nrow = 1, ncol = 3),
@@ -175,53 +175,58 @@ test_that("Testing marginal calibration of sampling from the prior", {
                                           ncol = 3
     )
   )
-  # shape is implicitly set to 1
-  smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 1000, seed = 36L)
-  scale_true <- 10
-  shape_true <- 1
-  # sample setting to different response probabilities
-  tbl_prior_predictive <- sample_predictive(mdl,
-                                            sample = smpl_prior,
-                                            scale = matrix(scale_true, ncol = 1, nrow = 3),
-                                            shape = matrix(shape_true, ncol = 1, nrow = 3),
-                                            n_per_group = 1L, nsim = 1e3,
-                                            seed = 342)
-  # check calibration of times to next event, use midpoints of intervals as
-  # approximation
-  # work out the theoretical mean given scale = 1 and true scale
-  # (see https://en.wikipedia.org/wiki/Weibull_distribution)
-  theoretical_means <- rep(scale_true * gamma(1 + 1 / shape_true), 3)
-  # check that stable to response timings are roughly calibrated, use midpoints
-  # of intervals
-  tbl_means <- tbl_prior_predictive %>%
-    distinct(subject_id, iter, state, .keep_all = TRUE) %>%
-    group_by(iter, group_id, subject_id) %>%
-    summarize(
-      dt = t - lag(t),
-      from = lag(state),
-      to = state,
-      .groups = "drop"
-    ) %>%
-    filter(to != "stable") %>%
-    group_by(group_id, from, to) %>%
-    summarize(
-      estimated_mean = mean(dt),
-      se = sd(dt) / sqrt(n()),
-      .groups = "drop"
-    ) %>%
-    mutate(
-      theoretical_mean = case_when(
-        from == "stable" & to == "response" ~ theoretical_means[1],
-        from == "stable" & to == "progression" ~ theoretical_means[2],
-        from == "response" & to == "progression" ~ theoretical_means[3],
+  smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 500, seed = 36L)
+  # define test function to estimate scale/shape from sampled data
+  test_calibration <- function(shape, scale) {
+    # sample setting to different response probabilities
+    tbl_prior_predictive <- sample_predictive(mdl,
+                                              sample = smpl_prior,
+                                              scale = matrix(scale_true, ncol = 1, nrow = 3),
+                                              shape = matrix(shape_true, ncol = 1, nrow = 3),
+                                              n_per_group = 1L, nsim = 1e3,
+                                              seed = 342)
+    # check calibration of times to next event, use midpoints of intervals as
+    # approximation
+    # work out the theoretical mean given scale = 1 and true scale
+    # (see https://en.wikipedia.org/wiki/Weibull_distribution)
+    theoretical_means <- rep(scale_true * gamma(1 + 1 / shape_true), 3)
+    # check that stable to response timings are roughly calibrated, use midpoints
+    # of intervals
+    tbl_means <- tbl_prior_predictive %>%
+      distinct(subject_id, iter, state, .keep_all = TRUE) %>%
+      group_by(iter, group_id, subject_id) %>%
+      summarize(
+        dt = t - lag(t),
+        from = lag(state),
+        to = state,
+        .groups = "drop"
+      ) %>%
+      filter(to != "stable") %>%
+      group_by(group_id, from, to) %>%
+      summarize(
+        estimated_mean = mean(dt),
+        se = sd(dt) / sqrt(n()),
+        .groups = "drop"
+      ) %>%
+      mutate(
+        theoretical_mean = case_when(
+          from == "stable" & to == "response" ~ theoretical_means[1],
+          from == "stable" & to == "progression" ~ theoretical_means[2],
+          from == "response" & to == "progression" ~ theoretical_means[3],
+        )
       )
-    )
-  # testing for comparison with theoretical mean, allowing for estimation error
-  expect_true(all(with(
-    tbl_means,
-    abs(estimated_mean - theoretical_mean) <= 2 * se
-  )))
-  message("\n\rTODO: Test calibration for more shapes / scales")
+    # testing for comparison with theoretical mean, allowing for estimation error
+    expect_true(all(with(
+      tbl_means,
+      abs(estimated_mean - theoretical_mean) <= 2 * se
+    )))
+  }
+  # test over a grid of shape/scale ccombinations
+  for (shape in c(0.5, 1, 5)) {
+    for (scale in c(3, 24)) {
+      test_calibration(shape, scale)
+    }
+  }
 })
 
 
