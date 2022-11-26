@@ -167,6 +167,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     logodds_mean = 0,
     logodds_sd = .1,
     visit_spacing = 0.1, # want this small to reduce discretization bias
+    max_time = 100*12, # avoid limiting effects from end of study
     median_time_to_next_event = matrix(c(
       3, 3, 6
     ), byrow = TRUE, nrow = 1, ncol = 3),
@@ -177,19 +178,20 @@ test_that("Testing marginal calibration of sampling from the prior", {
   )
   smpl_prior <- sample_prior(mdl, warmup = 250, nsim = 500, seed = 36L)
   # define test function to estimate scale/shape from sampled data
-  test_calibration <- function(shape, scale) {
+  scale_default <- matrix(c(3, 6, 12), ncol = 1, nrow = 3)
+  test_calibration <- function(scale_factor, shape) {
     # sample setting to different response probabilities
     tbl_prior_predictive <- sample_predictive(mdl,
                                               sample = smpl_prior,
-                                              scale = matrix(scale_true, ncol = 1, nrow = 3),
-                                              shape = matrix(shape_true, ncol = 1, nrow = 3),
+                                              scale = scale_default * scale_factor,
+                                              shape = matrix(shape, ncol = 1, nrow = 3),
                                               n_per_group = 1L, nsim = 1e3,
                                               seed = 342)
     # check calibration of times to next event, use midpoints of intervals as
     # approximation
     # work out the theoretical mean given scale = 1 and true scale
     # (see https://en.wikipedia.org/wiki/Weibull_distribution)
-    theoretical_means <- rep(scale_true * gamma(1 + 1 / shape_true), 3)
+    theoretical_means <- scale_default * scale_factor * gamma(1 + 1 / shape)
     # check that stable to response timings are roughly calibrated, use midpoints
     # of intervals
     tbl_means <- tbl_prior_predictive %>%
@@ -218,13 +220,13 @@ test_that("Testing marginal calibration of sampling from the prior", {
     # testing for comparison with theoretical mean, allowing for estimation error
     expect_true(all(with(
       tbl_means,
-      abs(estimated_mean - theoretical_mean) <= 2 * se
+      abs(estimated_mean - theoretical_mean) <= 3 * se
     )))
   }
-  # test over a grid of shape/scale ccombinations
-  for (shape in c(0.5, 1, 5)) {
-    for (scale in c(3, 24)) {
-      test_calibration(shape, scale)
+  # test over a grid of shape/scale combinations
+  for (scale_factor in c(1, 3)) {
+    for (shape in c(0.5, 1, 5)) {
+      test_calibration(scale_factor, shape)
     }
   }
 })
