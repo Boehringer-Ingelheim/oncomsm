@@ -139,7 +139,7 @@ go <- function(data, nsim = 200L) {
     sample_posterior(mdl, data = data, warmup = 200L, nsim = nsim)
   )
   tbl_pfs_orr <- bind_cols(
-      sample_pfs_rate(mdl, 12, smpl), # PFS 12
+      compute_pfs(mdl, 12, smpl), # PFS 12
       parameter_sample_to_tibble(mdl, smpl) %>% # ORR
         filter(parameter == "p") %>%
         transmute(orr = value)
