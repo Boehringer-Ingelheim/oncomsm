@@ -40,8 +40,8 @@ test_that("default plotting works as intended", {
   # check that plotting without sample works
   plot(mdl)
   # check that plotting sub functions work (output is subsumed in plot())
-  plot_pfs(mdl, dt_grid = c(.5, 5, 12))
-  plot_transition_times(mdl, dt_grid = c(.5, 5, 12))
+  plot_pfs(mdl)
+  plot_transition_times(mdl)
   plot_response_probability(mdl)
 })
 
