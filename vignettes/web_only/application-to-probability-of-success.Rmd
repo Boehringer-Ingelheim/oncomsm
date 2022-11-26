@@ -291,7 +291,7 @@ evaluate the decision criterion.
 ```{r simulate}
 tbl_pr_go_over_time <- tbl_data_interims %>%
   mutate(
-    res = purrr::map(data, pr_go, nsim = 25L)
+    res = purrr::map(data, pr_go, nsim = 100L)
   ) %>%
   tidyr::unnest(res)
 
