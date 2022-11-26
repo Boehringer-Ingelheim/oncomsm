@@ -537,48 +537,38 @@ visits_to_mstate.srp_model <- function(tbl_visits, model, # nolint
 }
 
 
-
-#' @param x the model to plot
+#' @inheritParams plot_transition_times
 #' @template param-parameter_sample
 #' @template param-seed
-#' @param dt_interval optional, fixed plotting limits in time since first visit
-#' @param dt_n_grid optional, plotting resolution along time scale
-#' @param dt_expand optional, expansion factor for the upper limit of the
-#' automatically determine plotting interval
 #' @template param-nsim
+#' @template param-warmup
 #'
 #' @rdname srp_model
 #' @export
-plot.srp_model <- function(x,
-                           parameter_sample = NULL, seed = NULL,
-                           dt_interval = NULL, dt_n_grid = 25, dt_expand = 1.1,
-                           nsim = 500L, ...) {
-  if (is.null(parameter_sample)) {
-    parameter_sample <- sample_prior(x, seed = seed, nsim = nsim, ...)
+plot_transition_times.srp_model <- function(model,
+                                            parameter_sample = NULL,
+                                            seed = 42L,
+                                            nsim = 500L,
+                                            warmup = 250,
+                                            nuts_control = list(),
+                                            dt_interval = NULL,
+                                            dt_n_grid = 25,
+                                            dt_expand = 1.1,
+                                            dt_grid = NULL,
+                                            ...) {
+  if (is.null(parameter_sample)) { # sample parameters from prior if none given
+    parameter_sample <- sample_prior(model,
+                                     seed = seed, nsim = nsim, nsim = nsim,
+                                     warmup = warmup,
+                                     nuts_control = nuts_control, ...)
   }
-  # determine timescale by forward sampling
-  if (is.null(dt_interval)) {
-    dt_max <- sample_predictive(
-        x, n_per_group = rep(1e3L, length(attr(x, "group_id"))),
-        sample = parameter_sample, nsim = 1, seed = seed, as_mstate = TRUE
-      ) %>%
-      arrange(.data$t_sot, .data$subject_id, .data$t_min) %>%
-      mutate(
-        dt = pmax(.data$t_max - .data$t_sot)
-      ) %>%
-      pull("dt") %>%
-      {stats::quantile(.[is.finite(.)], probs = 0.9)} %>% # nolint cut outliers
-      as.numeric()
-    dt_interval <- c(0, dt_max * dt_expand)
+  if (is.null(dt_grid)) {
+    # determine plotting grid
+    dt_grid <- get_dt_grid(model, parameter_sample, dt_interval,
+                           dt_n_grid, dt_expand, seed)
   }
-  # TODO: make pfs work from 0
-  dt_grid <- seq(dt_interval[1] + 0.1, dt_interval[2], length.out = dt_n_grid)
-  if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("the patchwork package is required to plot SRP models") # nocov
-  }
-  tbl_parameter_sample <- parameter_sample_to_tibble(x, parameter_sample)
-  # plot transition times
-  p1 <- tbl_parameter_sample %>%
+  # convert parameters to tibble and prepare for plotting
+  tbl <- parameter_sample_to_tibble(model, parameter_sample) %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
     tidyr::pivot_wider(
       names_from = "parameter",
@@ -587,8 +577,7 @@ plot.srp_model <- function(x,
     tidyr::expand_grid(dt = dt_grid) %>%
     mutate(
       survival = 1 - stats::pweibull(.data$dt,
-        shape = .data$shape, scale = .data$scale
-      )
+                                     shape = .data$shape, scale = .data$scale)
     ) %>%
     group_by(.data$group_id, .data$transition, .data$dt) %>%
     summarize(
@@ -607,10 +596,10 @@ plot.srp_model <- function(x,
           "stable to response", "stable to progression",
           "response to progression"
         ))
-    ) %>%
-    ggplot2::ggplot() +
+    )
+  plt <- ggplot2::ggplot(tbl) +
     ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
-      color = .data$group_id
+                                    color = .data$group_id
     )) +
     ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
     ggplot2::scale_color_discrete("") +
@@ -624,13 +613,39 @@ plot.srp_model <- function(x,
       panel.grid.minor = ggplot2::element_blank(),
       panel.spacing = ggplot2::unit(1.5, "lines")
     )
-  # plot response probability
-  p2 <- tbl_parameter_sample %>%
-    filter(.data$parameter == "p") %>%
-    ggplot2::ggplot() +
-    ggplot2::stat_ecdf(ggplot2::aes(.data$value,
-      color = .data$group_id
-    ), geom = "line") +
+  # add plotting data to return value
+  attr(plt, "data") <- tbl
+  return(plt)
+}
+
+
+
+#' @inheritParams plot_response_probability
+#' @template param-parameter_sample
+#' @template param-seed
+#' @template param-nsim
+#' @template param-warmup
+#'
+#' @rdname srp_model
+#' @export
+plot_response_probability.srp_model <- function(model,
+                                               parameter_sample = NULL,
+                                               seed = 42L,
+                                               nsim = 500L,
+                                               warmup = 250,
+                                               nuts_control = list(),
+                                               ...) {
+  if (is.null(parameter_sample)) { # sample parameters from prior if none given
+    parameter_sample <- sample_prior(model,
+                                     seed = seed, nsim = nsim,
+                                     warmup = warmup,
+                                     nuts_control = nuts_control, ...)
+  }
+  tbl <- parameter_sample_to_tibble(model, parameter_sample) %>%
+    filter(.data$parameter == "p")
+  plt <- ggplot2::ggplot(tbl) +
+    ggplot2::stat_ecdf(ggplot2::aes(.data$value, color = .data$group_id),
+                       geom = "line") +
     ggplot2::coord_cartesian(xlim = c(0, 1)) +
     ggplot2::labs(x = "response probability", y = "CDF") +
     ggplot2::scale_x_continuous(
@@ -646,13 +661,55 @@ plot.srp_model <- function(x,
       legend.position = "none",
       panel.grid.minor = ggplot2::element_blank()
     )
-  # plot pfs
-  tbl_pfs_survival <- compute_pfs(x, t = dt_grid,
-                                  parameter_sample = parameter_sample) %>% # TODO make sure this works from 0
-    # integrate over prior sample
+  attr(plt, "data") <- tbl
+  return(plt)
+}
+
+
+
+#' @inheritParams plot_pfs
+#' @template param-parameter_sample
+#' @template param-seed
+#' @template param-nsim
+#' @template param-warmup
+#'
+#' @rdname srp_model
+#' @export
+plot_pfs.srp_model <- function(model,
+                               parameter_sample = NULL,
+                               seed = 42L,
+                               nsim = 500L,
+                               warmup = 250,
+                               nuts_control = list(),
+                               dt_interval = NULL,
+                               dt_n_grid = 25,
+                               dt_expand = 1.1,
+                               dt_grid = NULL,
+                               ...) {
+  if (is.null(parameter_sample)) { # sample parameters from prior if none given
+    parameter_sample <- sample_prior(model,
+                                     seed = seed, nsim = nsim,
+                                     warmup = warmup,
+                                     nuts_control = nuts_control, ...)
+  }
+  if (is.null(dt_grid)) {
+    # determine plotting grid
+    dt_grid <- get_dt_grid(model, parameter_sample, dt_interval,
+                           dt_n_grid, dt_expand, seed)
+  }
+  # TODO make sure this works from 0
+  tbl <- compute_pfs(
+      mdl,
+      t = dt_grid,
+      parameter_sample = parameter_sample
+    ) %>%
+    # integrate over sample
     group_by(.data$group_id, .data$t) %>%
-    summarize(pfs = mean(.data$pfs), .groups = "drop")
-  p3 <- ggplot2::ggplot(tbl_pfs_survival) +
+    summarize(
+      pfs = mean(.data$pfs),
+      .groups = "drop"
+    )
+  plt <- ggplot2::ggplot(tbl) +
     ggplot2::geom_line(ggplot2::aes(
       x = .data$t,
       y = .data$pfs, color = .data$group_id
@@ -663,11 +720,56 @@ plot.srp_model <- function(x,
       legend.position = "none",
       panel.grid.minor = ggplot2::element_blank()
     )
+  attr(plt, "data") <- tbl
+  return(plt)
+}
+
+
+
+#' @param x the model to plot
+#' @template param-parameter_sample
+#' @template param-seed
+#' @param dt_interval optional, fixed plotting limits in time since first visit
+#' @param dt_n_grid optional, plotting resolution along time scale
+#' @param dt_expand optional, expansion factor for the upper limit of the
+#' automatically determine plotting interval
+#' @template param-nsim
+#'
+#' @rdname srp_model
+#' @export
+plot.srp_model <- function(x,
+                           parameter_sample = NULL,
+                           seed = 42L,
+                           nsim = 500L,
+                           warmup = 250,
+                           nuts_control = list(),
+                           dt_interval = NULL,
+                           dt_n_grid = 25,
+                           dt_expand = 1.1,
+                           dt_grid = NULL,
+                           ...) {
+  if (!requireNamespace("patchwork", quietly = TRUE)) {
+    stop("the patchwork package is required to plot SRP models") # nocov
+  }
+  if (is.null(parameter_sample)) { # sample parameters from prior if none given
+    parameter_sample <- sample_prior(x,
+                                     seed = seed, nsim = nsim,
+                                     warmup = warmup,
+                                     nuts_control = nuts_control, ...)
+  }
+  if (is.null(dt_grid)) {
+    # determine plotting grid
+    dt_grid <- get_dt_grid(x, parameter_sample, dt_interval,
+                           dt_n_grid, dt_expand, seed)
+  }
+  plt_trans <- plot_transition_times(x, parameter_sample, dt_grid = dt_grid)
+  plt_pfs <- plot_pfs(x, parameter_sample, dt_grid = dt_grid)
+  plt_pr <- plot_response_probability(x, parameter_sample)
   design <- "
   111
   234
   "
-  p1 + p2 + p3 + patchwork::guide_area() +
+  plt_trans + plt_pfs + plt_pr + patchwork::guide_area() +
     patchwork::plot_layout(design = design, guides = "collect")
 }
 

@@ -9,6 +9,9 @@
 \alias{sample_predictive.Model}
 \alias{impute.Model}
 \alias{parameter_sample_to_tibble.Model}
+\alias{plot_transition_times.Model}
+\alias{plot_response_probability.Model}
+\alias{plot_pfs.Model}
 \alias{plot_mstate.Model}
 \alias{compute_pfs.Model}
 \alias{visits_to_mstate.Model}
@@ -69,6 +72,12 @@
 
 \method{parameter_sample_to_tibble}{Model}(model, sample, ...)
 
+\method{plot_transition_times}{Model}(model, parameter_sample, ...)
+
+\method{plot_response_probability}{Model}(model, parameter_sample, ...)
+
+\method{plot_pfs}{Model}(model, parameter_sample, ...)
+
 \method{plot_mstate}{Model}(data, model, now, relative_to_sot, ...)
 
 \method{compute_pfs}{Model}(model, t, parameter_sample, ...)
@@ -121,12 +130,12 @@ this sample to match the desired number of imputations.}
 
 \item{recruitment_rates}{vector of recruitment rates}
 
+\item{parameter_sample}{a stanfit object with samples from the respective model.}
+
 \item{relative_to_sot}{Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
-
-\item{parameter_sample}{a stanfit object with samples from the respective model.}
 
 \item{tbl_visits}{visit data in long format}
 

@@ -24,6 +24,7 @@ reference:
   contents:
   - logodds
   - visits_to_mstate
+  - plot_transition_times
   - plot_mstate
   - parameter_sample_to_tibble
   - compute_pfs

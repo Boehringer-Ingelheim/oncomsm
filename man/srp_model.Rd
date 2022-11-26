@@ -6,6 +6,9 @@
 \alias{format.srp_model}
 \alias{plot_mstate.srp_model}
 \alias{visits_to_mstate.srp_model}
+\alias{plot_transition_times.srp_model}
+\alias{plot_response_probability.srp_model}
+\alias{plot_pfs.srp_model}
 \alias{plot.srp_model}
 \alias{compute_pfs.srp_model}
 \title{A Stable-Response-Progression Model}
@@ -42,14 +45,55 @@ create_srp_model(
   eof_indicator = "EOF"
 )
 
-\method{plot}{srp_model}(
-  x,
+\method{plot_transition_times}{srp_model}(
+  model,
   parameter_sample = NULL,
-  seed = NULL,
+  seed = 42L,
+  nsim = 500L,
+  warmup = 250,
+  nuts_control = list(),
   dt_interval = NULL,
   dt_n_grid = 25,
   dt_expand = 1.1,
+  dt_grid = NULL,
+  ...
+)
+
+\method{plot_response_probability}{srp_model}(
+  model,
+  parameter_sample = NULL,
+  seed = 42L,
   nsim = 500L,
+  warmup = 250,
+  nuts_control = list(),
+  ...
+)
+
+\method{plot_pfs}{srp_model}(
+  model,
+  parameter_sample = NULL,
+  seed = 42L,
+  nsim = 500L,
+  warmup = 250,
+  nuts_control = list(),
+  dt_interval = NULL,
+  dt_n_grid = 25,
+  dt_expand = 1.1,
+  dt_grid = NULL,
+  ...
+)
+
+\method{plot}{srp_model}(
+  x,
+  parameter_sample = NULL,
+  seed = 42L,
+  nsim = 500L,
+  warmup = 250,
+  nuts_control = list(),
+  dt_interval = NULL,
+  dt_n_grid = 25,
+  dt_expand = 1.1,
+  dt_grid = NULL,
   ...
 )
 
@@ -126,6 +170,11 @@ follow up.}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
+\item{nsim}{number of samples to draw}
+
+\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.}
+
 \item{dt_interval}{optional, fixed plotting limits in time since first visit}
 
 \item{dt_n_grid}{optional, plotting resolution along time scale}
@@ -133,12 +182,7 @@ follow up.}
 \item{dt_expand}{optional, expansion factor for the upper limit of the
 automatically determine plotting interval}
 
-\item{nsim}{number of samples to draw}
-
 \item{t}{a vector of time-points at which the PFS rate should be computed}
-
-\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.}
 }
 \description{
 Create a new instance of an SRP model
