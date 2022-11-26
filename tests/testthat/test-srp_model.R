@@ -33,6 +33,29 @@ test_that("can create SRP model", {
 
 
 
+test_that("can calculate PFS rate", {
+  mdl <- create_srp_model(
+    group_id = "A",
+    logodds_mean = 0,
+    logodds_sd = 10,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE, nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+  )
+  smpl <- sample_prior(mdl, 500L, seed = 42132L)
+  res1 <- compute_pfs(mdl, t = 12, parameter_sample = smpl)
+  # should be same as resampling under same seed
+  res2 <- compute_pfs(mdl, t = 12, nsim = 500L, seed = 42132L)
+  expect_true(
+    all(res1 == res2)
+  )
+  message("\n\rTODO: Implement PFS check against theoretical values!")
+})
+
+
+
 test_that("private function is_valid throws correct errors", {
   expect_error(
     create_srp_model(

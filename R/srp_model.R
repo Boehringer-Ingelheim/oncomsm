@@ -688,9 +688,9 @@ compute_pfs.srp_model <- function( # nolint
   ...
 ) {
   if (is.null(parameter_sample)) {
-    parameter_sample <- sample_prior(model, warmup = warmup, nsim = nsim, seed = seed,
-      rstan_output = TRUE, pars = attr(model, "parameter_names"), ...
-    )
+    parameter_sample <- sample_prior(model,
+                                     warmup = warmup, nsim = nsim, seed = seed,
+                                     pars = attr(model, "parameter_names"), ...)
   }
   parameter_sample <- parameter_sample_to_tibble(model, parameter_sample)
   pr_direct_progression <- function(shape_2, scale_2, t) {
