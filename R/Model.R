@@ -30,7 +30,7 @@ is_valid <- function(model) {
 }
 
 is_valid.Model <- function(model) {
-  stop("Not implemented")
+  stop("Not implemented") # nocov
 }
 
 #' Sample model prior parameters
@@ -249,7 +249,7 @@ impute.Model <- function(
       as.numeric()
   } else {
     if (is.null(recruitment_rates)) {
-      stop("recruitment_rates must be specified")
+      stop("recruitment_rates must be specified") # nocov
     }
   }
   tbl_to_recruit <- tibble(
@@ -266,7 +266,7 @@ impute.Model <- function(
       length()
     n_to_be_recruited <- n_per_group[i] - n_recruited
     if (n_to_be_recruited < 0) {
-      stop("data contains more individuals than specified in n_per_group")
+      stop("data contains more individuals than specified in n_per_group") # nocov nolint
     }
     ids_to_exclude <- c(tbl_to_recruit$subject_id, unique(data$subject_id))
     if (n_to_be_recruited > 0) {
@@ -359,7 +359,7 @@ parameter_sample_to_tibble <- function(model, sample, ...) {
 #' @rdname Model
 #' @export
 parameter_sample_to_tibble.Model <- function(model, sample, ...) {
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -373,7 +373,7 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 # helper to create empty standata for model
 .nodata.Model <- function(model) { # nolint
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -387,7 +387,7 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 # helper to create all-missing standata for model
 .emptydata.Model <- function(model, n_per_group, seed = NULL) { #nolint
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -401,7 +401,7 @@ data2standata <- function(data, model, ...) {
 
 # convert time to event data to stan data list
 data2standata.Model <- function(data, model) {
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -425,7 +425,7 @@ plot_mstate <- function(data, model, now, relative_to_sot, ...) {
 #' @name Model
 #' @export
 plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -464,7 +464,7 @@ sample_pfs_rate.Model <- function(
   seed = NULL,
   ...
 ) {
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -487,7 +487,7 @@ sample_pfs_rate.Model <- function(
 visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
                              eof_indicator = "EOF") {
   if (!inherits(tbl_visits, "data.frame")) {
-    stop("'tbl_visits' must be a data.frame")
+    stop("'tbl_visits' must be a data.frame") # nocov
   } else {
     checkmate::test_true(inherits(tbl_visits$subject_id, "character"))
     checkmate::test_true(inherits(tbl_visits$group_id, "character"))
@@ -502,5 +502,5 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
 #' @export
 visits_to_mstate.Model <- function(tbl_visits, model, now = max(tbl_visits$t),
                                    eof_indicator = "EOF") {
-  stop("not implemented")
+  stop("not implemented") # nocov
 }

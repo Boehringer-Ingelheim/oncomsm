@@ -13,7 +13,7 @@ create_srp_model(
   logodds_mean,
   logodds_sd = rep(0.01, length(group_id)),
   median_time_to_next_event_mean,
-  median_time_to_next_event_sd = matrix(0.01, nrow = length(group_id), ncol = 3),
+  median_time_to_next_event_sd = matrix(0.1, nrow = length(group_id), ncol = 3),
   visit_spacing,
   recruitment_rate = rep(1, length(group_id)),
   max_time = 10 * 12,
