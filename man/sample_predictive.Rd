@@ -4,17 +4,7 @@
 \alias{sample_predictive}
 \title{Sample data from predictive distribution of a model}
 \usage{
-sample_predictive(
-  model,
-  n_per_group,
-  sample,
-  nsim,
-  nsim_parameters,
-  warmup_parameters,
-  seed,
-  as_mstate,
-  ...
-)
+sample_predictive(model, n_per_group, sample, nsim, seed, ...)
 }
 \arguments{
 \item{model}{a model of class "Model"}
@@ -25,13 +15,7 @@ sample_predictive(
 
 \item{nsim}{number of samples to draw}
 
-\item{nsim_parameters}{integer, number of parameter samples}
-
-\item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
-
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
-
-\item{as_mstate}{return data in multi-state forma, see \code{\link[=visits_to_mstate]{visits_to_mstate()}}}
 
 \item{...}{further arguments passed to method implementations}
 }

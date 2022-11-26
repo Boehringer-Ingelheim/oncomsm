@@ -10,7 +10,7 @@
 \alias{impute.Model}
 \alias{parameter_sample_to_tibble.Model}
 \alias{plot_mstate.Model}
-\alias{sample_pfs_rate.Model}
+\alias{compute_pfs.Model}
 \alias{visits_to_mstate.Model}
 \title{An abstract multi-state model class}
 \usage{
@@ -20,21 +20,21 @@
 
 \method{sample_prior}{Model}(
   model,
-  warmup = 500L,
   nsim = 2000L,
   seed = NULL,
-  rstan_output = TRUE,
+  warmup = 500L,
   pars = attr(model, "parameter_names"),
+  nuts_control = list(),
   ...
 )
 
 \method{sample_posterior}{Model}(
   model,
   data,
-  warmup = 500L,
   nsim = 2000L,
   seed = NULL,
-  rstan_output = TRUE,
+  warmup = 500L,
+  nuts_control = list(),
   pars = attr(model, "parameter_names"),
   ...
 )
@@ -44,24 +44,26 @@
   n_per_group,
   sample = NULL,
   nsim = 100L,
+  seed = NULL,
   nsim_parameters = 1000L,
   warmup_parameters = 250,
-  seed = NULL,
   as_mstate = FALSE,
+  nuts_control = list(),
   ...
 )
 
 \method{impute}{Model}(
   model,
   data,
+  nsim,
   n_per_group = NULL,
-  recruitment_rates = attr(model, "recruitment_rate"),
   now = NULL,
+  seed = NULL,
+  recruitment_rates = attr(model, "recruitment_rate"),
   sample = NULL,
-  nsim = 250L,
   nsim_parameters = 1000L,
   warmup_parameters = 250L,
-  seed = NULL,
+  nuts_control = list(),
   ...
 )
 
@@ -69,15 +71,7 @@
 
 \method{plot_mstate}{Model}(data, model, now, relative_to_sot, ...)
 
-\method{sample_pfs_rate}{Model}(
-  model,
-  t,
-  sample = NULL,
-  warmup = 500L,
-  nsim = 2000L,
-  seed = NULL,
-  ...
-)
+\method{compute_pfs}{Model}(model, t, parameter_sample, ...)
 
 \method{visits_to_mstate}{Model}(
   tbl_visits,
@@ -93,20 +87,24 @@
 
 \item{model}{a model of class "Model"}
 
-\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.}
-
 \item{nsim}{number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
-\item{rstan_output}{logical, function returns raw rstan sample object if set to TRUE}
+\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.}
 
 \item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
 
-\item{data}{the (multi-state) data frame to impute further trajectories for.}
+\item{nuts_control}{control parameters for NUTS algorithm see \code{\link[rstan:stan]{rstan::stan()}}}
 
-\item{n_per_group}{the number of individuals per group to be recruited.}
+\item{data}{a data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+where dt1 is the minimal and dt2 the maximal time to the event in question.
+If both are Inf, the individual has not and will never experience the event.
+If dt1 < Inf but dt2 == Inf the individual is still at risk.
+"t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.}
+
+\item{n_per_group}{integer vector with number of individuals per group.}
 
 \item{sample}{a stanfit object containing samples. These parameter samples
 represent the parameter distribution over which the predictive distribution
@@ -117,16 +115,18 @@ this sample to match the desired number of imputations.}
 
 \item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
 
-\item{as_mstate}{return in multi-state format}
-
-\item{recruitment_rates}{the per-group recruitment rates.}
+\item{as_mstate}{return data in multi-state forma, see \code{\link[=visits_to_mstate]{visits_to_mstate()}}}
 
 \item{now}{exact time point relative to start of the trial}
+
+\item{recruitment_rates}{vector of recruitment rates}
 
 \item{relative_to_sot}{Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
+
+\item{parameter_sample}{a stanfit object with samples from the respective model.}
 
 \item{tbl_visits}{visit data in long format}
 

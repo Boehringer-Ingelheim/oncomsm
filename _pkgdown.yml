@@ -14,22 +14,22 @@ reference:
 - title: "Package documentation"
   contents:
   - oncomsm
-- title: "Functions"
+- title: "Sampling functions"
   contents:
   - sample_prior
   - sample_posterior
   - sample_predictive
   - impute
-- title: "Abstract model interface"
-  contents:
-  - Model
-- title: "SRP model"
-  contents:
-  - srp_model
-- title: "Other"
+- title: "Other functions"
   contents:
   - logodds
   - visits_to_mstate
   - plot_mstate
   - parameter_sample_to_tibble
-  - sample_pfs_rate
+  - compute_pfs
+- title: "Stable-Response-Progression model"
+  contents:
+  - srp_model
+- title: "Abstract model interface"
+  contents:
+  - Model

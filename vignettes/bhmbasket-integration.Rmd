@@ -31,7 +31,6 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(oncomsm)
-library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
 

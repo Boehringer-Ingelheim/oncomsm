@@ -4,41 +4,18 @@
 \alias{impute}
 \title{Impute data from predictive distribution}
 \usage{
-impute(
-  model,
-  data,
-  n_per_group,
-  recruitment_rates,
-  now,
-  sample,
-  nsim,
-  nsim_parameters,
-  warmup_parameters,
-  seed,
-  ...
-)
+impute(model, data, nsim, n_per_group, now, seed, ...)
 }
 \arguments{
 \item{model}{a model of class "Model"}
 
 \item{data}{the (multi-state) data frame to impute further trajectories for.}
 
-\item{n_per_group}{the number of individuals per group to be recruited.}
-
-\item{recruitment_rates}{the per-group recruitment rates.}
-
-\item{now}{exact time point relative to start of the trial}
-
-\item{sample}{a stanfit object containing samples. These parameter samples
-represent the parameter distribution over which the predictive distribution
-averages. Technically, the parameters are resampled with replacement from
-this sample to match the desired number of imputations.}
-
 \item{nsim}{number of samples to draw}
 
-\item{nsim_parameters}{integer, number of parameter samples}
+\item{n_per_group}{the number of individuals per group to be recruited.}
 
-\item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
+\item{now}{exact time point relative to start of the trial}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 

@@ -145,7 +145,7 @@ a visit-spacing of 1.2 months, i.e., about 6 weeks.
 ```{r specify-model}
 mdl <- create_srp_model(
   # names of the arms/groups
-  group_id = c("control", "intervention"),
+  group_id = c("A", "B"),
   # per-group logodds of response|stable
   logodds_mean = c(logodds(.4), logodds(.6)),
   logodds_sd = c(1, 1),
@@ -201,7 +201,8 @@ function of the "progression or death" event.
 ```{r plotting-the-prior}
 smpl_prior <- sample_prior(mdl, seed = 36L)
 
-plot(mdl, dt = c(0, 36), sample = smpl_prior)
+# plot(mdl) also works but need to resample prior further below
+plot(mdl, parameter_sample = smpl_prior)
 ```
 
 
@@ -364,7 +365,7 @@ in the direction of the observed response rates.
 ```{r}
 smpl_posterior <- sample_posterior(mdl, tbl_data_interim, seed = 43L)
 
-plot(mdl, dt = c(0, 36), sample = smpl_posterior)
+plot(mdl, parameter_sample = smpl_posterior) # plot under posterior
 
 # calculate posterior quantiles of response probability
 smpl_posterior %>%

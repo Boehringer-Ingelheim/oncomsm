@@ -48,7 +48,7 @@ DataFrame f(
   CharacterVector group_ids = group.attr("levels");
   // check that df starts with "stable" (must be if properly sorted)
   if (state(0) != "stable") {
-    stop("df must start with 'stable' state");
+    stop("df must start with 'stable' state");  // # nocov
   }
   // compute maximal output length
   const int max_visits = floor(max_time/min(visit_spacing));
@@ -76,14 +76,14 @@ DataFrame f(
       // is the next visit from the same subject?
       if (subject_id(i) == subject_id(i + 1)) {
         if (t(i + 1) < t(i)) {
-          stop("t must be sorted within individuals");
+          stop("t must be sorted within individuals"); // # nocov
         }
         if (group(i + 1) != group(i)) {
           stop("group assignment must be constant within individuals");
         }
         if ((state(i + 1) == "response") && (state(i) != "response")) {
           if (state(i) != "stable") {
-            stop("last visit before response must be 'stable'");
+            stop("last visit before response must be 'stable'"); // # nocov
           }
           // record response interval
           dt_response_interval = {t(i) - t_first_visit, t(i + 1) - t_first_visit};
@@ -93,7 +93,7 @@ DataFrame f(
         sample = ((state(i) == "stable") || (state(i) == "response"));
         // make sure new subject start with 'stable'
         if (state(i + 1) != "stable") {
-          stop("first visit of each individual must be 'stable' (start of treatment)");
+          stop("first visit of each individual must be 'stable' (start of treatment)"); // # nocov
         }
       }
     } else {

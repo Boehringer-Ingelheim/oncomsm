@@ -6,6 +6,8 @@
 \alias{format.srp_model}
 \alias{plot_mstate.srp_model}
 \alias{visits_to_mstate.srp_model}
+\alias{plot.srp_model}
+\alias{compute_pfs.srp_model}
 \title{A Stable-Response-Progression Model}
 \usage{
 create_srp_model(
@@ -38,6 +40,27 @@ create_srp_model(
   model,
   now = max(tbl_visits$t),
   eof_indicator = "EOF"
+)
+
+\method{plot}{srp_model}(
+  x,
+  parameter_sample = NULL,
+  seed = NULL,
+  dt_interval = NULL,
+  dt_n_grid = 25,
+  dt_expand = 1.1,
+  nsim = 500L,
+  ...
+)
+
+\method{compute_pfs}{srp_model}(
+  model,
+  t,
+  parameter_sample = NULL,
+  warmup = 500L,
+  nsim = 1000L,
+  seed = NULL,
+  ...
 )
 }
 \arguments{
@@ -81,7 +104,7 @@ Weibull distribution per group/transition}
 \item{shape_max}{matrix of upper boundaries of the uniform prior of the
 Weibull distribution per group/transition}
 
-\item{x}{SRP model to format}
+\item{x}{the model to plot}
 
 \item{...}{further arguments passed to method implementations}
 
@@ -98,6 +121,24 @@ of trial or the start of treatment for each individual}
 
 \item{eof_indicator}{state name indicating (exactly observed) end of
 follow up.}
+
+\item{parameter_sample}{a stanfit object with samples from the respective model.}
+
+\item{seed}{integer, fixed random seed; NULL for no fixed seed}
+
+\item{dt_interval}{optional, fixed plotting limits in time since first visit}
+
+\item{dt_n_grid}{optional, plotting resolution along time scale}
+
+\item{dt_expand}{optional, expansion factor for the upper limit of the
+automatically determine plotting interval}
+
+\item{nsim}{number of samples to draw}
+
+\item{t}{a vector of time-points at which the PFS rate should be computed}
+
+\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.}
 }
 \description{
 Create a new instance of an SRP model

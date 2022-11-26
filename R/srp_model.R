@@ -138,13 +138,13 @@ is_valid.srp_model <- function(mdl) { # nolint
     n_params_sample <- parameter_sample@sim$iter - parameter_sample@sim$warmup
   } else {
     # p, scale, and shape must be given
-    if (is.null(p) || is.null(shape) || is.null(scale)) {
+    if (is.null(p) || is.null(shape) || is.null(scale)) { # nocov start
       stop("if no parameter sample is given all of p, scale, shape must be given") # nolint
     }
     if (length(p) != n_groups) stop()
     if (all(dim(shape) != c(n_groups, 3))) stop()
     if (all(dim(scale) != c(n_groups, 3))) stop()
-  }
+  } # nocov end
   # extract subject and group id levels for conversion to and back from integer
   subject_id_levels <- unique(as.character(data$subject_id))
   group_id_levels <- attr(model, "group_id") # important to maintain ordering
@@ -228,7 +228,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 # helper to create all-missing standata for model
 .emptydata.srp_model <- function(model, n_per_group, seed = NULL) { # nolint
   if (!is.null(seed)) {
-    set.seed(seed)
+    set.seed(seed) # nocov
   }
   n <- sum(n_per_group)
   group_ids <- attr(model, "group_id")
@@ -247,7 +247,7 @@ is_valid.srp_model <- function(mdl) { # nolint
       state = "stable" # first visits are always stable
     ))
   }
-  return(res)
+  return(arrange(res, t))
 }
 
 
@@ -538,24 +538,53 @@ visits_to_mstate.srp_model <- function(tbl_visits, model, # nolint
 
 
 
+#' @param x the model to plot
+#' @template param-parameter_sample
+#' @template param-seed
+#' @param dt_interval optional, fixed plotting limits in time since first visit
+#' @param dt_n_grid optional, plotting resolution along time scale
+#' @param dt_expand optional, expansion factor for the upper limit of the
+#' automatically determine plotting interval
+#' @template param-nsim
+#'
+#' @rdname srp_model
 #' @export
-plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
-                           n_grid = 50, ...) {
-  if (is.null(sample)) {
-    sample <- sample_prior(x, seed = seed, ...)
+plot.srp_model <- function(x,
+                           parameter_sample = NULL, seed = NULL,
+                           dt_interval = NULL, dt_n_grid = 25, dt_expand = 1.1,
+                           nsim = 500L, ...) {
+  if (is.null(parameter_sample)) {
+    parameter_sample <- sample_prior(x, seed = seed, nsim = nsim, ...)
   }
+  # determine timescale by forward sampling
+  if (is.null(dt_interval)) {
+    dt_max <- sample_predictive(
+        x, n_per_group = rep(1e3L, length(attr(x, "group_id"))),
+        sample = parameter_sample, nsim = 1, seed = seed, as_mstate = TRUE
+      ) %>%
+      arrange(.data$t_sot, .data$subject_id, .data$t_min) %>%
+      mutate(
+        dt = pmax(.data$t_max - .data$t_sot)
+      ) %>%
+      pull("dt") %>%
+      {stats::quantile(.[is.finite(.)], probs = 0.9)} %>% # nolint cut outliers
+      as.numeric()
+    dt_interval <- c(0, dt_max * dt_expand)
+  }
+  # TODO: make pfs work from 0
+  dt_grid <- seq(dt_interval[1] + 0.1, dt_interval[2], length.out = dt_n_grid)
   if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("the patchwork package is required to plot SRP models")
+    stop("the patchwork package is required to plot SRP models") # nocov
   }
-  tbl_sample <- parameter_sample_to_tibble(x, sample)
+  tbl_parameter_sample <- parameter_sample_to_tibble(x, parameter_sample)
   # plot transition times
-  p1 <- tbl_sample %>%
+  p1 <- tbl_parameter_sample %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
     tidyr::pivot_wider(
       names_from = "parameter",
       values_from = "value"
     ) %>%
-    tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
+    tidyr::expand_grid(dt = dt_grid) %>%
     mutate(
       survival = 1 - stats::pweibull(.data$dt,
         shape = .data$shape, scale = .data$scale
@@ -596,7 +625,7 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
       panel.spacing = ggplot2::unit(1.5, "lines")
     )
   # plot response probability
-  p2 <- tbl_sample %>%
+  p2 <- tbl_parameter_sample %>%
     filter(.data$parameter == "p") %>%
     ggplot2::ggplot() +
     ggplot2::stat_ecdf(ggplot2::aes(.data$value,
@@ -618,12 +647,8 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
       panel.grid.minor = ggplot2::element_blank()
     )
   # plot pfs
-  tbl_pfs_survival <- sample_pfs_rate(
-    x,
-    # ToDo: make sure this works from 0
-    t = seq(0.5, dt[2], length.out = n_grid),
-    sample = sample
-  ) %>%
+  tbl_pfs_survival <- compute_pfs(x, t = dt_grid,
+                                  parameter_sample = parameter_sample) %>% # TODO make sure this works from 0
     # integrate over prior sample
     group_by(.data$group_id, .data$t) %>%
     summarize(pfs = mean(.data$pfs), .groups = "drop")
@@ -648,22 +673,26 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
 
 
 
+#' @inheritParams compute_pfs
+#' @template param-warmup
+#'
+#' @rdname srp_model
 #' @export
-sample_pfs_rate.srp_model <- function( # nolint
+compute_pfs.srp_model <- function( # nolint
   model,
-  t, # PFS_r is 1 - Pr[progression or death before time t]
-  sample = NULL,
+  t,
+  parameter_sample = NULL,
   warmup = 500L,
-  nsim = 2000L,
+  nsim = 1000L,
   seed = NULL,
   ...
 ) {
-  if (is.null(sample)) {
-    sample <- sample_prior(model, warmup = warmup, nsim = nsim, seed = seed,
-      rstan_output = TRUE, pars = attr(model, "parameter_names"), ...
-    )
+  if (is.null(parameter_sample)) {
+    parameter_sample <- sample_prior(model,
+                                     warmup = warmup, nsim = nsim, seed = seed,
+                                     pars = attr(model, "parameter_names"), ...)
   }
-  sample <- parameter_sample_to_tibble(model, sample)
+  parameter_sample <- parameter_sample_to_tibble(model, parameter_sample)
   pr_direct_progression <- function(shape_2, scale_2, t) {
     return(stats::pweibull(t, shape_2, scale_2))
   }
@@ -680,7 +709,7 @@ sample_pfs_rate.srp_model <- function( # nolint
     )
     return(res$value)
   }
-  tbl_pfs <- sample %>%
+  tbl_pfs <- parameter_sample %>%
     # pivot parameters
     tidyr::pivot_wider(
       names_from = all_of(c("parameter", "transition")),
