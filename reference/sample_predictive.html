@@ -58,17 +58,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sample_predictive</span><span class="op">(</span></span>
-<span>  <span class="va">model</span>,</span>
-<span>  <span class="va">n_per_group</span>,</span>
-<span>  <span class="va">sample</span>,</span>
-<span>  <span class="va">nsim</span>,</span>
-<span>  <span class="va">nsim_parameters</span>,</span>
-<span>  <span class="va">warmup_parameters</span>,</span>
-<span>  <span class="va">seed</span>,</span>
-<span>  <span class="va">as_mstate</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sample_predictive</span><span class="op">(</span><span class="va">model</span>, <span class="va">n_per_group</span>, <span class="va">sample</span>, <span class="va">nsim</span>, <span class="va">seed</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -89,20 +79,8 @@
 <dd><p>number of samples to draw</p></dd>
 
 
-<dt>nsim_parameters</dt>
-<dd><p>integer, number of parameter samples</p></dd>
-
-
-<dt>warmup_parameters</dt>
-<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.</p></dd>
-
-
 <dt>seed</dt>
 <dd><p>integer, fixed random seed; NULL for no fixed seed</p></dd>
-
-
-<dt>as_mstate</dt>
-<dd><p>return data in multi-state forma, see <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code></p></dd>
 
 
 <dt>...</dt>

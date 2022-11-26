@@ -67,7 +67,7 @@
         </dt>
         <dd>The oncomsm package.</dd>
       </dl></div><div class="section level2">
-      <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+      <h2 id="sampling-functions">Sampling functions<a class="anchor" aria-label="anchor" href="#sampling-functions"></a></h2>
       
       
 
@@ -98,39 +98,7 @@
         </dt>
         <dd>Impute data from predictive distribution</dd>
       </dl></div><div class="section level2">
-      <h2 id="abstract-model-interface">Abstract model interface<a class="anchor" aria-label="anchor" href="#abstract-model-interface"></a></h2>
-      
-      
-
-      
-    </div><div id="" class="section level2">
-      
-      
-      
-
-      <dl><dt>
-          
-          <code><a href="Model.html">format(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">print(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_pfs_rate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">visits_to_mstate(<i>&lt;Model&gt;</i>)</a></code> 
-        </dt>
-        <dd>An abstract multi-state model class</dd>
-      </dl></div><div class="section level2">
-      <h2 id="srp-model">SRP model<a class="anchor" aria-label="anchor" href="#srp-model"></a></h2>
-      
-      
-
-      
-    </div><div id="" class="section level2">
-      
-      
-      
-
-      <dl><dt>
-          
-          <code><a href="srp_model.html">create_srp_model()</a></code> <code><a href="srp_model.html">format(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">plot_mstate(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">visits_to_mstate(<i>&lt;srp_model&gt;</i>)</a></code> 
-        </dt>
-        <dd>A Stable-Response-Progression Model</dd>
-      </dl></div><div class="section level2">
-      <h2 id="other">Other<a class="anchor" aria-label="anchor" href="#other"></a></h2>
+      <h2 id="other-functions">Other functions<a class="anchor" aria-label="anchor" href="#other-functions"></a></h2>
       
       
 
@@ -162,9 +130,41 @@
         <dd>Convert stanfit sample to data table</dd>
       </dl><dl><dt>
           
-          <code><a href="sample_pfs_rate.html">sample_pfs_rate()</a></code> 
+          <code><a href="compute_pfs.html">compute_pfs()</a></code> 
         </dt>
         <dd>Sample from the progression-free-survival rate</dd>
+      </dl></div><div class="section level2">
+      <h2 id="stable-response-progression-model">Stable-Response-Progression model<a class="anchor" aria-label="anchor" href="#stable-response-progression-model"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="srp_model.html">create_srp_model()</a></code> <code><a href="srp_model.html">format(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">plot_mstate(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">visits_to_mstate(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">plot(<i>&lt;srp_model&gt;</i>)</a></code> <code><a href="srp_model.html">compute_pfs(<i>&lt;srp_model&gt;</i>)</a></code> 
+        </dt>
+        <dd>A Stable-Response-Progression Model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="abstract-model-interface">Abstract model interface<a class="anchor" aria-label="anchor" href="#abstract-model-interface"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="Model.html">format(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">print(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_prior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_posterior(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">sample_predictive(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">impute(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">parameter_sample_to_tibble(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">plot_mstate(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">compute_pfs(<i>&lt;Model&gt;</i>)</a></code> <code><a href="Model.html">visits_to_mstate(<i>&lt;Model&gt;</i>)</a></code> 
+        </dt>
+        <dd>An abstract multi-state model class</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>

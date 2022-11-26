@@ -76,11 +76,11 @@ the respective sub-classes can be.</p>
 <span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="sample_prior.html">sample_prior</a></span><span class="op">(</span></span>
 <span>  <span class="va">model</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500L</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  rstan_output <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">500L</span>,</span>
 <span>  pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"parameter_names"</span><span class="op">)</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -88,10 +88,10 @@ the respective sub-classes can be.</p>
 <span><span class="fu"><a href="sample_posterior.html">sample_posterior</a></span><span class="op">(</span></span>
 <span>  <span class="va">model</span>,</span>
 <span>  <span class="va">data</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500L</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  rstan_output <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"parameter_names"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
@@ -102,10 +102,11 @@ the respective sub-classes can be.</p>
 <span>  <span class="va">n_per_group</span>,</span>
 <span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nsim_parameters <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  warmup_parameters <span class="op">=</span> <span class="fl">250</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  as_mstate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -113,14 +114,15 @@ the respective sub-classes can be.</p>
 <span><span class="fu"><a href="impute.html">impute</a></span><span class="op">(</span></span>
 <span>  <span class="va">model</span>,</span>
 <span>  <span class="va">data</span>,</span>
+<span>  <span class="va">nsim</span>,</span>
 <span>  n_per_group <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  recruitment_rates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"recruitment_rate"</span><span class="op">)</span>,</span>
 <span>  now <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  recruitment_rates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"recruitment_rate"</span><span class="op">)</span>,</span>
 <span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  nsim <span class="op">=</span> <span class="fl">250L</span>,</span>
 <span>  nsim_parameters <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  warmup_parameters <span class="op">=</span> <span class="fl">250L</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -131,15 +133,7 @@ the respective sub-classes can be.</p>
 <span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">model</span>, <span class="va">now</span>, <span class="va">relative_to_sot</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu"><a href="sample_pfs_rate.html">sample_pfs_rate</a></span><span class="op">(</span></span>
-<span>  <span class="va">model</span>,</span>
-<span>  <span class="va">t</span>,</span>
-<span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500L</span>,</span>
-<span>  nsim <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span>
+<span><span class="fu"><a href="compute_pfs.html">compute_pfs</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">t</span>, <span class="va">parameter_sample</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span></span>
@@ -164,11 +158,6 @@ the respective sub-classes can be.</p>
 <dd><p>a model of class "Model"</p></dd>
 
 
-<dt>warmup</dt>
-<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.</p></dd>
-
-
 <dt>nsim</dt>
 <dd><p>number of samples to draw</p></dd>
 
@@ -177,20 +166,29 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
 <dd><p>integer, fixed random seed; NULL for no fixed seed</p></dd>
 
 
-<dt>rstan_output</dt>
-<dd><p>logical, function returns raw rstan sample object if set to TRUE</p></dd>
+<dt>warmup</dt>
+<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>pars</dt>
 <dd><p>character vector of parameter names to sample; resorting to model defaults if NULL</p></dd>
 
 
+<dt>nuts_control</dt>
+<dd><p>control parameters for NUTS algorithm see <code><a href="https://mc-stan.org/rstan/reference/stan.html" class="external-link">rstan::stan()</a></code></p></dd>
+
+
 <dt>data</dt>
-<dd><p>the (multi-state) data frame to impute further trajectories for.</p></dd>
+<dd><p>a data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
+where dt1 is the minimal and dt2 the maximal time to the event in question.
+If both are Inf, the individual has not and will never experience the event.
+If dt1 &lt; Inf but dt2 == Inf the individual is still at risk.
+"t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.</p></dd>
 
 
 <dt>n_per_group</dt>
-<dd><p>the number of individuals per group to be recruited.</p></dd>
+<dd><p>integer vector with number of individuals per group.</p></dd>
 
 
 <dt>sample</dt>
@@ -209,15 +207,15 @@ this sample to match the desired number of imputations.</p></dd>
 
 
 <dt>as_mstate</dt>
-<dd><p>return in multi-state format</p></dd>
-
-
-<dt>recruitment_rates</dt>
-<dd><p>the per-group recruitment rates.</p></dd>
+<dd><p>return data in multi-state forma, see <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code></p></dd>
 
 
 <dt>now</dt>
 <dd><p>exact time point relative to start of the trial</p></dd>
+
+
+<dt>recruitment_rates</dt>
+<dd><p>vector of recruitment rates</p></dd>
 
 
 <dt>relative_to_sot</dt>
@@ -227,6 +225,10 @@ of trial or the start of treatment for each individual</p></dd>
 
 <dt>t</dt>
 <dd><p>a vector of time-points at which the PFS rate should be computed</p></dd>
+
+
+<dt>parameter_sample</dt>
+<dd><p>a stanfit object with samples from the respective model.</p></dd>
 
 
 <dt>tbl_visits</dt>

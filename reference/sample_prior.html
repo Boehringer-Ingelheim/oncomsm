@@ -58,18 +58,13 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sample_prior</span><span class="op">(</span><span class="va">model</span>, <span class="va">warmup</span>, <span class="va">nsim</span>, <span class="va">seed</span>, <span class="va">rstan_output</span>, <span class="va">pars</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sample_prior</span><span class="op">(</span><span class="va">model</span>, <span class="va">nsim</span>, <span class="va">seed</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>model</dt>
 <dd><p>a model of class "Model"</p></dd>
-
-
-<dt>warmup</dt>
-<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>nsim</dt>
@@ -80,14 +75,6 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
 <dd><p>integer, fixed random seed; NULL for no fixed seed</p></dd>
 
 
-<dt>rstan_output</dt>
-<dd><p>logical, function returns raw rstan sample object if set to TRUE</p></dd>
-
-
-<dt>pars</dt>
-<dd><p>character vector of parameter names to sample; resorting to model defaults if NULL</p></dd>
-
-
 <dt>...</dt>
 <dd><p>further arguments passed to method implementations</p></dd>
 
@@ -96,9 +83,11 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>A tibble with columns iter (integer), parameter (character),
-group_id (character), and value (numeric) with the parameter samples in long
-format or (if rstan_output == TRUE) a rstanfit object.</p>
+<p>a rstanfit object with the sampled prior parameters</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="parameter_sample_to_tibble.html">parameter_sample_to_tibble()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

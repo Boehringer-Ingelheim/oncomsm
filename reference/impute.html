@@ -58,19 +58,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">impute</span><span class="op">(</span></span>
-<span>  <span class="va">model</span>,</span>
-<span>  <span class="va">data</span>,</span>
-<span>  <span class="va">n_per_group</span>,</span>
-<span>  <span class="va">recruitment_rates</span>,</span>
-<span>  <span class="va">now</span>,</span>
-<span>  <span class="va">sample</span>,</span>
-<span>  <span class="va">nsim</span>,</span>
-<span>  <span class="va">nsim_parameters</span>,</span>
-<span>  <span class="va">warmup_parameters</span>,</span>
-<span>  <span class="va">seed</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">impute</span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span>, <span class="va">nsim</span>, <span class="va">n_per_group</span>, <span class="va">now</span>, <span class="va">seed</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -83,35 +71,16 @@
 <dd><p>the (multi-state) data frame to impute further trajectories for.</p></dd>
 
 
-<dt>n_per_group</dt>
-<dd><p>the number of individuals per group to be recruited.</p></dd>
-
-
-<dt>recruitment_rates</dt>
-<dd><p>the per-group recruitment rates.</p></dd>
-
-
-<dt>now</dt>
-<dd><p>exact time point relative to start of the trial</p></dd>
-
-
-<dt>sample</dt>
-<dd><p>a stanfit object containing samples. These parameter samples
-represent the parameter distribution over which the predictive distribution
-averages. Technically, the parameters are resampled with replacement from
-this sample to match the desired number of imputations.</p></dd>
-
-
 <dt>nsim</dt>
 <dd><p>number of samples to draw</p></dd>
 
 
-<dt>nsim_parameters</dt>
-<dd><p>integer, number of parameter samples</p></dd>
+<dt>n_per_group</dt>
+<dd><p>the number of individuals per group to be recruited.</p></dd>
 
 
-<dt>warmup_parameters</dt>
-<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.</p></dd>
+<dt>now</dt>
+<dd><p>exact time point relative to start of the trial</p></dd>
 
 
 <dt>seed</dt>
