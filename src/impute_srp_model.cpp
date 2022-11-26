@@ -48,7 +48,7 @@ DataFrame f(
   CharacterVector group_ids = group.attr("levels");
   // check that df starts with "stable" (must be if properly sorted)
   if (state(0) != "stable") {
-    stop("df must start with 'stable' state");
+    stop("df must start with 'stable' state");  // # nocov
   }
   // compute maximal output length
   const int max_visits = floor(max_time/min(visit_spacing));

@@ -130,7 +130,7 @@ test_that("impute throws correct errors", {
   tbl_data <- tribble(
     ~subject_id, ~group_id, ~t,     ~state,
     " s1",       "A",  2, "stable",
-    " s1",       "B",  1, "stable",
+    " s1",       "B",  1, "stable"
   )
   expect_error(
     impute(mdl,
@@ -141,11 +141,39 @@ test_that("impute throws correct errors", {
   tbl_data <- tribble(
     ~subject_id, ~group_id, ~t,     ~state,
     " s1",       "A",  2, "stable",
-    " s2",       "B",  1, "response",
+    " s2",       "B",  1, "response"
   )
   expect_error(
     impute(mdl,
            data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
            nuts_control = list(adapt_delta = 0.99))
+  )
+})
+
+
+
+test_that("impute from 'response' works", {
+  mdl <- create_srp_model(
+    group_id = "A",
+    logodds_mean = 0,
+    logodds_sd = 10,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE, nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+  )
+  tbl_data <- tribble(
+    ~subject_id, ~group_id, ~t,     ~state,
+           "s1",       "A",  0,   "stable",
+           "s1",       "A",  0, "response"
+  )
+  tbl_test <- impute(mdl,
+         data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
+         nuts_control = list(adapt_delta = 0.99))
+  expect_true(
+    all(tbl_test$subject_id == "s1"),
+    all(tbl_test$state[2:(nrow(tbl_test) - 1)] == "response"),
+    tbl_test$state[nrow(tbl_test)] == "progression"
   )
 })
