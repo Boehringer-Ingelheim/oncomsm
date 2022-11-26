@@ -48,7 +48,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>A Stable-Response-Progression Model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Boehringer-Ingelheim/oncomsm/blob/HEAD/R/srp_model.R" class="external-link"><code>R/srp_model.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Boehringer-Ingelheim/oncomsm/blob/HEAD/R/srp_model.R" class="external-link"><code>R/srp_model.R</code></a>, <a href="https://github.com/Boehringer-Ingelheim/oncomsm/blob/HEAD/R/srp_model_plotting.R" class="external-link"><code>R/srp_model_plotting.R</code></a></small>
       <div class="d-none name"><code>srp_model.Rd</code></div>
     </div>
 
@@ -77,32 +77,11 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for srp_model</span></span>
-<span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span></span>
-<span>  <span class="va">data</span>,</span>
-<span>  <span class="va">model</span>,</span>
-<span>  now <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tbl_mstate</span><span class="op">$</span><span class="va">t_max</span><span class="op">)</span>,</span>
-<span>  relative_to_sot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for srp_model</span></span>
 <span><span class="fu"><a href="visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span></span>
 <span>  <span class="va">tbl_visits</span>,</span>
 <span>  <span class="va">model</span>,</span>
 <span>  now <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tbl_visits</span><span class="op">$</span><span class="va">t</span><span class="op">)</span>,</span>
 <span>  eof_indicator <span class="op">=</span> <span class="st">"EOF"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for srp_model</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
-<span>  <span class="va">x</span>,</span>
-<span>  parameter_sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dt_interval <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dt_n_grid <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>  dt_expand <span class="op">=</span> <span class="fl">1.1</span>,</span>
-<span>  nsim <span class="op">=</span> <span class="fl">500L</span>,</span>
-<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for srp_model</span></span>
@@ -113,6 +92,71 @@
 <span>  warmup <span class="op">=</span> <span class="fl">500L</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for srp_model</span></span>
+<span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">model</span>,</span>
+<span>  now <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tbl_mstate</span><span class="op">$</span><span class="va">t_max</span><span class="op">)</span>,</span>
+<span>  relative_to_sot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for srp_model</span></span>
+<span><span class="fu"><a href="plot_transition_times.html">plot_transition_times</a></span><span class="op">(</span></span>
+<span>  <span class="va">model</span>,</span>
+<span>  parameter_sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  dt_interval <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dt_n_grid <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  dt_expand <span class="op">=</span> <span class="fl">1.1</span>,</span>
+<span>  dt_grid <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for srp_model</span></span>
+<span><span class="fu"><a href="plot_response_probability.html">plot_response_probability</a></span><span class="op">(</span></span>
+<span>  <span class="va">model</span>,</span>
+<span>  parameter_sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for srp_model</span></span>
+<span><span class="fu"><a href="plot_pfs.html">plot_pfs</a></span><span class="op">(</span></span>
+<span>  <span class="va">model</span>,</span>
+<span>  parameter_sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  dt_interval <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dt_n_grid <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  dt_expand <span class="op">=</span> <span class="fl">1.1</span>,</span>
+<span>  dt_grid <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for srp_model</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  parameter_sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  nuts_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  dt_interval <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dt_n_grid <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  dt_expand <span class="op">=</span> <span class="fl">1.1</span>,</span>
+<span>  dt_grid <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -191,25 +235,17 @@ Weibull distribution per group/transition</p></dd>
 <dd><p>further arguments passed to method implementations</p></dd>
 
 
-<dt>data</dt>
-<dd><p>a data table with multi-state data</p></dd>
+<dt>tbl_visits</dt>
+<dd><p>visit data in long format</p></dd>
 
 
 <dt>model</dt>
-<dd><p>a model of class "Model"</p></dd>
+<dd><p>a multi-state model object</p></dd>
 
 
 <dt>now</dt>
-<dd><p>the current time relative to the start of the trial (sot)</p></dd>
-
-
-<dt>relative_to_sot</dt>
-<dd><p>Boolean, should the timeline be relative to the start
-of trial or the start of treatment for each individual</p></dd>
-
-
-<dt>tbl_visits</dt>
-<dd><p>visit data in long format</p></dd>
+<dd><p>time point since start of trial (might be later than last
+recorded visit)</p></dd>
 
 
 <dt>eof_indicator</dt>
@@ -217,38 +253,57 @@ of trial or the start of treatment for each individual</p></dd>
 follow up.</p></dd>
 
 
+<dt>t</dt>
+<dd><p>a vector of time-points at which the PFS rate should be computed</p></dd>
+
+
 <dt>parameter_sample</dt>
 <dd><p>a stanfit object with samples from the respective model.</p></dd>
 
 
-<dt>seed</dt>
-<dd><p>integer, fixed random seed; NULL for no fixed seed</p></dd>
-
-
-<dt>dt_interval</dt>
-<dd><p>optional, fixed plotting limits in time since first visit</p></dd>
-
-
-<dt>dt_n_grid</dt>
-<dd><p>optional, plotting resolution along time scale</p></dd>
-
-
-<dt>dt_expand</dt>
-<dd><p>optional, expansion factor for the upper limit of the
-automatically determine plotting interval</p></dd>
+<dt>warmup</dt>
+<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
+tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>nsim</dt>
 <dd><p>number of samples to draw</p></dd>
 
 
-<dt>t</dt>
-<dd><p>a vector of time-points at which the PFS rate should be computed</p></dd>
+<dt>seed</dt>
+<dd><p>integer, fixed random seed; NULL for no fixed seed</p></dd>
 
 
-<dt>warmup</dt>
-<dd><p>integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.</p></dd>
+<dt>data</dt>
+<dd><p>a data table with multi-state data</p></dd>
+
+
+<dt>relative_to_sot</dt>
+<dd><p>Boolean, should the timeline be relative to the start
+of trial or the start of treatment for each individual</p></dd>
+
+
+<dt>nuts_control</dt>
+<dd><p>control parameters for NUTS algorithm see <code><a href="https://mc-stan.org/rstan/reference/stan.html" class="external-link">rstan::stan()</a></code></p></dd>
+
+
+<dt>dt_interval</dt>
+<dd><p>numeric vector of length two with minimal and maximal
+time (relative to individual first visit) to use for plotting</p></dd>
+
+
+<dt>dt_n_grid</dt>
+<dd><p>number of grid points to use when automatically choosing
+plotting interval</p></dd>
+
+
+<dt>dt_expand</dt>
+<dd><p>expansion factor for upper plotting limit when using
+automatic interval detection</p></dd>
+
+
+<dt>dt_grid</dt>
+<dd><p>numeric vector of time points to use for plotting</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -130,6 +130,15 @@ the respective sub-classes can be.</p>
 <span><span class="fu"><a href="parameter_sample_to_tibble.html">parameter_sample_to_tibble</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">sample</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
+<span><span class="fu"><a href="plot_transition_times.html">plot_transition_times</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">parameter_sample</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for Model</span></span>
+<span><span class="fu"><a href="plot_response_probability.html">plot_response_probability</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">parameter_sample</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for Model</span></span>
+<span><span class="fu"><a href="plot_pfs.html">plot_pfs</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">parameter_sample</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for Model</span></span>
 <span><span class="fu"><a href="plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">model</span>, <span class="va">now</span>, <span class="va">relative_to_sot</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for Model</span></span>
@@ -218,6 +227,10 @@ this sample to match the desired number of imputations.</p></dd>
 <dd><p>vector of recruitment rates</p></dd>
 
 
+<dt>parameter_sample</dt>
+<dd><p>a stanfit object with samples from the respective model.</p></dd>
+
+
 <dt>relative_to_sot</dt>
 <dd><p>Boolean, should the timeline be relative to the start
 of trial or the start of treatment for each individual</p></dd>
@@ -225,10 +238,6 @@ of trial or the start of treatment for each individual</p></dd>
 
 <dt>t</dt>
 <dd><p>a vector of time-points at which the PFS rate should be computed</p></dd>
-
-
-<dt>parameter_sample</dt>
-<dd><p>a stanfit object with samples from the respective model.</p></dd>
 
 
 <dt>tbl_visits</dt>

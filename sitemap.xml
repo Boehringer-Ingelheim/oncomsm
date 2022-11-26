@@ -52,6 +52,15 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot_mstate.html</loc>
   </url>
   <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot_pfs.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot_response_probability.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot_transition_times.html</loc>
+  </url>
+  <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_posterior.html</loc>
   </url>
   <url>
