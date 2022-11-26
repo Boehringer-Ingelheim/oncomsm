@@ -81,3 +81,24 @@ test_that("impute remainder, without adding subjects", {
     n_groups(group_by(tbl_data2, subject_id, group_id)) == 10L
   )
 })
+
+
+
+test_that("impute to mstate works", {
+  mdl <- create_srp_model(
+    group_id = "A",
+    logodds_mean = 0,
+    logodds_sd = 10,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE, nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+  )
+  # sample some data and reduce to first visits
+  tbl_data <- sample_predictive(mdl, 10, nsim = 1, seed = 55L,
+                                as_mstate = TRUE)
+  expect_true(
+    n_groups(group_by(tbl_data, subject_id, group_id)) == 10L
+  )
+})

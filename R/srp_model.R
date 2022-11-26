@@ -228,7 +228,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 # helper to create all-missing standata for model
 .emptydata.srp_model <- function(model, n_per_group, seed = NULL) { # nolint
   if (!is.null(seed)) {
-    set.seed(seed)
+    set.seed(seed) # nocov
   }
   n <- sum(n_per_group)
   group_ids <- attr(model, "group_id")
@@ -545,7 +545,7 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
     sample <- sample_prior(x, seed = seed, ...)
   }
   if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("the patchwork package is required to plot SRP models")
+    stop("the patchwork package is required to plot SRP models") # nocov
   }
   tbl_sample <- parameter_sample_to_tibble(x, sample)
   # plot transition times

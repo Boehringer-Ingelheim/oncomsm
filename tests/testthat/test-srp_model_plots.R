@@ -37,6 +37,8 @@ test_that("default plotting works as intended", {
   )
   plt <- plot(mdl, dt = c(0, 36), sample = smpl, n_grid = 10)
   vdiffr::expect_doppelganger("plot.srp_model_2", plt)
+  # check that plotting without sample works
+  plot(mdl, dt = c(0, 36), n_grid = 10)
 })
 
 
@@ -105,4 +107,7 @@ test_that("can plot mstate data for SRP model", {
   tbl_mstate <- visits_to_mstate(tbl_visits, mdl)
   plt <- plot_mstate(tbl_mstate, mdl, relative_to_sot = FALSE)
   vdiffr::expect_doppelganger("plot_mstate.srp_model_2", plt)
+  # check relative to SOT
+  plt <- plot_mstate(tbl_mstate, mdl, relative_to_sot = TRUE)
+  vdiffr::expect_doppelganger("plot_mstate.srp_model_3", plt)
 })
