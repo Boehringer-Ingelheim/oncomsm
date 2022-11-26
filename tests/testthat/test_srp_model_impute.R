@@ -102,3 +102,50 @@ test_that("impute to mstate works", {
     n_groups(group_by(tbl_data, subject_id, group_id)) == 10L
   )
 })
+
+
+
+test_that("impute throws correct errors", {
+  mdl <- create_srp_model(
+    group_id = "A",
+    logodds_mean = 0,
+    logodds_sd = 10,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE, nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+  )
+  # create some data in wrong format
+  tbl_data <- tribble(
+    ~subject_id, ~group_id, ~t,     ~state,
+          " s1",       "A",  0, "response",
+  )
+  expect_error(
+    impute(mdl,
+           data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
+           nuts_control = list(adapt_delta = 0.99))
+  )
+  # create some data in wrong format
+  tbl_data <- tribble(
+    ~subject_id, ~group_id, ~t,     ~state,
+    " s1",       "A",  2, "stable",
+    " s1",       "B",  1, "stable",
+  )
+  expect_error(
+    impute(mdl,
+           data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
+           nuts_control = list(adapt_delta = 0.99))
+  )
+  # create some data in wrong format
+  tbl_data <- tribble(
+    ~subject_id, ~group_id, ~t,     ~state,
+    " s1",       "A",  2, "stable",
+    " s2",       "B",  1, "response",
+  )
+  expect_error(
+    impute(mdl,
+           data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
+           nuts_control = list(adapt_delta = 0.99))
+  )
+})
