@@ -2,7 +2,7 @@
 % Please edit documentation in R/Model.R
 \name{plot_pfs}
 \alias{plot_pfs}
-\title{Plot the progression-free-survial function of a model}
+\title{Plot the progression-free-survival function of a model}
 \usage{
 plot_pfs(model, parameter_sample, ...)
 }
@@ -14,5 +14,5 @@ plot_pfs(model, parameter_sample, ...)
 \item{...}{further arguments passed to method implementations}
 }
 \description{
-Plot the progression-free-survial function of a model
+Plot the progression-free-survival function of a model
 }

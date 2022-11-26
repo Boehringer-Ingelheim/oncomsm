@@ -450,7 +450,7 @@ plot_response_probability.Model <- function(model, parameter_sample, ...) {
 
 
 
-#' Plot the progression-free-survial function of a model
+#' Plot the progression-free-survival function of a model
 #'
 #' @template param-model
 #' @template param-parameter_sample
