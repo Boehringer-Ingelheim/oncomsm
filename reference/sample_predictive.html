@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">oncomsm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
-    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of Success</a>
+    <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of 'go'</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -66,6 +66,7 @@
 <span>  <span class="va">nsim_parameters</span>,</span>
 <span>  <span class="va">warmup_parameters</span>,</span>
 <span>  <span class="va">seed</span>,</span>
+<span>  <span class="va">as_mstate</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -98,6 +99,10 @@
 
 <dt>seed</dt>
 <dd><p>integer, fixed random seed; NULL for no fixed seed</p></dd>
+
+
+<dt>as_mstate</dt>
+<dd><p>return data in multi-state forma, see <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code></p></dd>
 
 
 <dt>...</dt>

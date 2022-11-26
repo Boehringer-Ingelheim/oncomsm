@@ -96,20 +96,8 @@ the respective sub-classes can be.</p>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">sample_predictive</span><span class="op">(</span></span>
-<span>  <span class="va">model</span>,</span>
-<span>  <span class="va">n_per_group</span>,</span>
-<span>  <span class="va">sample</span>,</span>
-<span>  <span class="va">nsim</span>,</span>
-<span>  <span class="va">nsim_parameters</span>,</span>
-<span>  <span class="va">warmup_parameters</span>,</span>
-<span>  <span class="va">seed</span>,</span>
-<span>  <span class="va">as_mstate</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># S3 method for Model</span></span>
-<span><span class="fu">sample_predictive</span><span class="op">(</span></span>
+<span><span class="fu"><a href="sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>  <span class="va">model</span>,</span>
 <span>  <span class="va">n_per_group</span>,</span>
 <span>  sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -202,11 +190,14 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>n_per_group</dt>
-<dd><p>integer vector with number of individuals per group.</p></dd>
+<dd><p>the number of individuals per group to be recruited.</p></dd>
 
 
 <dt>sample</dt>
-<dd><p>a stanfit object with samples from the respective model.</p></dd>
+<dd><p>a stanfit object containing samples. These parameter samples
+represent the parameter distribution over which the predictive distribution
+averages. Technically, the parameters are resampled with replacement from
+this sample to match the desired number of imputations.</p></dd>
 
 
 <dt>nsim_parameters</dt>
@@ -218,7 +209,7 @@ tune the hyperparameters of the MCMC algorithm.</p></dd>
 
 
 <dt>as_mstate</dt>
-<dd><p>return data in multi-state forma, see <code><a href="visits_to_mstate.html">visits_to_mstate()</a></code></p></dd>
+<dd><p>return in multi-state format</p></dd>
 
 
 <dt>recruitment_rates</dt>
@@ -247,12 +238,6 @@ of trial or the start of treatment for each individual</p></dd>
 follow up.</p></dd>
 
 </dl></div>
-    <div class="section level2">
-    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    
-
-<p>TODO:</p>
-    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><a href="srp_model.html">srp_model</a></p></div>

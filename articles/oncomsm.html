@@ -105,8 +105,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-d335622c135c5e8829a4" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-d335622c135c5e8829a4">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-dcf8f82ba176b8653aff" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-dcf8f82ba176b8653aff">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -261,7 +261,7 @@ event.</p>
 model. We sample 100 trials with 30 individuals per arm. Here, we can
 re-use the sample prior sample already used for plotting.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>  <span class="va">mdl</span>,</span>
 <span>  sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
 <span>  n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30L</span>, <span class="fl">30L</span><span class="op">)</span>,</span>
@@ -378,7 +378,7 @@ values can be interpreted as conditioning on some or all of the
 parameters. For instance one could set the response probabilities to
 fixed values of <span class="math inline">\(0.1\)</span> and <span class="math inline">\(0.9\)</span>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
 <span>    p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span>,</span>
@@ -410,7 +410,7 @@ probabilities that deviate from the chosen prior. The data can then be
 curtailed to a hypothetical interim time-point simply by filtering the
 visit time-points.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_data_interim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tbl_data_interim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
 <span>    p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.8</span><span class="op">)</span>,</span>

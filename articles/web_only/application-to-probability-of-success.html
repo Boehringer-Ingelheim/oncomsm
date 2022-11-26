@@ -209,7 +209,7 @@ function:</p>
 <p>An example of how to apply the criterion to a sample from the prior
 predictive distribution is given below:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">40L</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>    sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
@@ -229,7 +229,7 @@ frame of data frames, where <code>tbl_prior_predictive$data[[i]]</code>
 corresponds to the data in the <span class="math inline">\(i\)</span>-th
 resample.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tbl_prior_predictive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">40L</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>    sample <span class="op">=</span> <span class="va">smpl_prior</span>,</span>
@@ -291,7 +291,7 @@ with the prior mean is sampled as hypothetical data. As data accrues,
 the evidence will lead to a shift in the posterior probability and thus
 the probability of ‘go’.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Model.html">sample_predictive</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tbl_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/sample_predictive.html">sample_predictive</a></span><span class="op">(</span></span>
 <span>    <span class="va">mdl</span>,</span>
 <span>    p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.65</span>, <span class="fl">0.45</span><span class="op">)</span>, <span class="co">## conflicting prior expectation</span></span>
 <span>    n_per_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40L</span>, <span class="fl">40L</span><span class="op">)</span>,</span>
