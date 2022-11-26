@@ -15,7 +15,7 @@ NULL
 #' @template param-dotdotdot
 #' @rdname Model
 #' @export
-format.Model <- function(x, ...) class(x)[1]
+format.Model <- function(x, ...) class(x)[1] # nocov
 
 #' @param x Model to print
 #' @template param-dotdotdot
@@ -195,7 +195,7 @@ sample_predictive.Model <- function(
 #' @return a data frame with imputed version of the input data.
 #'
 #' @export
-impute <- function(model, data, nsim, n_per_group, now, seed, ... ) {
+impute <- function(model, data, nsim, n_per_group, now, seed, ...) {
   UseMethod("impute")
 }
 
@@ -266,9 +266,9 @@ impute.Model <- function(
       unique() %>%
       length()
     n_to_be_recruited <- n_per_group[i] - n_recruited
-    if (n_to_be_recruited < 0) {
-      stop("data contains more individuals than specified in n_per_group") # nocov nolint
-    }
+    if (n_to_be_recruited < 0) { # nocov start
+      stop("data contains more individuals than specified in n_per_group") # nolint
+    } # nocov end
     ids_to_exclude <- c(tbl_to_recruit$subject_id, unique(data$subject_id))
     if (n_to_be_recruited > 0) {
       subject_ids <- get_identifier(n = n_to_be_recruited,

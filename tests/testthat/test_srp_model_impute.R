@@ -24,6 +24,8 @@ test_that("impute remainder of trial from interim data", {
   )
 })
 
+
+
 test_that("impute remainder of trial from interim data, no new individuals", {
   mdl <- create_srp_model(
     group_id = "A",
@@ -46,6 +48,35 @@ test_that("impute remainder of trial from interim data, no new individuals", {
   # need to adapt sampler a bit here to avoid diverging transitions!
   tbl_data2 <- impute(mdl,
                       tbl_data1, 10, nsim = 1, seed = 4453L)
+  expect_true(
+    n_groups(group_by(tbl_data2, subject_id, group_id)) == 10L
+  )
+})
+
+
+
+test_that("impute remainder, without adding subjects", {
+  mdl <- create_srp_model(
+    group_id = "A",
+    logodds_mean = 0,
+    logodds_sd = 10,
+    visit_spacing = 1.2,
+    median_time_to_next_event = matrix(c(
+      3, 3, 6
+    ), byrow = TRUE, nrow = 1, ncol = 3),
+    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+  )
+  # sample some data and reduce to first visits
+  tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
+                                 nsim_parameters = 1500L
+    ) %>%
+    group_by(subject_id) %>%
+    filter(row_number() == 1) %>%
+    ungroup()
+  # impute conditional on observed data,
+  # need to adapt sampler a bit here to avoid diverging transitions!
+  tbl_data2 <- impute(mdl,
+                      tbl_data1, nsim = 1, seed = 4453L)
   expect_true(
     n_groups(group_by(tbl_data2, subject_id, group_id)) == 10L
   )
