@@ -167,7 +167,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     logodds_mean = 0,
     logodds_sd = .1,
     visit_spacing = 0.1, # want this small to reduce discretization bias
-    max_time = 100*12, # avoid limiting effects from end of study
+    max_time = 100 * 12, # avoid limiting effects from end of study
     median_time_to_next_event = matrix(c(
       3, 3, 6
     ), byrow = TRUE, nrow = 1, ncol = 3),
@@ -181,19 +181,21 @@ test_that("Testing marginal calibration of sampling from the prior", {
   scale_default <- matrix(c(3, 6, 12), ncol = 1, nrow = 3)
   test_calibration <- function(scale_factor, shape) {
     # sample setting to different response probabilities
-    tbl_prior_predictive <- sample_predictive(mdl,
-                                              sample = smpl_prior,
-                                              scale = scale_default * scale_factor,
-                                              shape = matrix(shape, ncol = 1, nrow = 3),
-                                              n_per_group = 1L, nsim = 1e3,
-                                              seed = 342)
+    tbl_prior_predictive <- sample_predictive(
+      mdl,
+      sample = smpl_prior,
+      scale = scale_default * scale_factor,
+      shape = matrix(shape, ncol = 1, nrow = 3),
+      n_per_group = 1L, nsim = 1e3,
+      seed = 342
+    )
     # check calibration of times to next event, use midpoints of intervals as
     # approximation
     # work out the theoretical mean given scale = 1 and true scale
     # (see https://en.wikipedia.org/wiki/Weibull_distribution)
     theoretical_means <- scale_default * scale_factor * gamma(1 + 1 / shape)
-    # check that stable to response timings are roughly calibrated, use midpoints
-    # of intervals
+    # check that stable to response timings are roughly calibrated,
+    # use midpoints of intervals
     tbl_means <- tbl_prior_predictive %>%
       distinct(subject_id, iter, state, .keep_all = TRUE) %>%
       group_by(iter, group_id, subject_id) %>%
@@ -217,7 +219,8 @@ test_that("Testing marginal calibration of sampling from the prior", {
           from == "response" & to == "progression" ~ theoretical_means[3],
         )
       )
-    # testing for comparison with theoretical mean, allowing for estimation error
+    # testing for comparison with theoretical mean, allowing for
+    # estimation error
     expect_true(all(with(
       tbl_means,
       abs(estimated_mean - theoretical_mean) <= 3 * se

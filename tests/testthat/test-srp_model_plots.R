@@ -17,7 +17,7 @@ test_that("default plotting works as intended", {
   smpl <- readRDS(
     system.file("testthat/prior_smpl_plotting_1.rds", package = "oncomsm")
   )
-  plt <- plot(mdl, parameter_sample = smpl, n_grid = 10, seed = 42L)
+  plt <- plot(mdl, parameter_sample = smpl, n_grid = 10)
   vdiffr::expect_doppelganger("plot.srp_model_1", plt)
 
   mdl <- create_srp_model(
@@ -35,10 +35,14 @@ test_that("default plotting works as intended", {
   smpl <- readRDS(
     system.file("testthat/prior_smpl_plotting_2.rds", package = "oncomsm")
   )
-  plt <- plot(mdl, parameter_sample = smpl, n_grid = 10, seed = 42L)
+  plt <- plot(mdl, parameter_sample = smpl, n_grid = 10)
   vdiffr::expect_doppelganger("plot.srp_model_2", plt)
   # check that plotting without sample works
   plot(mdl)
+  # check that plotting sub functions work (output is subsumed in plot())
+  plot_pfs(mdl)
+  plot_transition_times(mdl)
+  plot_response_probability(mdl)
 })
 
 

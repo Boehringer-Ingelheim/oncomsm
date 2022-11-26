@@ -410,6 +410,65 @@ data2standata.Model <- function(data, model) {
 
 
 
+#' Plot the transition time distributions of a model
+#'
+#' @template param-model
+#' @template param-parameter_sample
+#' @template param-dotdotdot
+#'
+#' @export
+plot_transition_times <- function(model, parameter_sample, ...) {
+  UseMethod("plot_transition_times")
+}
+
+#' @inheritParams plot_transition_times
+#' @rdname Model
+#' @export
+plot_transition_times.Model <- function(model, parameter_sample, ...) {
+  stop("not implemented") # nocov
+}
+
+
+
+#' Plot the response probability distributions of a model
+#'
+#' @template param-model
+#' @template param-parameter_sample
+#' @template param-dotdotdot
+#'
+#' @export
+plot_response_probability <- function(model, parameter_sample, ...) {
+  UseMethod("plot_response_probability")
+}
+
+#' @inheritParams plot_response_probability
+#' @rdname Model
+#' @export
+plot_response_probability.Model <- function(model, parameter_sample, ...) {
+  stop("not implemented") # nocov
+}
+
+
+
+#' Plot the progression-free-survival function of a model
+#'
+#' @template param-model
+#' @template param-parameter_sample
+#' @template param-dotdotdot
+#'
+#' @export
+plot_pfs <- function(model, parameter_sample, ...) {
+  UseMethod("plot_pfs")
+}
+
+#' @inheritParams plot_pfs
+#' @rdname Model
+#' @export
+plot_pfs.Model <- function(model, parameter_sample, ...) {
+  stop("not implemented") # nocov
+}
+
+
 
 #' Swimmer-like plot of multi-state data
 #'
