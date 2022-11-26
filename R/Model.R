@@ -30,7 +30,7 @@ is_valid <- function(model) {
 }
 
 is_valid.Model <- function(model) {
-  stop("Not implemented")
+  stop("Not implemented") # nocov
 }
 
 #' Sample model prior parameters
@@ -138,17 +138,19 @@ sample_posterior.Model <- function(
 #' @template param-nsim_parameters
 #' @template param-warmup_parameters
 #' @template param-seed
+#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
 #' @template param-dotdotdot
 #'
 #' @return TODO:
 #'
+#' @rdname Model
 #' @export
 sample_predictive <- function(model, n_per_group, sample, nsim,
-                              nsim_parameters, warmup_parameters, seed, ...) {
+                              nsim_parameters, warmup_parameters, seed,
+                              as_mstate, ...) {
   UseMethod("sample_predictive")
 }
 
-#'
 #' @rdname Model
 #' @export
 sample_predictive.Model <- function(
@@ -159,16 +161,21 @@ sample_predictive.Model <- function(
   nsim_parameters = 1000L,
   warmup_parameters = 250,
   seed = NULL,
+  as_mstate = FALSE,
   ...
 ) {
-  if (is.null(sample)) {
-    sample <- sample_prior(
-      model, rstan_output = TRUE, seed = seed,
-      warmup = warmup_parameters, nsim = nsim_parameters
-    )
+  if (!is.null(seed)) {
+    set.seed(seed)
   }
-  .impute(model = model, data = .emptydata(model, n_per_group),
-          parameter_sample = sample, now = 0, nsim = nsim, seed = seed, ...)
+  if (is.null(sample)) {
+    sample <- sample_prior(model, rstan_output = TRUE,
+                           warmup = warmup_parameters, nsim = nsim_parameters)
+  }
+  # construct an empty data set
+  data <- .emptydata(model, n_per_group)
+  # call model-specific imputation method
+  .impute(model = model, data = data, parameter_sample = sample, now = 0,
+          nsim = nsim, as_mstate = as_mstate, ...)
 }
 
 
@@ -208,7 +215,7 @@ impute.Model <- function(
   model,
   data,
   n_per_group = NULL,
-  recruitment_rates = NULL,
+  recruitment_rates = attr(model, "recruitment_rate"),
   now = NULL,
   sample = NULL,
   nsim = 250L,
@@ -217,6 +224,9 @@ impute.Model <- function(
   seed = NULL,
   ...
 ) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   group_ids <- attr(model, "group_id")
   if (is.null(sample)) {
     sample <- sample_posterior(
@@ -226,7 +236,7 @@ impute.Model <- function(
   }
   if (is.null(now)) {
     # convert to visits and take the last time point
-    now <- max(mstate_to_visits(model, data)$t)
+    now <- max(data$t)
   }
   if (is.null(n_per_group)) {
     # no new individuals
@@ -239,10 +249,15 @@ impute.Model <- function(
       as.numeric()
   } else {
     if (is.null(recruitment_rates)) {
-      stop("recruitment_rates must be specified")
+      stop("recruitment_rates must be specified") # nocov
     }
   }
-  tbl_to_be_recruited <- list()
+  tbl_to_recruit <- tibble(
+    subject_id = character(0L),
+    group_id = character(0L),
+    t = numeric(0L),
+    state = character(0L)
+  )
   for (i in seq_along(group_ids)) {
     n_recruited <- data %>%
       filter(.data$group_id == group_ids[i]) %>%
@@ -251,26 +266,26 @@ impute.Model <- function(
       length()
     n_to_be_recruited <- n_per_group[i] - n_recruited
     if (n_to_be_recruited < 0) {
-      stop("data contains more individuals than specified in n_per_group")
+      stop("data contains more individuals than specified in n_per_group") # nocov nolint
     }
+    ids_to_exclude <- c(tbl_to_recruit$subject_id, unique(data$subject_id))
     if (n_to_be_recruited > 0) {
-      tbl_to_be_recruited <- rbind(tbl_to_be_recruited, tibble(
-          group_id = group_ids[i],
-          subject_id = uuid::UUIDgenerate(n = n_to_be_recruited),
-          t_sot = now +
-            cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i])),
-          from = "stable",
-          to = NA_character_,
-          t_min = .data$t_sot + 1 / 30,
-          t_max = Inf # right censored
-        )) %>%
-        arrange(.data$t_sot)
+      subject_ids <- get_identifier(n = n_to_be_recruited,
+                                    exclude = ids_to_exclude)
+      recruitment_times <- now +
+        cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i]))
+      tbl_to_recruit <- bind_rows(tbl_to_recruit, tibble(
+        subject_id = subject_ids,
+        group_id = group_ids[i],
+        t = recruitment_times,
+        state = "stable" # first visits are always stable
+      ))
     }
   }
-  tbl_tmp <- bind_rows(data, tbl_to_be_recruited)
-  res <- .impute(model = model, data = tbl_tmp, parameter_sample = sample,
+  tbl_data <- bind_rows(data, tbl_to_recruit)
+  res <- .impute(model = model, data = tbl_data, parameter_sample = sample,
                  nsim = nsim, seed = seed, ...)
-  return(res)
+  return(res) # problem with forward sampling?
 }
 
 # must be implemented by "Model" subclass
@@ -290,6 +305,7 @@ impute.Model <- function(
 .sample.Model <- function( # nolint
   model,
   data = NULL,
+  now = NULL,
   warmup = 250L,
   nsim = 1000L,
   seed = NULL,
@@ -299,16 +315,16 @@ impute.Model <- function(
 ) {
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
+  if (is.null(data)) {
+    data <- .nodata(model)
+  } else {
+    if (is.null(now)) {
+      now <- max(data$t)
+    }
+    data <- visits_to_mstate(data, model, now)
+  }
   # combine prior information with data for stan
-  stan_data <- c(
-    as.list(model), # hyperparameters
-    data2standata(model, if (is.null(data)) {
-      .nodata(model)
-      }else {
-        data
-        }
-    ) # data
-  )
+  stan_data <- c(as.list(model), data2standata(data, model))
   # global seed affects permutation of extracted parameters if not set
   set.seed(seed)
   # sample
@@ -343,7 +359,7 @@ parameter_sample_to_tibble <- function(model, sample, ...) {
 #' @rdname Model
 #' @export
 parameter_sample_to_tibble.Model <- function(model, sample, ...) {
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -357,7 +373,7 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 # helper to create empty standata for model
 .nodata.Model <- function(model) { # nolint
-  stop("not implemented")
+  stop("not implemented") # nocov
 }
 
 
@@ -365,13 +381,13 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 
 # create a data set with no observed data
-.emptydata <- function(model, n_per_group) {
+.emptydata <- function(model, n_per_group, seed) {
   UseMethod(".emptydata")
 }
 
 # helper to create all-missing standata for model
-.emptydata.Model <- function(model, n_per_group) { #nolint
-  stop("not implemented")
+.emptydata.Model <- function(model, n_per_group, seed = NULL) { #nolint
+  stop("not implemented") # nocov
 }
 
 
@@ -379,13 +395,13 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
 
 
 # generic for digesting data into rstan-ready list
-data2standata <- function(model, data, ...) {
-  UseMethod("data2standata")
+data2standata <- function(data, model, ...) {
+  UseMethod("data2standata", model)
 }
 
 # convert time to event data to stan data list
-data2standata.Model <- function(model, data) {
-  stop("not implemented")
+data2standata.Model <- function(data, model) {
+  stop("not implemented") # nocov
 }
 
 
@@ -401,65 +417,15 @@ data2standata.Model <- function(model, data) {
 #' @template param-dotdotdot
 #'
 #' @export
-plot_mstate <- function(model, data, now, relative_to_sot, ...) {
-  UseMethod("plot_mstate")
+plot_mstate <- function(data, model, now, relative_to_sot, ...) {
+  UseMethod("plot_mstate", object = model)
 }
 
 #' @inheritParams plot_mstate
 #' @name Model
 #' @export
-plot_mstate.Model <- function(model, data, now, relative_to_sot, ...) {
-  stop("not implemented")
-}
-
-
-
-#' Generate Visit data from a multi-state model
-#'
-#' @template param-model
-#' @template param-n_per_group
-#' @param recruitment_rate numeric vector with the monthly recruitment rates
-#' per group
-#' @template param-dotdotdot
-#'
-#' @export
-generate_visit_data <- function(model, n_per_group, recruitment_rate, ...) {
-  UseMethod("generate_visit_data")
-}
-
-#' @inheritParams generate_visit_data
-#' @template param-seed
-#' @rdname Model
-#' @export
-generate_visit_data.Model <- function(model, n_per_group, recruitment_rate,
-                                      seed = NULL, ...) {
-  tbl_data <- sample_predictive(model, n_per_group = n_per_group, nsim = 1,
-                                seed = seed) %>% select(-"iter", -"t_sot")
-  tbl_recruitment_times <- tbl_data %>%
-    select("subject_id", "group_id") %>%
-    distinct() %>%
-    group_by(.data$group_id) %>%
-    mutate( # poisson recruitment process
-      rate = purrr::map_dbl(
-          .data$group_id,
-          ~recruitment_rate[which(attr(model, "group_id") == .)]
-        ),
-      t_sot = cumsum(stats::rexp(n = n(), rate = .data$rate))
-    ) %>%
-    ungroup() %>%
-    select(-"rate")
-  # join and shift transition times accordingly
-  res <- left_join(
-      tbl_data,
-      tbl_recruitment_times,
-      by = c("subject_id", "group_id")
-    ) %>%
-    mutate(
-      t_min = .data$t_min + .data$t_sot,
-      t_max = .data$t_max + .data$t_sot
-    ) %>%
-    mstate_to_visits(model, .)
-  return(res)
+plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
+  stop("not implemented") # nocov
 }
 
 
@@ -498,5 +464,43 @@ sample_pfs_rate.Model <- function(
   seed = NULL,
   ...
 ) {
-  stop("not implemented")
+  stop("not implemented") # nocov
+}
+
+
+
+#' Convert cross sectional visit data to time-to-event data
+#'
+#' This function assumes that the visit density is high enough to not miss any
+#' transient state jumps.
+#'
+#' @param tbl_visits visit data in long format
+#' @param model a multi-state model object
+#' @param now time point since start of trial (might be later than last
+#'   recorded visit)
+#' @param eof_indicator state name indicating (exactly observed) end of
+#'   follow up.
+#'
+#' @return A data frame
+#'
+#' @export
+visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
+                             eof_indicator = "EOF") {
+  if (!inherits(tbl_visits, "data.frame")) {
+    stop("'tbl_visits' must be a data.frame") # nocov
+  } else {
+    checkmate::test_true(inherits(tbl_visits$subject_id, "character"))
+    checkmate::test_true(inherits(tbl_visits$group_id, "character"))
+    checkmate::test_true(inherits(tbl_visits$t, "numeric"))
+    checkmate::test_true(inherits(tbl_visits$state, "character"))
+  }
+  UseMethod("visits_to_mstate", object = model)
+}
+
+#' @inheritParams visits_to_mstate
+#' @rdname Model
+#' @export
+visits_to_mstate.Model <- function(tbl_visits, model, now = max(tbl_visits$t),
+                                   eof_indicator = "EOF") {
+  stop("not implemented") # nocov
 }

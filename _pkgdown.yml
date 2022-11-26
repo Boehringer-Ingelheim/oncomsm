@@ -20,7 +20,6 @@ reference:
   - sample_posterior
   - sample_predictive
   - impute
-  - generate_visit_data
 - title: "Abstract model interface"
   contents:
   - Model
@@ -31,7 +30,6 @@ reference:
   contents:
   - logodds
   - visits_to_mstate
-  - mstate_to_visits
   - plot_mstate
   - parameter_sample_to_tibble
   - sample_pfs_rate

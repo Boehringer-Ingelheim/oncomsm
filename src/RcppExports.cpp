@@ -25,20 +25,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// impute_srp_model
-DataFrame impute_srp_model(DataFrame df, NumericMatrix p, NumericVector shape_vec, NumericVector scale_vec, NumericVector visit_spacing, int n_sim, int n_groups);
-RcppExport SEXP _oncomsm_impute_srp_model(SEXP dfSEXP, SEXP pSEXP, SEXP shape_vecSEXP, SEXP scale_vecSEXP, SEXP visit_spacingSEXP, SEXP n_simSEXP, SEXP n_groupsSEXP) {
+// f
+DataFrame f(DataFrame df, NumericVector response_probabilities, NumericMatrix shapes, NumericMatrix scales, NumericVector visit_spacing, double max_time);
+RcppExport SEXP _oncomsm_f(SEXP dfSEXP, SEXP response_probabilitiesSEXP, SEXP shapesSEXP, SEXP scalesSEXP, SEXP visit_spacingSEXP, SEXP max_timeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type p(pSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type shape_vec(shape_vecSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type scale_vec(scale_vecSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type response_probabilities(response_probabilitiesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type shapes(shapesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type scales(scalesSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type visit_spacing(visit_spacingSEXP);
-    Rcpp::traits::input_parameter< int >::type n_sim(n_simSEXP);
-    Rcpp::traits::input_parameter< int >::type n_groups(n_groupsSEXP);
-    rcpp_result_gen = Rcpp::wrap(impute_srp_model(df, p, shape_vec, scale_vec, visit_spacing, n_sim, n_groups));
+    Rcpp::traits::input_parameter< double >::type max_time(max_timeSEXP);
+    rcpp_result_gen = Rcpp::wrap(f(df, response_probabilities, shapes, scales, visit_spacing, max_time));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -47,7 +46,7 @@ RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_oncomsm_rtruncweibull", (DL_FUNC) &_oncomsm_rtruncweibull, 4},
-    {"_oncomsm_impute_srp_model", (DL_FUNC) &_oncomsm_impute_srp_model, 7},
+    {"_oncomsm_f", (DL_FUNC) &_oncomsm_f, 6},
     {"_rcpp_module_boot_stan_fit4srp_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srp_model_mod, 0},
     {NULL, NULL, 0}
 };

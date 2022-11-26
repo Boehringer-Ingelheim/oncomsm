@@ -1,5 +1,5 @@
 ---
-title: "Application to Probability of Success"
+title: "Application to Probability of 'go'"
 author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 ---
@@ -19,57 +19,63 @@ knitr::opts_chunk$set(
 library(oncomsm)
 library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
+library(tidyr)
 library(future) # parallel processing
 library(doFuture)
+library(doRNG) # parallel safe random number generation
 registerDoFuture()
 plan(multisession) # instruct future how to run in parallel
 set.seed(42L)
 ```
 
 
-**tl;dr:** *A multi-state model allows sampling individual-level 
-data. This can be used to sample future trial data from the 
-prior-predictive distribution at the planning stage.
-This generated trial data can then be used to evaluate quantitative
-decision criteria to determine whether the sampled data would lead to a success.
-The average success rate over multiple such data sets is the 
-Probability of Success.
+**tl;dr:** *A multi-state model allows sampling individual-level data. 
+This can be used to impute future trial data from the prior-predictive 
+distribution at the planning stage.
+The generated trial data can then be used to evaluate quantitative 'go'
+decision criteria to determine whether the sampled data would lead to a 'go'
+decision.
+The average sampled 'go' rate over multiple such data sets is the a MCMC
+approximation of the probability of 'go'.
 A similar approach can be taken at any interim time point by sampling from 
 the posterior predictive distribution conditioning on any observed data.
-This then leads to an updated (or conditional) Probability of Success.*
+This then leads to an updated (or conditional) probability of 'go'.*
 
 For a general introduction to the multi-state approach used throughout this
 package, see the vignette *Multi-state Models for Early Oncology*.
 
 
 
-## Decision criteria and Probability of Success
+## Decision criteria and probability of 'go'
 
 Let $D_t \in \mathbb{D}$ be the observed (visit) data at time point 
 $t$ after the start of the trial.
 Let $\tau$ be the stopping time of the trial, 
-e.g. the time point when all $n$ individuals have been recruited and 
+e.g., the time point when all $n$ individuals have been recruited and 
 have reached their minimal follow-up.
-The final decision whether or not the trial is considered a success can then
-be modeled as a function $\phi: \mathbb{D} \to \{0,1\}$ with 
+The final decision on 'go' can then be modeled as a function
+$\phi: \mathbb{D} \to \{0,1\}$ with 
 
-$$\phi(D_\tau)=1 :\Leftrightarrow D_\tau\ \text{is considered a success}\ . $$
+$$\phi(D_\tau)=1 :\Leftrightarrow D_\tau\ \ \text{leads to 'go'}\ . $$
 
 Let $\theta$ be a vector of parameters for a generative model that allows to
 sample data $D_\tau|\theta$.
-Probability of Success can the be calculated as expected value of the 
-decision rule under a prior distribution $f(\cdot)$ over the parameter space:
+Probability of 'go' can the be calculated as expected value of the
+decision rule under a prior distribution (density) $f(\theta)$ over the
+parameter space:
 $$
-\operatorname{PoS} = \int \phi(D_\tau) \cdot f(\theta) \operatorname{d}\theta \ .
+\operatorname{Pr}\big[\,go\,\big] = \int \phi(D_\tau\,|\,\theta) \cdot f(\theta) \operatorname{d}\theta \ .
 $$
-In practice this integral can be approximated by sampling from the generative
-model and calculating the average success rate.
+In practice, this integral can be approximated by sampling from the generative
+model and calculating the average 'go' rate.
 
-If data $D_t=d_t$ is observed for $t\leq\tau$, one can update the Probability
-of Success using Bayes Theorem
+If data $D_t=d_t$ is observed, the probability of 'go' can be updated using
+Bayes Theorem
 $$
-\operatorname{PoS}\,|\, (D_t=d_t \ ) = \int \phi(D_\tau\,|\,D_t=d_t) \cdot f(\theta\,|\,D_t=d_t) \operatorname{d}\theta \ .
+\operatorname{Pr}\big[\,go\,|\, D_t=d_t \,\big] = \int \phi(D_\tau\,|\,D_t=d_t,\theta) \cdot f(\theta\,|\,D_t=d_t) \operatorname{d}\theta
 $$
+where $f(\theta\,|\,D_t=d_t)$ is the posterior density given the data $d_t$
+observed up to time $t$.
 
 Examples for such decision rules could be
 
@@ -97,7 +103,8 @@ mdl <- create_srp_model(
     2, 6, 24
   ), byrow = TRUE, nrow = 2, ncol = 3),
   median_time_to_next_event_sd = matrix(3, byrow = TRUE, nrow = 2, ncol = 3),
-  visit_spacing = rep(1.2, 2L)
+  visit_spacing = rep(1.2, 2),
+  recruitment_rate = c(40 / 24, 40 / 24)
 )
 ```
 
@@ -110,30 +117,37 @@ plot(mdl, dt = c(0, 36), sample = smpl_prior, n_grid = 25)
 ```
 
 
-## A composite ORR and PFS12 success criterion
+## A composite ORR and PFS12 'go' criterion
 
-Assume that success is defined as a combination of a sufficiently high
+Assume that a 'go' is defined as a combination of a sufficiently high
 response rate and a sufficiently high progression-free-survival rate at 12
 months:
 
-$$\phi(D_\tau) := \operatorname{Pr}\big[\,\text{ORR} \geq 0.3\ \&\ \text{PFS}_{t=12} \geq 0.4 \, | \, D_\tau\,\big] \geq 0.75$$
+$$\phi(D_\tau) := \begin{cases} 
+  1 \quad \text{if} \quad \operatorname{Pr}\big[\,\text{ORR} \geq 0.3\ \&\ \text{PFS}_{t=12} \geq 0.4 \, | \, D_\tau\,\big] \geq 0.8 \\
+  0 \quad \text{else.}
+  \end{cases}$$
 
 This decision criterion can be implemented as the following function:
 
 ```{r}
-is_success <- function(data, nsim = 250L) {
-  set.seed(3819308)
-  smpl <- sample_posterior(mdl, data = data, warmup = 150L, nsim = nsim)
+go <- function(data, nsim = 200L) {
+  set.seed(3819308) # fix the seed for reproducibility
+  smpl <- suppressWarnings( # low sample size leads to stan warnings on ESS
+                            # can be ignored, errors average out
+                            # can also be avoided by increasing nsim
+    sample_posterior(mdl, data = data, warmup = 200L, nsim = nsim)
+  )
   tbl_pfs_orr <- bind_cols(
-      sample_pfs_rate(mdl, 12, smpl),
-      parameter_sample_to_tibble(mdl, smpl) %>%
+      sample_pfs_rate(mdl, 12, smpl), # PFS 12
+      parameter_sample_to_tibble(mdl, smpl) %>% # ORR
         filter(parameter == "p") %>%
         transmute(orr = value)
     )
-  res <- tbl_pfs_orr %>%
+  res <- tbl_pfs_orr %>% # apply decision criterion
     group_by(group_id) %>%
     summarize(
-      success = mean(pfs >= 0.5 & orr >= 0.3) >= 0.75
+      go = mean(pfs >= 0.5 & orr >= 0.3) >= 0.8
     )
   return(res)
 }
@@ -142,7 +156,7 @@ is_success <- function(data, nsim = 250L) {
 An example of how to apply the criterion to a sample from the prior predictive 
 distribution is given below:
 
-```{r, warning=FALSE}
+```{r}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 2),
@@ -151,15 +165,15 @@ tbl_prior_predictive <- sample_predictive(
     seed = 34930L
   )
 
-is_success(tbl_prior_predictive)
+go(tbl_prior_predictive)
 ```
 
 Next, we can create a table of multiple prior-predictive samples.
 Grouping them by iteration and nesting the data frames results in a data frame
 of data frames, where `tbl_prior_predictive$data[[i]]` corresponds to the data
-in the i-th resample.
+in the $i$-th resample.
 
-```{r sample-prior-predictive, warning=FALSE}
+```{r sample-prior-predictive}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 2),
@@ -170,118 +184,165 @@ tbl_prior_predictive <- sample_predictive(
   group_by(iter) %>%
   tidyr::nest() %>%
   ungroup()
+
 print(tbl_prior_predictive)
 ```
 
-Applying the decision criterion to each of them and averaging over all iterations
-is an MCMC approximation of the expected Probability of Success.
+Applying the decision criterion to each of them and averaging over all
+iterations is an MCMC approximation of the probability of 'go'.
 
-```{r, warning=FALSE}
+```{r}
 # compute results in parallel
-res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dopar% {
-  is_success(tbl_prior_predictive$data[[i]])
+res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dorng% {
+  go(tbl_prior_predictive$data[[i]])
 }
-# bind results together and aggregate to probability of success
-tbl_pos <- bind_rows(res, .id = "iter") %>%
+
+# bind results together and aggregate to probability of 'go'
+tbl_pr_go <- bind_rows(res, .id = "iter") %>%
   group_by(group_id) %>%
   summarize(
-    PoS = mean(success),
-    se  = sd(success) / sqrt(n())
+    `Pr[go]` = mean(go),
+    se  = sd(go) / sqrt(n())
   )
-print(tbl_pos)
+
+print(tbl_pr_go)
 ```
 
 
 
-## Probability of Success During the Trial
+## Updating the probability of 'go' during a trial
 
 The Bayesian generative model allows calculating the posterior distribution 
-at any time point given the data observed so far.
+at any time point given the data observed up to that point.
 The future course of the trial can then be sampled from the posterior
 predictive distribution.
 
-To illustrate the shift in success probability over time, a single
-realization from a point in the parameter space is sampled. 
-The probability of success can then be calculated at different time points to
-show how the prior shifts.
+To illustrate the shift in 'go' probability over time,
+a single trial realization from a set of fixed response probabilities that
+conflict with the prior mean is sampled as hypothetical data.
+As data accrues, the evidence will lead to a shift in the posterior probability
+and thus the probability of 'go'.
 
-```{r, warning=FALSE}
-mdl_point <- create_srp_model(
-  group_id = c("A", "B"),
-  logodds_mean = logodds(c(0.5, 0.3)), # chose conflicting ORR parameters
-  logodds_sd = rep(0.01, 2L), # almost constant prior = fixed parameter
-  median_time_to_next_event = matrix(c(
-     4, 8, 24,
-     4, 8, 24
-  ), byrow = TRUE, nrow = 2, ncol = 3),
-  median_time_to_next_event_sd = matrix(0.1, byrow = TRUE, nrow = 2, ncol = 3),
-  visit_spacing = c(1.2, 1.2)
-)
-# sample single realization
-tbl_data <- generate_visit_data(
-    mdl_point,
+```{r}
+tbl_data <- sample_predictive(
+    mdl,
+    p = c(0.65, 0.45), ## conflicting prior expectation
     n_per_group = c(40L, 40L),
-    recruitment_rate = c(40 / 24, 40 / 24) # recruit in 24 months
+    nsim = 1,
+    seed = 23849
   )
+
 print(tbl_data)
 ```
 
-Next, the snapshot at a sequence of time points of this trial data can be
+Next, interim views of the full data set at a sequence of time points can be
 created.
-Interim analyses every 3 months starting at 9 months after first-patient-in
-up to 24 months are considered.
+This data subsets correspond to the data available at potential interim
+analyses.
 
 ```{r}
 tbl_data_interims <- tibble(
-    t_interim = c(1, 3, 6, 9, 12, 18, 24, 60)
+    t_interim = c(1, 3, 6, 9, 12, 18, 24, 36) # interim time point (months)
   ) %>%
   mutate(
-    data = purrr::map(t_interim, function(t_interim) {
-        filter(tbl_data, t <= t_interim) %>% # keep only visits before interim
-        visits_to_mstate(start_state = "stable", # convert to mstate format
-                         absorbing_states = "progression", now = t_interim)
-      })
+    data = purrr::map(t_interim, ~filter(tbl_data, t <= .))
   )
+
+print(tbl_data_interims)
 ```
 
 For each such interim data set, the remainder of the trial can be imputed by 
-sampling form the posterior-predictive distribution.
-Probability of success is then the average success rate in the posterior
-predictive sample.
-The change of PoS over time is shown below with errorbars corresponding to the
-standard error of the simulation.
+sampling form the posterior-predictive distribution given the data observed
+up to this point.
+The probability of 'go' is then the average 'go' rate in the posterior
+predictive sample when applying the decision criterion.
 
-```{r, warning=FALSE}
-# wrap the steps to calculate PoS into a function
-pos <- function(tbl, nsim = 50L) {
+First, the calculation of the probability to 'go' is wrapped in a function that
+accepts a dataset (`tbl`) and the number of resamples (`nsim`).
+
+```{r}
+pr_go <- function(tbl, nsim) {
+  # sample forward from the posterior predictive distribution given data in tbl
   tbl_posterior_predictive <- impute(
-      mdl, tbl, rep(40L, 2), rep(1, 2L), nsim = nsim) %>%
+      mdl, tbl, n_per_group = rep(40L, 2), nsim = nsim
+    ) %>%
     group_by(iter) %>%
     tidyr::nest()
-  res <- foreach(i = seq_len(nsim)) %dopar% {
-    is_success(tbl_posterior_predictive$data[[i]])
+  # determine for each sampled trial whether it ends in a 'go'
+  res <- foreach(i = 1:nsim) %dorng% {
+    go(tbl_posterior_predictive$data[[i]])
   }
-  tbl_pos <- bind_rows(res, .id = "iter") %>%
+  tbl_pr_go <- bind_rows(res, .id = "iter") %>%
     group_by(group_id) %>%
     summarize(
-      PoS = mean(success),
-      se  = sd(success) / sqrt(n())
+      `Pr[go]` = mean(go),
+      se  = sd(go) / sqrt(n())
     )
-  return(tbl_pos)
+  return(tbl_pr_go)
 }
-# apply it to every time point
-tbl_pos_over_time <- tbl_data_interims %>%
+```
+
+Next, this function is mapped over all interim time points with the respective
+interim data.
+The number of simulations is the main factor in determining the runtime of the
+program besides the number of samples drawn from the posterior distribution to
+evaluate the decision criterion.
+
+```{r simulate}
+tbl_pr_go_over_time <- tbl_data_interims %>%
   mutate(
-    pos = purrr::map(data, pos, nsim = 50L)
+    res = purrr::map(data, pr_go, nsim = 100L)
   ) %>%
-  tidyr::unnest(pos)
-# plot
-ggplot(tbl_pos_over_time) +
+  tidyr::unnest(res)
+
+tbl_pr_go_over_time
+```
+
+The change of the 'go' probability over time is shown below with error bars
+corresponding to the standard error of the simulation.
+
+```{r}
+ggplot(tbl_pr_go_over_time) +
   aes(t_interim) +
-  geom_errorbar(aes(ymin = PoS - se, ymax = PoS + se, color = group_id),
-                width = 1) +
-  geom_line(aes(y = PoS, color = group_id), alpha = 0.33) +
+  geom_errorbar(aes(ymin = `Pr[go]` - se, ymax = `Pr[go]` + se,
+                    color = group_id), width = 1) +
+  geom_line(aes(y = `Pr[go]`, color = group_id), alpha = 0.33) +
+  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
   scale_y_continuous(breaks = seq(0, 1, by = 0.1), limits = c(0, 1))
+```
+
+This can be compared to the number of available responses, progressions, and
+stable individuals at each time point.
+
+```{r}
+f <- function(tbl) {
+  tbl %>%
+  group_by(group_id, subject_id) %>%
+  summarize(
+    responder = any(state == "response") && all(state != "progression"),
+    progressor = any(state == "progression"),
+    stable = all(state == "stable"),
+    .groups = "drop_last"
+  ) %>%
+  summarize(
+    response = sum(responder),
+    progression = sum(progressor),
+    stable = sum(stable)
+  )
+}
+
+tbl <- tibble(
+    t_interim = tbl_data_interims$t_interim,
+    summary = purrr::map(tbl_data_interims$data, f)
+  ) %>%
+  unnest(summary)
+
+pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>%
+  ggplot() +
+    aes(t_interim, value, color = event, linetype = group_id) +
+    geom_line() +
+    scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
+    scale_y_continuous("", breaks = seq(0, 30, by = 5))
 ```
 
 

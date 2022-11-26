@@ -4,12 +4,12 @@
 \alias{plot_mstate}
 \title{Swimmer-like plot of multi-state data}
 \usage{
-plot_mstate(model, data, now, relative_to_sot, ...)
+plot_mstate(data, model, now, relative_to_sot, ...)
 }
 \arguments{
-\item{model}{a model of class "Model"}
-
 \item{data}{a data table with multi-state data}
+
+\item{model}{a model of class "Model"}
 
 \item{now}{the current time relative to the start of the trial (sot)}
 

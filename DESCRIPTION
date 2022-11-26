@@ -1,7 +1,7 @@
 Package: oncomsm
 Type: Package
 Title: Bayesian Multi-State Models for Early Oncology
-Version: 0.1.0.9000
+Version: 0.1.1.9000
 Authors@R: c(
     person("Kevin", "Kunzmann", 
       role = c("aut", "cre"), 
@@ -63,6 +63,7 @@ Suggests:
     future,
     furrr,
     doFuture,
+    doRNG,
     rjags
 VignetteBuilder: knitr
 Config/testthat/edition: 3

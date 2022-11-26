@@ -20,7 +20,12 @@
 #'   the Weibull transition probabilities, the (i,j)-th entry is the i-th group
 #'   median time to next event for transition j
 #'   (1=stable-response, 2=stable-progression, 3=response-progression)
-#' @param visit_spacing vector of time differences between visits per group
+#' @param visit_spacing vector of time differences between visits per group,
+#' only relevant for sampling from the predictive distribution
+#' @param recruitment_rate vector with per-group recruitment rates,
+#' only relevant for sampling from the predictive distribution
+#' @param max_time maximal overall runtime from first visit,
+#' only relevant for sampling from the predictive distribution
 #' @param logodds_min lower boundary on the log-odds per group
 #' @param logodds_max upper boundary on the log-odds per group
 #' @param shape_min matrix of lower boundaries of the uniform prior of the
@@ -36,10 +41,12 @@
 create_srp_model <- function(
   group_id,
   logodds_mean,
-  logodds_sd,
+  logodds_sd = rep(0.01, length(group_id)),
   median_time_to_next_event_mean,
-  median_time_to_next_event_sd,
+  median_time_to_next_event_sd = matrix(0.1, nrow = length(group_id), ncol = 3),
   visit_spacing,
+  recruitment_rate = rep(1, length(group_id)),
+  max_time = 10 * 12,
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
   shape_min = matrix(.99, nrow = length(group_id), ncol = 3),
@@ -52,6 +59,8 @@ create_srp_model <- function(
   attr(mdl, "group_id") <- as.character(group_id) # assert type
   attr(mdl, "states") <- c("stable", "response", "progression")
   attr(mdl, "visit_spacing") <- as.array(visit_spacing)
+  attr(mdl, "recruitment_rate") <- as.array(recruitment_rate)
+  attr(mdl, "max_time") <- as.array(max_time)
   attr(mdl, "stanmodel") <- stanmodels[["srp_model"]]
   attr(mdl, "parameter_names") <- c("p", "shape", "scale",
                                     "median_time_to_next_event")
@@ -72,34 +81,45 @@ format.srp_model <- function(x, ...) {
 
 is_valid.srp_model <- function(mdl) { # nolint
   with(mdl, {
-    checkmate::assert_vector(logodds_mean, len = length(attr(mdl, "group_id")),
-                             any.missing = FALSE, .var.name = "logodds_mean")
-    checkmate::assert_vector(logodds_sd, len = length(attr(mdl, "group_id")),
-                             any.missing = FALSE, .var.name = "logodds_mean")
-    checkmate::assert_array(median_time_to_next_event_mean, d = 2,
-                             any.missing = FALSE,
-                            .var.name = "median_time_to_next_event_mean")
-    checkmate::assert_array(median_time_to_next_event_sd, d = 2,
-                             any.missing = FALSE,
-                            .var.name = "median_time_to_next_event_sd")
+    checkmate::assert_vector(logodds_mean,
+      len = length(attr(mdl, "group_id")),
+      any.missing = FALSE, .var.name = "logodds_mean"
+    )
+    checkmate::assert_vector(logodds_sd,
+      len = length(attr(mdl, "group_id")),
+      any.missing = FALSE, .var.name = "logodds_mean"
+    )
+    checkmate::assert_array(median_time_to_next_event_mean,
+      d = 2,
+      any.missing = FALSE,
+      .var.name = "median_time_to_next_event_mean"
+    )
+    checkmate::assert_array(median_time_to_next_event_sd,
+      d = 2,
+      any.missing = FALSE,
+      .var.name = "median_time_to_next_event_sd"
+    )
     checkmate::assert_vector(median_time_to_next_event_sd,
-                             len = length(attr(mdl, "group_id")) *
-                               length(attr(mdl, "states")), any.missing = FALSE,
-                             .var.name = "median_time_to_next_event_sd")
+      len = length(attr(mdl, "group_id")) *
+        length(attr(mdl, "states")), any.missing = FALSE,
+      .var.name = "median_time_to_next_event_sd"
+    )
     checkmate::assert_vector(median_time_to_next_event_mean,
-                             len = length(attr(mdl, "group_id")) *
-                               length(attr(mdl, "states")), any.missing = FALSE,
-                             .var.name = "median_time_to_next_event_mean")
+      len = length(attr(mdl, "group_id")) *
+        length(attr(mdl, "states")), any.missing = FALSE,
+      .var.name = "median_time_to_next_event_mean"
+    )
     checkmate::assertTRUE(all(logodds_mean < logodds_max),
-                          .var.name = "logodds_mean < logodds_max")
-    with(mdl,
+      .var.name = "logodds_mean < logodds_max"
+    )
+    with(
+      mdl,
       checkmate::assert_numeric(
         median_time_to_next_event_mean[median_time_to_next_event_mean < 0],
         lower = 0, upper = 0,
         .var.name = "median_time_to_next_event_mean"
       )
     )
-
   })
   return(TRUE)
 }
@@ -107,7 +127,7 @@ is_valid.srp_model <- function(mdl) { # nolint
 # see Model.R
 .impute.srp_model <- function(model, data, nsim, parameter_sample = NULL, # nolint
                               seed = NULL, p = NULL, shape = NULL,
-                              scale = NULL, ...) {
+                              scale = NULL, as_mstate = FALSE, ...) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -157,42 +177,34 @@ is_valid.srp_model <- function(mdl) { # nolint
       c(3, 1, 2)
     )
   }
-  # extract visit_spacing
-  visit_spacing <- attr(model, "visit_spacing")
   # sorting the samples and changing type to integer for groups and subj id
   data <- data %>%
-    arrange(.data$t_sot, .data$subject_id, (.data$t_min + .data$t_max) / 2) %>%
-    mutate(
-      subject_id = as.integer(factor(as.character(.data$subject_id),
-                                     levels = subject_id_levels)),
-      group_id = as.integer(factor(.data$group_id, levels = group_id_levels))
+    arrange(.data$subject_id, .data$t) %>%
+    mutate( # convert group_id to properly ordered factor
+      group_id = factor(.data$group_id, levels = group_id_levels)
     )
-  # sub/re-sample parameters
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
-  res <- impute_srp_model(
-    data,
-    p[idx, , drop = FALSE],
-    as.vector(shape[idx, , ]),
-    as.vector(scale[idx, , ]),
-    visit_spacing,
-    nsim,
-    as.integer(length(group_id_levels))
-  ) %>%
-  arrange(.data$subject_id, .data$iter) %>%
-  as_tibble()
-  # Mapping back from integer to character type for effective recognition
-  # of groups
-  res <- res %>%
-    mutate(
-      subject_id = as.character(
-        factor(.data$subject_id, levels = seq_along(subject_id_levels),
-               labels = subject_id_levels)
-      ),
-      group_id = as.character(
-        factor(.data$group_id, levels = seq_along(group_id_levels),
-               labels = group_id_levels)
+  sample_once <- function(iter) {
+    # extract a set of parameters
+    response_probabilities <- p[idx[iter], , drop = FALSE]
+    shapes <- matrix(shape[idx[iter], , ], ncol = 3)
+    scales <- matrix(scale[idx[iter], , ], ncol = 3)
+    # sample
+    res <- f(data, response_probabilities, shapes, scales,
+      visit_spacing = attr(model, "visit_spacing"),
+      max_time = attr(model, "max_time")
+    ) %>%
+      as_tibble() %>%
+      mutate(
+        group_id = as.character(.data$group_id)
       )
-    )
+    if (as_mstate) {
+      res <- visits_to_mstate(res, model)
+    }
+    res <- mutate(res, iter = as.integer(iter))
+    return(res)
+  }
+  res <- purrr::map_df(1:nsim, sample_once)
   return(res)
 }
 
@@ -214,37 +226,46 @@ is_valid.srp_model <- function(mdl) { # nolint
 
 
 # helper to create all-missing standata for model
-.emptydata.srp_model <- function(model, n_per_group) { # nolint
+.emptydata.srp_model <- function(model, n_per_group, seed = NULL) { # nolint
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   n <- sum(n_per_group)
-  tibble(
-    subject_id = 1:n,
-    group_id = attr(model, "group_id")[rep(seq_len(length(n_per_group)),
-                                           times = n_per_group)],
-    from = rep("stable", n),
-    to = rep(NA, n),
-    # assume everyone is recruited at zero
-    # only t_min/max - t_sot is relevant anyhow
-    t_min = rep(0, n),
-    t_max = rep(Inf, n),
-    t_sot = rep(0, n)
-  )
+  group_ids <- attr(model, "group_id")
+  rr <- attr(model, "recruitment_rate")
+  res <- tibble()
+  for (i in seq_along(group_ids)) {
+    if (n_per_group[i] < 1) {
+      next
+    }
+    subject_ids <- get_identifier(n = n_per_group[i])
+    recruitment_times <- cumsum(stats::rexp(n_per_group[i], rate = rr[i]))
+    res <- bind_rows(res, tibble(
+      subject_id = subject_ids,
+      group_id = group_ids[i],
+      t = recruitment_times,
+      state = "stable" # first visits are always stable
+    ))
+  }
+  return(res)
 }
 
 
 
 # convert time to event data to stan data list
-data2standata.srp_model <- function(model, data) { # nolint
+data2standata.srp_model <- function(data, model) { # nolint
   lst_stan_data <- data %>%
     mutate(
       group_id = as.integer(factor(.data$group_id,
-                                   levels = attr(model, "group_id"))),
+        levels = attr(model, "group_id")
+      )),
       subject_id = as.integer(factor(.data$subject_id)),
       from = as.integer(factor(.data$from, levels = attr(model, "states"))),
       to = if_else(
-          is.na(.data$to),
-          "unknown",
-          as.character(.data$to)
-        ) %>%
+        is.na(.data$to),
+        "unknown",
+        as.character(.data$to)
+      ) %>%
         factor(levels = c(attr(model, "states"), "unknown")) %>%
         as.integer(),
       t_min = .data$t_min - .data$t_sot,
@@ -278,13 +299,18 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
     ) %>%
     tidyr::pivot_longer(-"iter") %>%
     filter(.data$name != "lp__") %>%
-    tidyr::separate("name", into = c("parameter", "group_id"),
-                    sep = "\\[", fill = "right") %>%
-    tidyr::separate("group_id", into = c("group_id", "transition"),
-                    sep = "[\\]|,]", fill = "right", extra = "drop") %>%
+    tidyr::separate("name",
+      into = c("parameter", "group_id"),
+      sep = "\\[", fill = "right"
+    ) %>%
+    tidyr::separate("group_id",
+      into = c("group_id", "transition"),
+      sep = "[\\]|,]", fill = "right", extra = "drop"
+    ) %>%
     mutate(
       group_id = attr(model, "group_id")[as.integer(stringr::str_extract(
-        .data$group_id, "[0-9]+"))],
+        .data$group_id, "[0-9]+"
+      ))],
       transition = as.integer(.data$transition)
     )
 }
@@ -294,9 +320,8 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
 #' @inheritParams plot_mstate
 #' @name srp_model
 #' @export
-plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # nolint
+plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # nolint
                                   relative_to_sot = TRUE, ...) {
-
   starting_state <- attr(model, "states")[1]
 
   tbl_mstate <- data %>%
@@ -315,7 +340,7 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # no
     mutate(
       tmp = purrr::pmap(
         list(.data$from, .data$to, .data$t_min, .data$t_max, .data$t_sot),
-        ~if (is.na(..2)) {
+        ~ if (is.na(..2)) {
           tibble(t = c(..3, ..5), state = c(..1, starting_state))
         } else {
           tibble(t = c(..3, ..4, ..5), state = c(..1, ..2, starting_state))
@@ -346,13 +371,16 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # no
       .data$subject_id,
       .data$`Group ID`,
       state = if_else(.data$to == lead(.data$from), lead(.data$from),
-                      NA_character_),
+        NA_character_
+      ),
       tmp1 = .data$t_max,
       tmp2 = lead(.data$t_min)
     ) %>%
     ungroup() %>%
-    filter(!is.na(.data$state), is.finite(.data$tmp1), is.finite(.data$tmp2),
-           .data$tmp2 > .data$tmp1)
+    filter(
+      !is.na(.data$state), is.finite(.data$tmp1), is.finite(.data$tmp2),
+      .data$tmp2 > .data$tmp1
+    )
 
   tbl_at_risk <- tbl_mstate %>%
     filter(.data$t_max == Inf) %>%
@@ -376,36 +404,136 @@ plot_mstate.srp_model <- function(model, data, now = max(tbl_mstate$t_max), # no
 
   ggplot2::ggplot() +
     ggplot2::geom_segment(
-      ggplot2::aes(x = .data$tmp1, xend = .data$tmp2,
-                   y = .data$subject_id, yend = .data$subject_id,
-                   color = .data$state),
+      ggplot2::aes(
+        x = .data$tmp1, xend = .data$tmp2,
+        y = .data$subject_id, yend = .data$subject_id,
+        color = .data$state
+      ),
       data = tbl_intervals
     ) +
     ggplot2::geom_point(ggplot2::aes(.data$t, .data$subject_id,
-                                     color = .data$state), data = tbl_points) +
+      color = .data$state
+    ), data = tbl_points) +
     ggplot2::geom_segment(
-      ggplot2::aes(.data$t, .data$subject_id, xend = .data$t + scale / 33,
-                   yend = .data$subject_id, color = .data$state),
-      arrow = ggplot2::arrow(type = "closed", angle = 10,
-                             length = ggplot2::unit(0.05, "npc")),
+      ggplot2::aes(.data$t, .data$subject_id,
+        xend = .data$t + scale / 33,
+        yend = .data$subject_id, color = .data$state
+      ),
+      arrow = ggplot2::arrow(
+        type = "closed", angle = 10,
+        length = ggplot2::unit(0.05, "npc")
+      ),
       data = tbl_at_risk
     ) +
     ggplot2::geom_point(ggplot2::aes(.data$t, .data$subject_id,
-                                     color = .data$state), shape = "x",
-                        size = 5, data = tbl_censored) +
+      color = .data$state
+    ),
+    shape = "x",
+    size = 5, data = tbl_censored
+    ) +
     ggplot2::geom_vline(xintercept = now) +
-    ggplot2::labs(x = if (relative_to_sot) "Time since SoT" else
-      "Time since first SoT", y = "Subject ID") +
+    ggplot2::labs(x = if (relative_to_sot) {
+      "Time since SoT"
+    } else {
+      "Time since first SoT"
+    }, y = "Subject ID") +
     ggplot2::scale_color_discrete("") +
-    ggplot2::facet_wrap(~.data$`Group ID`, ncol = 1,
-                        labeller = ggplot2::label_both,
-                        strip.position = "right", scales = "free_y") +
+    ggplot2::facet_wrap(~ .data$`Group ID`,
+      ncol = 1,
+      labeller = ggplot2::label_both,
+      strip.position = "right", scales = "free_y"
+    ) +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_text(size = 5),
       legend.position = "right"
     )
+}
 
+
+
+#' @inheritParams visits_to_mstate
+#' @name srp_model
+#' @export
+visits_to_mstate.srp_model <- function(tbl_visits, model, # nolint
+                                       now = max(tbl_visits$t),
+                                       eof_indicator = "EOF") {
+  # make sure everything is sorted
+  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t)
+
+  tbl_mstate <- list()
+
+  subject_id_lagged <- 0L
+  state_lagged <- 0L
+  t_sot <- 0 # start of treatment
+  for (i in seq_len(nrow(tbl_visits))) {
+    if (tbl_visits$subject_id[i] != subject_id_lagged || i == 1) {
+      # switch to new subject
+      subject_id_lagged <- tbl_visits$subject_id[i]
+      state_lagged <- "stable"
+      t_sot <- tbl_visits$t[i]
+      if (tbl_visits$state[i] != state_lagged) {
+        # record jump
+        stop(sprintf(
+          "first visit must be in starting state; subject_id=%s, state=%s",
+          tbl_visits$subject_id[i],
+          tbl_visits$state[i]
+        ))
+      }
+    }
+    # handle jumps
+    if (tbl_visits$state[i] != state_lagged) {
+      if (tbl_visits$state[i] == eof_indicator) { # record eof
+        tbl_mstate <- bind_rows(tbl_mstate, tibble(
+          subject_id = tbl_visits$subject_id[i],
+          group_id = tbl_visits$group_id[i],
+          from = state_lagged,
+          to = NA,
+          t_min = tbl_visits$t[i],
+          # - Inf indicates censoring and end of follow up
+          # (event can no longer be observed)
+          t_max = -Inf,
+          t_sot = t_sot
+        ))
+        state_lagged <- tbl_visits$state[i]
+      } else { # record jump
+        tbl_mstate <- bind_rows(tbl_mstate, tibble(
+          subject_id = tbl_visits$subject_id[i],
+          group_id = tbl_visits$group_id[i],
+          from = state_lagged,
+          to = tbl_visits$state[i],
+          t_min = tbl_visits$t[i - 1],
+          t_max = tbl_visits$t[i],
+          t_sot = t_sot
+        ))
+      }
+      # updated current state
+      state_lagged <- tbl_visits$state[i]
+    }
+    # handle non-eof censoring
+    censored <- FALSE
+    if (!(tbl_visits$state[i] %in% c("progression", eof_indicator))) {
+      if (i < nrow(tbl_visits)) {
+        if (tbl_visits$subject_id[i] != tbl_visits$subject_id[i + 1]) {
+          censored <- TRUE
+        }
+      } else {
+        censored <- TRUE
+      }
+    }
+    if (censored) {
+      tbl_mstate <- bind_rows(tbl_mstate, tibble(
+        subject_id = tbl_visits$subject_id[i],
+        group_id = tbl_visits$group_id[i],
+        from = tbl_visits$state[i],
+        to = NA,
+        t_min = now,
+        t_max = Inf,
+        t_sot = t_sot
+      ))
+    }
+  }
+  return(tbl_mstate)
 }
 
 
@@ -423,12 +551,15 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
   # plot transition times
   p1 <- tbl_sample %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
-    tidyr::pivot_wider(names_from = "parameter",
-                       values_from = "value") %>%
+    tidyr::pivot_wider(
+      names_from = "parameter",
+      values_from = "value"
+    ) %>%
     tidyr::expand_grid(dt = seq(dt[1], dt[2], length.out = n_grid)) %>%
     mutate(
       survival = 1 - stats::pweibull(.data$dt,
-                                     shape = .data$shape, scale = .data$scale)
+        shape = .data$shape, scale = .data$scale
+      )
     ) %>%
     group_by(.data$group_id, .data$transition, .data$dt) %>%
     summarize(
@@ -443,52 +574,64 @@ plot.srp_model <- function(x, dt, sample = NULL, seed = NULL,
         .data$transition == 2 ~ "stable to progression",
         .data$transition == 3 ~ "response to progression",
       ) %>%
-      factor(levels = c("stable to response", "stable to progression",
-                        "response to progression"))
+        factor(levels = c(
+          "stable to response", "stable to progression",
+          "response to progression"
+        ))
     ) %>%
     ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
-                                      color = .data$group_id)) +
-      ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
-      ggplot2::scale_color_discrete("") +
-      ggplot2::scale_y_continuous(limits = c(0, 1),
-                                  breaks = seq(0, 1, by = .1)) +
-      ggplot2::facet_wrap(~.data$transition, nrow = 1) +
-      ggplot2::theme(
-        legend.position = "top",
-        panel.grid.minor = ggplot2::element_blank(),
-        panel.spacing = ggplot2::unit(1.5, "lines")
-      )
+    ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
+      color = .data$group_id
+    )) +
+    ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
+    ggplot2::scale_color_discrete("") +
+    ggplot2::scale_y_continuous(
+      limits = c(0, 1),
+      breaks = seq(0, 1, by = .1)
+    ) +
+    ggplot2::facet_wrap(~ .data$transition, nrow = 1) +
+    ggplot2::theme(
+      legend.position = "top",
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.spacing = ggplot2::unit(1.5, "lines")
+    )
   # plot response probability
   p2 <- tbl_sample %>%
     filter(.data$parameter == "p") %>%
     ggplot2::ggplot() +
-      ggplot2::stat_ecdf(ggplot2::aes(.data$value,
-                                      color = .data$group_id), geom = "line") +
-      ggplot2::coord_cartesian(xlim = c(0, 1)) +
-      ggplot2::labs(x = "response probability", y = "CDF") +
-      ggplot2::scale_x_continuous(limits = c(0, 1),
-                                  breaks = seq(0, 1, by = .1),
-                                  expand = c(0, 0)) +
-      ggplot2::scale_y_continuous(limits = c(0, 1),
-                                  breaks = seq(0, 1, by = .1)) +
-      ggplot2::theme(
-        legend.position = "none",
-        panel.grid.minor = ggplot2::element_blank()
-      )
+    ggplot2::stat_ecdf(ggplot2::aes(.data$value,
+      color = .data$group_id
+    ), geom = "line") +
+    ggplot2::coord_cartesian(xlim = c(0, 1)) +
+    ggplot2::labs(x = "response probability", y = "CDF") +
+    ggplot2::scale_x_continuous(
+      limits = c(0, 1),
+      breaks = seq(0, 1, by = .1),
+      expand = c(0, 0)
+    ) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, 1),
+      breaks = seq(0, 1, by = .1)
+    ) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.minor = ggplot2::element_blank()
+    )
   # plot pfs
   tbl_pfs_survival <- sample_pfs_rate(
-      x,
-      # ToDo: make sure this works from 0
-      t = seq(0.5, dt[2], length.out = n_grid),
-      sample = sample
-    ) %>%
+    x,
+    # ToDo: make sure this works from 0
+    t = seq(0.5, dt[2], length.out = n_grid),
+    sample = sample
+  ) %>%
     # integrate over prior sample
     group_by(.data$group_id, .data$t) %>%
     summarize(pfs = mean(.data$pfs), .groups = "drop")
   p3 <- ggplot2::ggplot(tbl_pfs_survival) +
-    ggplot2::geom_line(ggplot2::aes(x = .data$t,
-                                    y = .data$pfs, color = .data$group_id)) +
+    ggplot2::geom_line(ggplot2::aes(
+      x = .data$t,
+      y = .data$pfs, color = .data$group_id
+    )) +
     ggplot2::labs(x = "time", y = "PFS") +
     ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, by = .1)) +
     ggplot2::theme(
@@ -532,7 +675,8 @@ sample_pfs_rate.srp_model <- function( # nolint
     }
     # can reduce absolute tolerance substantially ok for probabilities
     res <- stats::integrate(
-      integrand, lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
+      integrand,
+      lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
     )
     return(res$value)
   }

@@ -13,3 +13,4 @@
 ^dev\.R$
 ^cran-comments\.md$
 ^vignettes/.+_cache$
+^.covrignore$
