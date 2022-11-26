@@ -58,7 +58,6 @@ Suggests:
     bhmbasket,
     vdiffr,
     DiagrammeR,
-    uuid,
     future,
     furrr,
     doFuture,
