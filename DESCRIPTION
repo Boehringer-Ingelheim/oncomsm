@@ -46,6 +46,7 @@ Imports:
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
+    RcppEigen (>= 0.3),
     rstan (>= 2.18),
     StanHeaders (>= 2.18)
 SystemRequirements: GNU make
