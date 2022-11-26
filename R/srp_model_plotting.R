@@ -142,7 +142,7 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
 #'
 #' @rdname srp_model
 #' @export
-plot_transition_times.srp_model <- function(model,
+plot_transition_times.srp_model <- function(model, # nolint
                                             parameter_sample = NULL,
                                             seed = 42L,
                                             nsim = 500L,
@@ -155,7 +155,7 @@ plot_transition_times.srp_model <- function(model,
                                             ...) {
   if (is.null(parameter_sample)) { # sample parameters from prior if none given
     parameter_sample <- sample_prior(model,
-                                     seed = seed, nsim = nsim, nsim = nsim,
+                                     seed = seed, nsim = nsim,
                                      warmup = warmup,
                                      nuts_control = nuts_control, ...)
   }
@@ -225,7 +225,7 @@ plot_transition_times.srp_model <- function(model,
 #'
 #' @rdname srp_model
 #' @export
-plot_response_probability.srp_model <- function(model,
+plot_response_probability.srp_model <- function(model, # nolint
                                                parameter_sample = NULL,
                                                seed = 42L,
                                                nsim = 500L,
@@ -273,7 +273,7 @@ plot_response_probability.srp_model <- function(model,
 #'
 #' @rdname srp_model
 #' @export
-plot_pfs.srp_model <- function(model,
+plot_pfs.srp_model <- function(model, # nolint
                                parameter_sample = NULL,
                                seed = 42L,
                                nsim = 500L,
@@ -297,7 +297,7 @@ plot_pfs.srp_model <- function(model,
   }
   # TODO make sure this works from 0
   tbl <- compute_pfs(
-      mdl,
+      model,
       t = dt_grid,
       parameter_sample = parameter_sample
     ) %>%
