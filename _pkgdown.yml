@@ -20,12 +20,16 @@ reference:
   - sample_posterior
   - sample_predictive
   - impute
+- title: "Plotting functions"
+  contents:
+  - plot_transition_times
+  - plot_pfs
+  - plot_response_probability
+  - plot_mstate
 - title: "Other functions"
   contents:
   - logodds
   - visits_to_mstate
-  - plot_transition_times
-  - plot_mstate
   - parameter_sample_to_tibble
   - compute_pfs
 - title: "Stable-Response-Progression model"
