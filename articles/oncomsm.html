@@ -105,8 +105,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-3328a3b8b9f02affce80" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-3328a3b8b9f02affce80">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-42cc70ef20543bacf27e" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-42cc70ef20543bacf27e">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -234,13 +234,14 @@ between progression or death, we denote the combined endpoint as
 \operatorname{PFS}(t) :&amp;= \operatorname{Pr}\big[\,\text{no
 progression before } t\,\big] \\
   &amp;= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,] \\
-  &amp;= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,|\,
-\text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,] \\
-  &amp;\qquad- \operatorname{Pr}\big[\,\text{progression before } t\,|\,
-\text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,]
+  &amp;= 1 - \Big(\ \operatorname{Pr}\big[\,\text{progression before }
+t\,|\, \text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,]
 \\
-  &amp;= 1 - p\cdot\int_0^t f_1(u) \cdot F_2(t - u) \operatorname{d}u -
-(1 - p)\cdot F_3(t) \ .
+  &amp;\qquad+ \operatorname{Pr}\big[\,\text{progression before } t\,|\,
+\text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,]
+\ \Big)\\
+  &amp;= 1 - p\cdot\int_0^t f_1(u) \cdot F_3(t - u) \operatorname{d}u -
+(1 - p)\cdot F_2(t) \ .
 \end{align}
 \]</span> The integral arises from the need to reflect the uncertainty
 over the state change from “stable” to “response” on the way to
@@ -524,8 +525,9 @@ of the observed response rates.</p>
 <span><span class="co">#&gt; [61] vctrs_0.5.1          RColorBrewer_1.1-3   tools_4.2.2         </span></span>
 <span><span class="co">#&gt; [64] glue_1.6.2           purrr_0.3.5          processx_3.8.0      </span></span>
 <span><span class="co">#&gt; [67] parallel_4.2.2       fastmap_1.1.0        yaml_2.3.6          </span></span>
-<span><span class="co">#&gt; [70] inline_0.3.19        colorspace_2.0-3     memoise_2.0.1       </span></span>
-<span><span class="co">#&gt; [73] knitr_1.41           patchwork_1.1.2      sass_0.4.4</span></span></code></pre></div>
+<span><span class="co">#&gt; [70] RcppNumerical_0.4-0  inline_0.3.19        colorspace_2.0-3    </span></span>
+<span><span class="co">#&gt; [73] memoise_2.0.1        knitr_1.41           patchwork_1.1.2     </span></span>
+<span><span class="co">#&gt; [76] sass_0.4.4</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-aubel_bayesian_2021" class="csl-entry">
 Aubel, Paul, Marine Antigny, Ronan Fougeray, Frédéric Dubois, and Gaëlle
