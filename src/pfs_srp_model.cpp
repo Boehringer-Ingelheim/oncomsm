@@ -43,10 +43,10 @@ NumericVector pfs(NumericVector& t, const double& p, NumericVector& shapes, Nume
     // integrate
     ind = integrate(
       f, 0.0, t[i], err_est, err_code,
-      100, // max subdivisions
-      1e-5, // absolute error
-      1e-6, // relative error
-      Integrator<double>::GaussKronrod15 // integration rule
+      100, // max subdivisions # nocov
+      1e-5, // absolute error # nocov
+      1e-6, // relative error # nocov
+      Integrator<double>::GaussKronrod15 // integration rule # nocov
     );
     // calculate direct progression probability | no response
     d = R::pweibull(t[i], shapes[1], scales[1], 1, 0);
