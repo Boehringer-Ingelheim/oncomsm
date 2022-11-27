@@ -51,7 +51,16 @@ test_that("can calculate PFS rate", {
   expect_true(
     all(res1 == res2)
   )
-  message("\n\rTODO: Implement PFS check against theoretical values!")
+  # check monotonicity of average survival
+  expect_true(all(
+    compute_pfs(mdl, t = 0:25, parameter_sample = smpl) %>%
+      group_by(t) %>%
+      summarize(
+        pfs = mean(pfs)
+      ) %>%
+      pull(pfs) %>%
+      diff() < 0
+  ))
 })
 
 

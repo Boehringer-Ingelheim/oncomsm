@@ -7,37 +7,51 @@ using namespace Numer;
 
 
 
-// P(0.3 < X < 0.8), X ~ Beta(a, b)
-class BetaPDF: public Func
+class SRPModelPFSIntegrand: public Func
 {
 private:
-  double a;
-  double b;
+  double t;
+  double p;
+  double scale_sr, shape_sr; // stable->response
+  double scale_rp, shape_rp; // response->progression
 public:
-  BetaPDF(double a_, double b_) : a(a_), b(b_) {}
+  SRPModelPFSIntegrand(double t_, double p_,
+                       double scale_sr_, double shape_sr_,
+                       double scale_rp_, double shape_rp_) :
+    t(t_), p(p_),
+    scale_sr(scale_sr_), shape_sr(shape_sr_),
+    scale_rp(scale_rp_), shape_rp(shape_rp_) {}
 
   double operator()(const double& x) const
   {
-    return R::dbeta(x, a, b, 0);
+    return R::dweibull(x, shape_sr, scale_sr, 0) * // 0 = not log density
+      R::pweibull(t - x, shape_rp, scale_rp, 1, 0); // 1, 0 = lower tail + not log
   }
 };
 
 // [[Rcpp::export]]
-Rcpp::List integrate_test()
-{
-  const double a = 3, b = 10;
-  const double lower = 0.3, upper = 0.8;
-  const double true_val = R::pbeta(upper, a, b, 1, 0) -
-    R::pbeta(lower, a, b, 1, 0);
-
-  BetaPDF f(a, b);
+NumericVector pfs(NumericVector& t, const double& p, NumericVector& shapes, NumericVector& scales) {
   double err_est;
   int err_code;
-  const double res = integrate(f, lower, upper, err_est, err_code);
-  return Rcpp::List::create(
-    Rcpp::Named("true") = true_val,
-    Rcpp::Named("approximate") = res,
-    Rcpp::Named("error_estimate") = err_est,
-    Rcpp::Named("error_code") = err_code
-  );
+  const int n = t.length();
+  NumericVector pfs(n);
+  double ind;
+  double d;
+  for (int i = 0; i < n; i++) {
+    // define integrand for indirect path
+    SRPModelPFSIntegrand f(t[i], p, scales[0], shapes[0], scales[2], shapes[2]);
+    // integrate
+    ind = integrate(
+      f, 0.0, t[i], err_est, err_code,
+      100, // max subdivisions
+      1e-5, // absolute error
+      1e-6, // relative error
+      Integrator<double>::GaussKronrod15 // integration rule
+    );
+    // calculate direct progression probability | no response
+    d = R::pweibull(t[i], shapes[1], scales[1], 1, 0);
+    // 1 - (pr[progression | response] pr[response + pr[progression | no response] pr[no response]])
+    pfs[i] = 1 - (p * ind + (1 - p) * d);
+  }
+  return pfs;
 }
