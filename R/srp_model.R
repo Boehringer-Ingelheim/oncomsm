@@ -452,7 +452,7 @@ compute_pfs.srp_model <- function( # nolint
         tidyr::pivot_longer(
           -t, names_to = "iter", values_to = "pfs"
         ) %>%
-        mutate(group_id = group_ids[i], iter = as.integer(iter))
+        mutate(group_id = group_ids[i], iter = as.integer(.data$iter))
     )
   }
   return(tbl_pfs)
