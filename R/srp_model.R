@@ -422,51 +422,38 @@ compute_pfs.srp_model <- function( # nolint
                                      warmup = warmup, nsim = nsim, seed = seed,
                                      pars = attr(model, "parameter_names"), ...)
   }
-  parameter_sample <- parameter_sample_to_tibble(model, parameter_sample)
-  pr_direct_progression <- function(shape_2, scale_2, t) {
-    return(stats::pweibull(t, shape_2, scale_2))
-  }
-  pr_indirect_progression <- function(shape_1, shape_3, scale_1, scale_3, t) {
-    # need to integrate over response time
-    integrand <- function(t_response) {
-      stats::dweibull(t_response, shape_1, scale_1) *
-        stats::pweibull(t - t_response, shape_3, scale_3)
+  group_ids <- attr(model, "group_id")
+  n_groups <- length(group_ids)
+  n_smpl <- dim(parameter_sample)[[1]]
+  n_t <- length(t)
+  res <- array(0.0, dim = c(n_smpl, n_t, n_groups))
+  p <- rstan::extract(parameter_sample, "p")[[1]]
+  shape <- rstan::extract(parameter_sample, "shape")[[1]]
+  scale <- rstan::extract(parameter_sample, "scale")[[1]]
+  for (i in 1:n_smpl) {
+    for (j in 1:n_groups) {
+      # calculate pfs for i-th sample, j-th group and add to result
+      res[i, , j] <- pfs(t, p[i, j], shape[i, j, ], scale[i, j, ])
     }
-    # can reduce absolute tolerance substantially ok for probabilities
-    res <- stats::integrate(
-      integrand,
-      lower = 0, upper = t, rel.tol = 1e-5, abs.tol = 1e-5
-    )
-    return(res$value)
   }
-  tbl_pfs <- parameter_sample %>%
-    # pivot parameters
-    tidyr::pivot_wider(
-      names_from = all_of(c("parameter", "transition")),
-      values_from = "value"
-    ) %>%
-    rename(pr_response = "p_NA") %>%
-    # cross with time points
-    tidyr::expand_grid(t = t) %>%
-    # compute PFS before t
-    mutate(
-      pfs = purrr::pmap_dbl(
-        list(
-          .data$pr_response,
-          .data$scale_1, .data$scale_2, .data$scale_3,
-          .data$shape_1, .data$shape_2, .data$shape_3,
-          t
-        ),
-        function(pr_response, scale_1, scale_2, scale_3, shape_1,
-                 shape_2, shape_3, t) {
-          pr_progression_t <- pr_response *
-            pr_indirect_progression(shape_1, shape_3, scale_1, scale_3, t) +
-            (1 - pr_response) * pr_direct_progression(shape_2, scale_2, t)
-          return(1 - pr_progression_t)
-        }
-      )
-    ) %>%
-    # only keep interesting stuff
-    select(all_of(c("iter", "group_id", "t", "pfs")))
+  # unpack 3d array into tibble
+  tbl_pfs <- tibble(
+    iter = integer(),
+    group_id = character(),
+    t = numeric(),
+    pfs = numeric()
+  )
+  dimnames(res) <- list(1:n_smpl, 1:n_t, group_ids)
+  for (i in seq_along(group_ids)) {
+    tbl_pfs <- dplyr::bind_rows(
+      tbl_pfs,
+      as_tibble(t(res[ , , i])) %>%
+        mutate(t = t) %>%
+        tidyr::pivot_longer(
+          -t, names_to = "iter", values_to = "pfs"
+        ) %>%
+        mutate(group_id = group_ids[i], iter = as.integer(.data$iter))
+    )
+  }
   return(tbl_pfs)
 }

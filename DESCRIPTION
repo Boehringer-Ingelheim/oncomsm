@@ -34,6 +34,7 @@ Depends:
 Imports: 
     methods,
     Rcpp,
+    RcppNumerical (>= 0.4),
     rstan (>= 2.18),
     rlang (>= 0.4),
     magrittr (>= 2.0),
@@ -48,6 +49,7 @@ LinkingTo:
     BH (>= 1.66.0),
     Rcpp,
     RcppEigen (>= 0.3),
+    RcppNumerical (>= 0.4),
     rstan (>= 2.18),
     StanHeaders (>= 2.18)
 SystemRequirements: GNU make

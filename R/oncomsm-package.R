@@ -14,6 +14,7 @@
 #' @import methods
 #' @import Rcpp
 #' @import dplyr
+#' @import RcppNumerical
 #' @importFrom rstan sampling
 #' @importFrom rlang .data
 #'

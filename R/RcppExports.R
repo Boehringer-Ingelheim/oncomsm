@@ -5,6 +5,10 @@ impute_srp_model <- function(df, response_probabilities, shapes, scales, visit_s
     .Call(`_oncomsm_impute_srp_model`, df, response_probabilities, shapes, scales, visit_spacing, max_time)
 }
 
+pfs <- function(t, p, shapes, scales) {
+    .Call(`_oncomsm_pfs`, t, p, shapes, scales)
+}
+
 rtruncweibull <- function(shape, scale, a, b) {
     .Call(`_oncomsm_rtruncweibull`, shape, scale, a, b)
 }

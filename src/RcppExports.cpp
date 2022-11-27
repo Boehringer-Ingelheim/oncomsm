@@ -27,6 +27,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pfs
+NumericVector pfs(NumericVector& t, const double& p, NumericVector& shapes, NumericVector& scales);
+RcppExport SEXP _oncomsm_pfs(SEXP tSEXP, SEXP pSEXP, SEXP shapesSEXP, SEXP scalesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector& >::type t(tSEXP);
+    Rcpp::traits::input_parameter< const double& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< NumericVector& >::type shapes(shapesSEXP);
+    Rcpp::traits::input_parameter< NumericVector& >::type scales(scalesSEXP);
+    rcpp_result_gen = Rcpp::wrap(pfs(t, p, shapes, scales));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rtruncweibull
 double rtruncweibull(double shape, double scale, double a, double b);
 RcppExport SEXP _oncomsm_rtruncweibull(SEXP shapeSEXP, SEXP scaleSEXP, SEXP aSEXP, SEXP bSEXP) {
@@ -46,6 +60,7 @@ RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_oncomsm_impute_srp_model", (DL_FUNC) &_oncomsm_impute_srp_model, 6},
+    {"_oncomsm_pfs", (DL_FUNC) &_oncomsm_pfs, 4},
     {"_oncomsm_rtruncweibull", (DL_FUNC) &_oncomsm_rtruncweibull, 4},
     {"_rcpp_module_boot_stan_fit4srp_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srp_model_mod, 0},
     {NULL, NULL, 0}

@@ -187,9 +187,9 @@ $$
 \begin{align}
 \operatorname{PFS}(t) :&= \operatorname{Pr}\big[\,\text{no progression before } t\,\big] \\
   &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,] \\
-  &= 1 - \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,] \\
-  &\qquad- \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,] \\
-  &= 1 - p\cdot\int_0^t f_1(u) \cdot F_2(t - u) \operatorname{d}u - (1 - p)\cdot F_3(t) \ .
+  &= 1 - \Big(\ \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{response}\,]\cdot\operatorname{Pr}\big[\,\text{response}\,] \\
+  &\qquad+ \operatorname{Pr}\big[\,\text{progression before } t\,|\, \text{no response}\,]\cdot\operatorname{Pr}\big[\,\text{no response}\,] \ \Big)\\
+  &= 1 - p\cdot\int_0^t f_1(u) \cdot F_3(t - u) \operatorname{d}u - (1 - p)\cdot F_2(t) \ .
 \end{align}
 $$
 The integral arises from the need to reflect the uncertainty over the 
