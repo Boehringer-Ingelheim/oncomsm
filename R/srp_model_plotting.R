@@ -178,7 +178,10 @@ plot_transition_times.srp_model <- function(model, # nolint
     ) %>%
     group_by(.data$group_id, .data$transition, .data$dt) %>%
     summarize(
-      survival = mean(.data$survival), .groups = "drop"
+      survival = mean(.data$survival),
+      lo = quantile(.data$survival, probs = 0.1) %>% as.numeric(),
+      hi = quantile(.data$survival, probs = 0.9) %>% as.numeric(),
+      .groups = "drop"
     ) %>%
     filter(
       is.finite(.data$survival)
@@ -187,17 +190,18 @@ plot_transition_times.srp_model <- function(model, # nolint
       transition = case_when(
         .data$transition == 1 ~ "stable to response",
         .data$transition == 2 ~ "stable to progression",
-        .data$transition == 3 ~ "response to progression",
+        .data$transition == 3 ~ "response to progression"
       ) %>%
-        factor(levels = c(
-          "stable to response", "stable to progression",
-          "response to progression"
-        ))
+      factor(levels = c(
+        "stable to response", "stable to progression",
+        "response to progression"
+      ))
     )
   plt <- ggplot2::ggplot(tbl) +
+    ggplot2::geom_ribbon(ggplot2::aes(.data$dt, ymin = .data$lo,
+                                      ymax = .data$hi)) +
     ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
-                                    color = .data$group_id
-    )) +
+                                    color = .data$group_id)) +
     ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
     ggplot2::scale_color_discrete("") +
     ggplot2::scale_y_continuous(

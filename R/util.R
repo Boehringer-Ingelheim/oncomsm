@@ -49,3 +49,27 @@ get_dt_grid <- function(model,
   dt_grid <- seq(dt_interval[1] + 0.1, dt_interval[2], length.out = dt_n_grid)
   return(dt_grid)
 }
+
+
+
+get_mu_sigma <- function(mean, sd, prob = 0.9) {
+  f <- function(x) {
+    mu <- x[1]
+    sigma <- x[2]
+    c(
+      exp(mu - sigma^2), # mode
+      qlnorm(prob, mu, sigma)
+    )
+  }
+  res <- optim(
+    c(1, 0.5),
+    function(x) sum((f(x) - c(mean, sd))^2),
+    lower = c(-Inf, 0.001),
+    method = "L-BFGS-B"
+  )
+  return(tibble(
+    mu = res$par[1],
+    sigma = res$par[2]
+  ))
+}
+

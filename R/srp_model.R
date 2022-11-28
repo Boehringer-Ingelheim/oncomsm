@@ -49,12 +49,44 @@ create_srp_model <- function(
   max_time = 10 * 12,
   logodds_min = rep(logodds(.001), length(group_id)),
   logodds_max = rep(logodds(.999), length(group_id)),
-  shape_min = matrix(.99, nrow = length(group_id), ncol = 3),
-  shape_max = matrix(1.01, nrow = length(group_id), ncol = 3)
+  shape_min = matrix(.001, nrow = length(group_id), ncol = 3),
+  shape_max = matrix(20, nrow = length(group_id), ncol = 3), # about .999 quantile
+  shape_mode = matrix(1, nrow = length(group_id), ncol = 3),
+  shape_90q = matrix(5, nrow = length(group_id), ncol = 3),
+  median_t_mode = matrix(6, nrow = length(group_id), ncol = 3),
+  median_t_90q = matrix(12, nrow = length(group_id), ncol = 3),
+  median_t_max = matrix(Inf, nrow = length(group_id), ncol = 3)
 ) {
-  mdl <- as.list(environment()) # store all input parameters
-  mdl$group_id <- NULL
-  mdl$visit_spacing <- NULL
+  # calculate mu, sigma for log-normal priors
+  shape_mu <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
+  shape_sigma <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
+  median_t_mu <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
+  median_t_sigma <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
+  for (i in 1:3) {
+    for (j in 1:length(group_id)) {
+      tmp <- get_mu_sigma(shape_mode[j, i], shape_90q[j, i])
+      shape_mu[j, i] <- tmp$mu
+      shape_sigma[j, i] <- tmp$sigma
+      tmp <- get_mu_sigma(median_t_mode[j, i], median_t_90q[j, i])
+      median_t_mu[j, i] <- tmp$mu
+      median_t_sigma[j, i] <- tmp$sigma
+    }
+  }
+  mdl <- list(
+    logodds_mean = logodds_mean,
+    logodds_sd = logodds_sd,
+    median_time_to_next_event_mean = median_time_to_next_event_mean,
+    median_time_to_next_event_sd = median_time_to_next_event_sd,
+    logodds_min = logodds_min,
+    logodds_max = logodds_max,
+    shape_min = shape_min,
+    shape_max = shape_max,
+    shape_mu = shape_mu,
+    shape_sigma = shape_sigma,
+    median_t_mu = median_t_mu,
+    median_t_sigma = median_t_sigma,
+    median_t_max = median_t_max
+  )
   mdl <- lapply(mdl, base::as.array)
   attr(mdl, "group_id") <- as.character(group_id) # assert type
   attr(mdl, "states") <- c("stable", "response", "progression")
@@ -273,18 +305,14 @@ data2standata.srp_model <- function(data, model) { # nolint
     ) %>%
     arrange(.data$subject_id, .data$from) %>%
     as.list()
-
   # make sure everything is an array
   for (i in seq_along(lst_stan_data)) {
     lst_stan_data[[i]] <- as.array(lst_stan_data[[i]])
   }
-
   lst_stan_data$M_groups <- length(attr(model, "group_id"))
   lst_stan_data$N <- nrow(data)
   lst_stan_data$N_subjects <- length(unique(data$subject_id))
-
   lst_stan_data <- c(lst_stan_data, as.list(model))
-
   return(lst_stan_data)
 }
 

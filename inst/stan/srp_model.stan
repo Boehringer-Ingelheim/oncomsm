@@ -35,9 +35,14 @@ data {
   // alpha (weibull shape)
   real<lower=machine_precision()> shape_min[M_groups, 3];
   real<lower=machine_precision()> shape_max[M_groups, 3];
+  real shape_mu[M_groups, 3];
+  real<lower=machine_precision()> shape_sigma[M_groups, 3];
   // weibull median
   real median_time_to_next_event_mean[M_groups, 3];
   real<lower=machine_precision()> median_time_to_next_event_sd[M_groups, 3];
+  real median_t_mu[M_groups, 3];
+  real<lower=machine_precision()> median_t_sigma[M_groups, 3];
+  real<lower=machine_precision()> median_t_max[M_groups, 3];
 
 }
 
@@ -102,12 +107,13 @@ model {
   for (gg in 1:M_groups) {
     logodds[gg] ~ normal(logodds_mean[gg], logodds_sd[gg]) T[logodds_min[gg],logodds_max[gg]];
     for (j in 1:3) {
-      shape[gg, j] ~ uniform(shape_min[gg, j], shape_max[gg, j]);
+      shape[gg, j] ~ lognormal(
+        shape_mu[gg, j], shape_sigma[gg, j]
+      ) T[shape_min[gg, j], shape_max[gg, j]];
       // this is a linear transformation and does not require a jacobian
-      median_time_to_next_event[gg, j] ~ normal(
-          median_time_to_next_event_mean[gg, j],
-          median_time_to_next_event_sd[gg, j]
-        ) T[sqrt(machine_precision()), ];
+      median_time_to_next_event[gg, j] ~ lognormal(
+          median_t_mu[gg, j], median_t_sigma[gg, j]
+        ) T[0, median_t_max[gg, j]];
     }
   }
 
