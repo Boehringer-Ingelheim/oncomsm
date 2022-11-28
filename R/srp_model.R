@@ -1,3 +1,88 @@
+#' @name srp_model
+#' @export
+srp_group_prior <- function(
+  p_mean = 0.5,
+  p_n = 1,
+  p_eta = 0.0,
+  p_min = 0.0,
+  p_max = 1.0,
+  median_t_mode = c(3, 3, 6),
+  median_t_90q = c(30, 30, 60),
+  median_t_max = c(Inf, Inf, Inf),
+  shape_mode = c(1, 1, 1),
+  shape_90q = c(5, 5, 5),
+  shape_min = c(0.01, 0.01, 0.01),
+  shape_max = c(20, 20, 20), # about .999 quantile
+  visit_spacing = 1, # months
+  recruitment_rate = 1
+) {
+  params <- as.list(environment())
+  params$visit_spacing <- NULL
+  params$recrutiment_rate <- NULL
+  res <- structure(
+    as.list(environment()),
+    visit_spacing = visit_spacing,
+    recruitment_rate = recruitment_rate,
+    class = "srp_group_prior"
+  )
+  return(res)
+}
+
+#'
+#' @export
+srp_modell <- function(
+  ...,
+  maximal_time = 10 * 12
+) {
+  group_priors <- list(...)
+  group_id <- names(group_priors)
+  k <- length(group_id)
+  if (any(group_id == "")) {
+    stop("All arguments passed to ... must be named.") # nocov
+  }
+  if (length(unique(group_id)) < k) {
+    stop("All names of arguments passed to ... must be unique.") # nocov
+  }
+  transition_labels <- c("s->r", "s->p", "r->p")
+  p <- matrix(NA_real_, nrow = k, ncol = 5,
+              dimnames = list(group_id, c("mean", "n", "eta", "min", "max")))
+  median_t <- array(NA_real_, dim = c(k, 3, 3),
+                    dimnames = list(group_id, transition_labels,
+                                    c("mode", "90q", "max")))
+  shape <- array(NA_real_, dim = c(k, 3, 4),
+                 dimnames = list(group_id, transition_labels,
+                                 c("mode", "90q", "min", "max")))
+  visit_spacing <- numeric(k)
+  names(visit_spacing) <- group_id
+  recruitment_rate <- numeric(k)
+  names(recruitment_rate) <- group_id
+  for (g in group_id) {
+    group <- group_priors[[g]]
+    visit_spacing[g] <- attr(group, "visit_spacing")
+    recruitment_rate[g] <- attr(group, "recruitment_rate")
+    p[g, ] <- c(group$p_mean, group$p_n, group$p_eta, group$p_min, group$p_max)
+    median_t[g, , ] <- cbind(group$median_t_mode, group$median_t_90q,
+                             group$median_t_max)
+    shape[g, , ] <- cbind(group$shape_mode, group$shape_90q, group$shape_min,
+                          group$shape_max)
+  }
+  res <- structure(
+    list(
+      group_id = group_id,
+      maximal_time = maximal_time,
+      visit_spacing = visit_spacing,
+      recruitment_rate = recruitment_rate,
+      prior = list(
+        p = p, median_t = median_t, shape = shape
+      )
+    ),
+    class = "srp_model"
+  )
+  return(res)
+}
+
+
+
 #' A Stable-Response-Progression Model
 #'
 #' Create a new instance of an SRP model
@@ -55,7 +140,12 @@ create_srp_model <- function(
   shape_90q = matrix(5, nrow = length(group_id), ncol = 3),
   median_t_mode = matrix(6, nrow = length(group_id), ncol = 3),
   median_t_90q = matrix(12, nrow = length(group_id), ncol = 3),
-  median_t_max = matrix(Inf, nrow = length(group_id), ncol = 3)
+  median_t_max = matrix(Inf, nrow = length(group_id), ncol = 3),
+  p_mean = rep(0.5, length(group_id)),
+  p_n = rep(1, length(group_id)),
+  p_eta = rep(0.0, length(group_id)),
+  p_min = rep(0.0, length(group_id)),
+  p_max = rep(1.0, length(group_id))
 ) {
   # calculate mu, sigma for log-normal priors
   shape_mu <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
@@ -85,7 +175,12 @@ create_srp_model <- function(
     shape_sigma = shape_sigma,
     median_t_mu = median_t_mu,
     median_t_sigma = median_t_sigma,
-    median_t_max = median_t_max
+    median_t_max = median_t_max,
+    p_mean = p_mean,
+    p_n = p_n,
+    p_eta = p_eta,
+    p_min = p_min,
+    p_max = p_max
   )
   mdl <- lapply(mdl, base::as.array)
   attr(mdl, "group_id") <- as.character(group_id) # assert type
@@ -298,8 +393,8 @@ data2standata.srp_model <- function(data, model) { # nolint
         "unknown",
         as.character(.data$to)
       ) %>%
-        factor(levels = c(attr(model, "states"), "unknown")) %>%
-        as.integer(),
+      factor(levels = c(attr(model, "states"), "unknown")) %>%
+      as.integer(),
       t_min = .data$t_min - .data$t_sot,
       t_max = .data$t_max - .data$t_sot
     ) %>%

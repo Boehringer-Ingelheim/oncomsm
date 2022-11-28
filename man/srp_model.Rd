@@ -24,8 +24,13 @@ create_srp_model(
   max_time = 10 * 12,
   logodds_min = rep(logodds(0.001), length(group_id)),
   logodds_max = rep(logodds(0.999), length(group_id)),
-  shape_min = matrix(0.99, nrow = length(group_id), ncol = 3),
-  shape_max = matrix(1.01, nrow = length(group_id), ncol = 3)
+  shape_min = matrix(0.001, nrow = length(group_id), ncol = 3),
+  shape_max = matrix(20, nrow = length(group_id), ncol = 3),
+  shape_mode = matrix(1, nrow = length(group_id), ncol = 3),
+  shape_90q = matrix(5, nrow = length(group_id), ncol = 3),
+  median_t_mode = matrix(6, nrow = length(group_id), ncol = 3),
+  median_t_90q = matrix(12, nrow = length(group_id), ncol = 3),
+  median_t_max = matrix(Inf, nrow = length(group_id), ncol = 3)
 )
 
 \method{format}{srp_model}(x, ...)
@@ -66,6 +71,7 @@ create_srp_model(
   dt_n_grid = 25,
   dt_expand = 1.1,
   dt_grid = NULL,
+  confidence = NULL,
   ...
 )
 
@@ -90,6 +96,7 @@ create_srp_model(
   dt_n_grid = 25,
   dt_expand = 1.1,
   dt_grid = NULL,
+  confidence = NULL,
   ...
 )
 
@@ -104,6 +111,7 @@ create_srp_model(
   dt_n_grid = 25,
   dt_expand = 1.1,
   dt_grid = NULL,
+  confidence = NULL,
   ...
 )
 }
@@ -190,6 +198,9 @@ plotting interval}
 automatic interval detection}
 
 \item{dt_grid}{numeric vector of time points to use for plotting}
+
+\item{confidence}{numeric in (0, 1) confidence level for point-wise
+confidence bands around mean; none plotted if NULL.}
 }
 \description{
 Create a new instance of an SRP model

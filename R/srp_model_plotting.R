@@ -139,6 +139,8 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
 #' @template param-nsim
 #' @template param-warmup
 #' @template param-dt-params
+#' @param confidence numeric in (0, 1) confidence level for point-wise
+#' confidence bands around mean; none plotted if NULL.
 #'
 #' @rdname srp_model
 #' @export
@@ -152,6 +154,7 @@ plot_transition_times.srp_model <- function(model, # nolint
                                             dt_n_grid = 25,
                                             dt_expand = 1.1,
                                             dt_grid = NULL,
+                                            confidence = NULL,
                                             ...) {
   if (is.null(parameter_sample)) { # sample parameters from prior if none given
     parameter_sample <- sample_prior(model,
@@ -165,6 +168,11 @@ plot_transition_times.srp_model <- function(model, # nolint
                            dt_n_grid, dt_expand, seed)
   }
   # convert parameters to tibble and prepare for plotting
+  if (!is.null(confidence)) {
+    alpha_half <- (1 - confidence) / 2
+  } else {
+    alpha_half <- 0
+  }
   tbl <- parameter_sample_to_tibble(model, parameter_sample) %>%
     filter(.data$parameter %in% c("shape", "scale")) %>%
     tidyr::pivot_wider(
@@ -178,9 +186,11 @@ plot_transition_times.srp_model <- function(model, # nolint
     ) %>%
     group_by(.data$group_id, .data$transition, .data$dt) %>%
     summarize(
+      lo = stats::quantile(.data$survival, probs = alpha_half) %>%
+        as.numeric(),
+      hi = stats::quantile(.data$survival, probs = 1 - alpha_half) %>%
+        as.numeric(),
       survival = mean(.data$survival),
-      lo = quantile(.data$survival, probs = 0.1) %>% as.numeric(),
-      hi = quantile(.data$survival, probs = 0.9) %>% as.numeric(),
       .groups = "drop"
     ) %>%
     filter(
@@ -197,10 +207,13 @@ plot_transition_times.srp_model <- function(model, # nolint
         "response to progression"
       ))
     )
-  plt <- ggplot2::ggplot(tbl) +
-    ggplot2::geom_ribbon(ggplot2::aes(.data$dt, ymin = .data$lo,
-                                      ymax = .data$hi)) +
-    ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
+  plt <- ggplot2::ggplot(tbl)
+  if (!is.null(confidence)) {
+    plt <- plt + ggplot2::geom_ribbon(ggplot2::aes(.data$dt, ymin = .data$lo,
+                                      ymax = .data$hi, fill = .data$group_id),
+                                      alpha = 0.2)
+  }
+  plt <- plt + ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
                                     color = .data$group_id)) +
     ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
     ggplot2::scale_color_discrete("") +
@@ -230,12 +243,12 @@ plot_transition_times.srp_model <- function(model, # nolint
 #' @rdname srp_model
 #' @export
 plot_response_probability.srp_model <- function(model, # nolint
-                                               parameter_sample = NULL,
-                                               seed = 42L,
-                                               nsim = 500L,
-                                               warmup = 250,
-                                               nuts_control = list(),
-                                               ...) {
+                                                parameter_sample = NULL,
+                                                seed = 42L,
+                                                nsim = 500L,
+                                                warmup = 250,
+                                                nuts_control = list(),
+                                                ...) {
   if (is.null(parameter_sample)) { # sample parameters from prior if none given
     parameter_sample <- sample_prior(model,
                                      seed = seed, nsim = nsim,
@@ -243,7 +256,8 @@ plot_response_probability.srp_model <- function(model, # nolint
                                      nuts_control = nuts_control, ...)
   }
   tbl <- parameter_sample_to_tibble(model, parameter_sample) %>%
-    filter(.data$parameter == "p")
+    filter(.data$parameter == "p") %>%
+    select(-"transition")
   plt <- ggplot2::ggplot(tbl) +
     ggplot2::stat_ecdf(ggplot2::aes(.data$value, color = .data$group_id),
                        geom = "line") +
@@ -274,6 +288,8 @@ plot_response_probability.srp_model <- function(model, # nolint
 #' @template param-nsim
 #' @template param-warmup
 #' @template param-dt-params
+#' @param confidence numeric in (0, 1) confidence level for point-wise
+#' confidence bands around mean; none plotted if NULL.
 #'
 #' @rdname srp_model
 #' @export
@@ -287,6 +303,7 @@ plot_pfs.srp_model <- function(model, # nolint
                                dt_n_grid = 25,
                                dt_expand = 1.1,
                                dt_grid = NULL,
+                               confidence = NULL,
                                ...) {
   if (is.null(parameter_sample)) { # sample parameters from prior if none given
     parameter_sample <- sample_prior(model,
@@ -299,7 +316,11 @@ plot_pfs.srp_model <- function(model, # nolint
     dt_grid <- get_dt_grid(model, parameter_sample, dt_interval,
                            dt_n_grid, dt_expand, seed)
   }
-  # TODO make sure this works from 0
+  if (!is.null(confidence)) {
+    alpha_half <- (1 - confidence) / 2
+  } else {
+    alpha_half <- 0
+  }
   tbl <- compute_pfs(
       model,
       t = dt_grid,
@@ -308,11 +329,19 @@ plot_pfs.srp_model <- function(model, # nolint
     # integrate over sample
     group_by(.data$group_id, .data$t) %>%
     summarize(
+      lo = stats::quantile(.data$pfs, probs = alpha_half) %>% as.numeric(),
+      hi = stats::quantile(.data$pfs, probs = 1 - alpha_half) %>% as.numeric(),
       pfs = mean(.data$pfs),
       .groups = "drop"
     )
-  plt <- ggplot2::ggplot(tbl) +
-    ggplot2::geom_line(ggplot2::aes(
+  plt <- ggplot2::ggplot(tbl)
+  if (!is.null(confidence)) {
+    plt <- plt + ggplot2::geom_ribbon(ggplot2::aes(.data$t, ymin = .data$lo,
+                                                   ymax = .data$hi,
+                                                   fill = .data$group_id),
+                                      alpha = 0.2)
+  }
+  plt <- plt + ggplot2::geom_line(ggplot2::aes(
       x = .data$t,
       y = .data$pfs, color = .data$group_id
     )) +
@@ -336,6 +365,8 @@ plot_pfs.srp_model <- function(model, # nolint
 #' @template param-nuts_control
 #' @template param-dt-params
 #' @template param-dotdotdot
+#' @param confidence numeric in (0, 1) confidence level for point-wise
+#' confidence bands around mean; none plotted if NULL.
 #'
 #' @rdname srp_model
 #' @export
@@ -349,6 +380,7 @@ plot.srp_model <- function(x,
                            dt_n_grid = 25,
                            dt_expand = 1.1,
                            dt_grid = NULL,
+                           confidence = NULL,
                            ...) {
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("the patchwork package is required to plot SRP models") # nocov
@@ -364,8 +396,10 @@ plot.srp_model <- function(x,
     dt_grid <- get_dt_grid(x, parameter_sample, dt_interval,
                            dt_n_grid, dt_expand, seed)
   }
-  plt_trans <- plot_transition_times(x, parameter_sample, dt_grid = dt_grid)
-  plt_pfs <- plot_pfs(x, parameter_sample, dt_grid = dt_grid)
+  plt_trans <- plot_transition_times(x, parameter_sample, dt_grid = dt_grid,
+                                     confidence = confidence)
+  plt_pfs <- plot_pfs(x, parameter_sample, dt_grid = dt_grid,
+                      confidence = confidence)
   plt_pr <- plot_response_probability(x, parameter_sample)
   design <- "
   111

@@ -225,7 +225,10 @@ mdl <- create_srp_model(
   shape_90q = matrix(c(5, 5, 5), nrow = 1),
   median_t_mode = matrix(c(3, 3, 6), nrow = 1),
   median_t_90q = matrix(c(30, 30, 60), nrow = 1),
-  visit_spacing = c(.1, .1, .1)
+  visit_spacing = c(.1, .1, .1),
+  p_mean = .5,
+  p_n = 20,
+  p_eta = .0
 )
 
 plot(mdl)
