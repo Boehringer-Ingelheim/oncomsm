@@ -124,7 +124,7 @@ create_srp_model <- function(
       maximal_time = maximal_time,
       visit_spacing = visit_spacing,
       recruitment_rate = recruitment_rate,
-      stan_model = stanmodels$srp_model,
+      stan_model = stanmodels$srp_model_simple,
       states = c("stable", "response", "progression"),
       prior = list(
         p = p, median_t = median_t, shape = shape

@@ -2,12 +2,6 @@
 
 functions {
 
-  real weibull_trunc_lpdf (real t, real shape, real scale, real a, real b) {
-    real eps = 1e-6; // numerical stability, minimum interval width
-    real delta_cdf = weibull_cdf(b, shape, scale) - weibull_cdf(a, shape, scale);
-    return weibull_lpdf(t | shape, scale) - log(delta_cdf + eps);
-  }
-
   real beta_mix_trunc_lpdf(real p, real mean, real n, real eta, real lower, real upper) {
     real eps = 1e-6;
     real a = mean * n;
@@ -62,7 +56,6 @@ parameters {
 
   real<lower=0.5> shape[M_groups, 3];
   real<lower=0,upper=1> p_raw[M_groups]; // the boundaries here are for scaling!
-  real<lower=0,upper=1> t_jump_from_stable_raw[N_subjects]; // the boundaries here are for scaling!
   real<lower=sqrt(machine_precision())> median_t[M_groups, 3];
 
 }
@@ -73,22 +66,13 @@ transformed parameters {
 
   real p[M_groups];
   real scale[M_groups, 3];
-  real<lower=0> t_jump_from_stable[N_subjects];
 
   for (g in 1:M_groups) {
-    p[g] = p_min[g] + (p_max[g] - p_min[g]) * p_raw[g]; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
+    // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
+    p[g] = p_min[g] + (p_max[g] - p_min[g]) * p_raw[g];
     for (j in 1:3) {
-      scale[g, j] = median_t[g, j]/(log(2)^(1/shape[g, j])); // solve for scale given shape and median
-    }
-  }
-
-  for (i in 1:N) {
-    if (from[i] == 1) {
-      if (to[i] != 4) {
-        t_jump_from_stable[subject_id[i]] = t_min[i] + (t_max[i] - t_min[i]) * t_jump_from_stable_raw[subject_id[i]]; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
-      } else {
-        t_jump_from_stable[subject_id[i]] = t_min[i] + (300 - t_min[i]) * t_jump_from_stable_raw[subject_id[i]]; // upper limit is infinity
-      }
+      // solve for scale given shape and median
+      scale[g, j] = median_t[g, j] / (log(2)^(1/shape[g, j]));
     }
   }
 
@@ -99,15 +83,12 @@ transformed parameters {
 model {
 
   // buffer for current group_id and subject_id in loop
+  real eps = 1e-6;
   int g;
   int s;
-  // buffer for jump times in loop, dt since it is reset at previous junmp time
-  // hence a difference (clock reset at state switching)
-  real dt_jump = 0;
-  real dt_jump_min = 0;
-  real dt_jump_max = 0;
-  // small constant used for numerical stability
-  real eps = 1e-6;
+  // instead of sampling the actual jumping times, we just approximate them as
+  // midpoints
+  real t_jump_from_stable[N_subjects];
 
   // handle prior contribution to log likelihood target
   for (gg in 1:M_groups) {
@@ -127,28 +108,28 @@ model {
     s = subject_id[i]; // convenience only
     g = group_id[i]; // convenience only
     if (from[i] == 1) {
-      // Weibull can become unstable around 0, hence we shift everything away
-      // from 0 by a tiny ammount; if/else would hinder sampler, this is smoother
-      // and has minimal effect on the log likelihood
-      dt_jump = t_jump_from_stable[s] + eps;
-      dt_jump_min = t_min[i] + eps; // jump needs to have occured between this lower and ...
-      dt_jump_max = t_max[i] + eps; // .. this upper bound
-      // pick jump-specific weibull parameters
+      // approximate jump time with midpoint instead of treating as random
+      // should reduce number of paramters and avoid too much correlation
+      // between paramters.
+      t_jump_from_stable[s] = (t_min[i] + t_max[i]) / 2;
       if (to[i] == 2) { // stable -> response
-        target += log(p[g] + eps) + // prevent log(0)
-          weibull_trunc_lpdf(dt_jump | shape[g, 1], scale[g, 1], dt_jump_min, dt_jump_max);
+        target += log(
+          p[g] * (weibull_cdf(t_max[i] + eps, shape[g, 1], scale[g, 1]) -
+            weibull_cdf(t_min[i] + eps, shape[g, 1], scale[g, 1])) + eps
+        );
       }
       if (to[i] == 3) { // stable -> progression
-        target += log(1 - p[g] + eps) + // prevent log(0)
-          weibull_trunc_lpdf(dt_jump | shape[g, 2], scale[g, 2], dt_jump_min, dt_jump_max);
+        target += log(
+          (1 - p[g]) * (weibull_cdf(t_max[i]+ eps, shape[g, 2], scale[g, 2]) -
+            weibull_cdf(t_min[i]+ eps, shape[g, 2], scale[g, 2])) + eps
+        );
       }
       if (to[i] == 4) { // stable -> ??? (still at risk or right censored)
         // here we need to use the mixture distribution since the next state
         // is unknown
         target += log(
-                 p[g]  * exp(weibull_trunc_lpdf(dt_jump | shape[g, 1], scale[g, 1], dt_jump_min, 300))
-          + (1 - p[g]) * exp(weibull_trunc_lpdf(dt_jump | shape[g, 2], scale[g, 2], dt_jump_min, 300))
-          + eps // numerical stability, prevent log(0)
+          p[g] * (1 - weibull_cdf(t_min[i]+ eps, shape[g, 1], scale[g, 1])) +
+          (1 - p[g]) * (1 - weibull_cdf(t_min[i]+ eps, shape[g, 2], scale[g, 2])) + eps
         );
       }
     } // end from[i] == "stable"
@@ -160,21 +141,15 @@ model {
       // We need to substract the previous (unobserved) jump time
       // to get the boundaries for the new jump time 2->3
       // again adding small eps to avoid 0
-      //
-      // TODO: consider replacing fmax() with a smooth maximum for better gradients
-      dt_jump_min = fmax(eps, t_min[i] - t_jump_from_stable[s] + eps);
-      dt_jump_max = fmax(dt_jump_min + eps, t_max[i] - t_jump_from_stable[s] + eps);
       if (to[i] == 3) { // response -> progression
         target += log(
-          weibull_cdf(dt_jump_max, shape[g, 3], scale[g, 3]) -
-          weibull_cdf(dt_jump_min, shape[g, 3], scale[g, 3]) +
-          eps // numerical stability
+          weibull_cdf(t_max[i] - t_jump_from_stable[s] + eps, shape[g, 3], scale[g, 3]) -
+          weibull_cdf(t_min[i] - t_jump_from_stable[s] + eps, shape[g, 3], scale[g, 3]) + eps
         );
       }
-      if (to[i] == 4) { // stable -> ??? (still at riks, right censored)
+      if (to[i] == 4) { // stable -> ??? (still at risk, right censored)
         target += log(
-          1 - weibull_cdf(dt_jump_min, shape[g, 3], scale[g, 3]) +
-          eps // numerical stability
+          1 - weibull_cdf(t_min[i] - t_jump_from_stable[s] + eps, shape[g, 3], scale[g, 3]) + eps
         );
       }
     } // end from[i] == "response"

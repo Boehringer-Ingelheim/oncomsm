@@ -57,12 +57,14 @@ END_RCPP
 }
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_simple_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_oncomsm_impute_srp_model", (DL_FUNC) &_oncomsm_impute_srp_model, 6},
     {"_oncomsm_pfs", (DL_FUNC) &_oncomsm_pfs, 4},
     {"_oncomsm_rtruncweibull", (DL_FUNC) &_oncomsm_rtruncweibull, 4},
     {"_rcpp_module_boot_stan_fit4srp_model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srp_model_mod, 0},
+    {"_rcpp_module_boot_stan_fit4srp_model_simple_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4srp_model_simple_mod, 0},
     {NULL, NULL, 0}
 };
 
