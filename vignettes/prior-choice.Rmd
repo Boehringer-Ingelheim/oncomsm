@@ -2,7 +2,7 @@
 title: "Prior Choice"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Prior Choice}
+  %\VignetteIndexEntry{prior-choice}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
