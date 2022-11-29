@@ -22,7 +22,7 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/prior-choice.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html</loc>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/probability-of-go.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/authors.html</loc>
@@ -68,6 +68,9 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_prior.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/simulate_decision_rule.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/srp_model.html</loc>
