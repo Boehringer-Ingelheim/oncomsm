@@ -218,7 +218,7 @@ smpl_prior <- sample_prior(mdl, seed = 2314513)
 smpl_posterior <- sample_posterior(mdl, tbl_interim, seed = 2314)
 
 rstan::extract(smpl_prior, "p")[[1]] %>% colMeans()
-rstan::extract(interim_posterior, "p")[[1]] %>% colMeans()
+rstan::extract(smpl_posterior, "p")[[1]] %>% colMeans()
 ```
 
 Clearly, the posterior starts to shift under the conflicting evidence.
