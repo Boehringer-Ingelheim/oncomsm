@@ -39,8 +39,8 @@ srp_group_prior <- function(
   p_max = 1.0,
   median_t_q05 = c(1, 1, 3),
   median_t_q95 = c(12, 12, 24),
-  shape_q05 = rep(0.98, 3),
-  shape_q95 = rep(1.46, 3),
+  shape_q05 = rep(0.99, 3),
+  shape_q95 = rep(1.01, 3),
   visit_spacing = 1, # months
   recruitment_rate = 1
 ) {
