@@ -177,12 +177,16 @@ ggplot() +
   geom_line()
 ```
 
-The choice of the prior on the shape is less obvious.
-In absence of evidence against constant transition hazards,
-a stronger regularization towards a shape of $1$ makes sense to avoid
-convergence issues.
-It is suggested that the degree of regularization can be agreed on by inspecting
-samples of potential survival curves under a fixed median survival time (here 6).
+The choice of the prior on the shape is more difficult since the shape parameter
+is almost unidentifiable from only a few data points per transition.
+To avoid convergence issues `oncomsm` uses a default of a point prior on $1$,
+i.e. an exponential model.
+If changes in the hazards over time are expected, it can make sense to
+relax the prior at the risk of divergent transitions during sampling.
+A small number of divergent transitions can usually be tolerated.
+In practice, it is always possible to reduce the prior variability post-hoc or
+(fine-tune the MCMC parameters to obtain stable inference)[https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions]. 
+
 A sensible default choice seems to be to chose the quantiles $\pm 0.2$ around $\log(1.2)$
 on the log scale, more variation allows extreme deviations in the shape that are 
 less likely to occur in practice.
