@@ -1,16 +1,3 @@
-#' Log-odds function
-#'
-#' computed the log odds of a probability.
-#'
-#' @param p numeric of probabilities
-#'
-#' @return log(p/(1-p))
-#'
-#' @export
-logodds <- function(p) log(p / (1 - p))
-
-
-
 # get unique identifiers that are reproducible
 get_identifier <- function(n = 1, exclude = NULL) {
   res <- character(n)
@@ -34,7 +21,7 @@ get_dt_grid <- function(model,
   if (is.null(dt_interval)) {
     dt_max <- sample_predictive(
         model,
-        n_per_group = rep(1e3L, length(attr(model, "group_id"))),
+        n_per_group = rep(1e3L, length(model$group_id)),
         sample = parameter_sample, nsim = 1, seed = seed, as_mstate = TRUE
       ) %>%
       arrange(.data$t_sot, .data$subject_id, .data$t_min) %>%
@@ -48,4 +35,24 @@ get_dt_grid <- function(model,
   }
   dt_grid <- seq(dt_interval[1] + 0.1, dt_interval[2], length.out = dt_n_grid)
   return(dt_grid)
+}
+
+
+
+get_mu_sigma <- function(q05, q95) {
+  f <- function(x) {
+    mu <- x[1]
+    sigma <- x[2]
+    qlnorm(c(0.05, 0.95), mu, sigma)
+  }
+  res <- optim(
+    c(1, 0.5),
+    function(x) sum((f(x) - c(q05, q95))^2),
+    lower = c(-Inf, 0.001),
+    method = "L-BFGS-B"
+  )
+  return(tibble(
+    mu = res$par[1],
+    sigma = res$par[2]
+  ))
 }

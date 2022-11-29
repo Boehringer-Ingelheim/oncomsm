@@ -1,14 +1,7 @@
 test_that("impute remainder of trial from interim data", {
   mdl <- create_srp_model(
-    group_id = c("A", "B"),
-    logodds_mean = c(0, 0),
-    logodds_sd = c(.1, .1),
-    visit_spacing = c(1.2, 1.2),
-    median_time_to_next_event = matrix(c(
-      3, 3, 6,
-      3, 3, 6
-    ), byrow = TRUE, nrow = 2, ncol = 3),
-    median_time_to_next_event_sd = matrix(1, byrow = TRUE, nrow = 2, ncol = 3)
+    A = srp_group_prior(),
+    B = srp_group_prior()
   )
   # sample some data
   tbl_data1 <- sample_predictive(mdl, c(20, 20),
@@ -28,14 +21,7 @@ test_that("impute remainder of trial from interim data", {
 
 test_that("impute remainder of trial from interim data, no new individuals", {
   mdl <- create_srp_model(
-    group_id = "A",
-    logodds_mean = 0,
-    logodds_sd = 10,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE, nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+    A = srp_group_prior()
   )
   # sample some data and reduce to first visits
   tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
@@ -57,14 +43,7 @@ test_that("impute remainder of trial from interim data, no new individuals", {
 
 test_that("impute remainder, without adding subjects", {
   mdl <- create_srp_model(
-    group_id = "A",
-    logodds_mean = 0,
-    logodds_sd = 10,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE, nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+    A = srp_group_prior()
   )
   # sample some data and reduce to first visits
   tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
@@ -86,14 +65,7 @@ test_that("impute remainder, without adding subjects", {
 
 test_that("impute to mstate works", {
   mdl <- create_srp_model(
-    group_id = "A",
-    logodds_mean = 0,
-    logodds_sd = 10,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE, nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+    A = srp_group_prior()
   )
   # sample some data and reduce to first visits
   tbl_data <- sample_predictive(mdl, 10, nsim = 1, seed = 55L,
@@ -107,14 +79,7 @@ test_that("impute to mstate works", {
 
 test_that("impute throws correct errors", {
   mdl <- create_srp_model(
-    group_id = "A",
-    logodds_mean = 0,
-    logodds_sd = 10,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE, nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+    A = srp_group_prior()
   )
   # create some data in wrong format
   tbl_data <- tribble(
@@ -154,14 +119,7 @@ test_that("impute throws correct errors", {
 
 test_that("impute from 'response' works", {
   mdl <- create_srp_model(
-    group_id = "A",
-    logodds_mean = 0,
-    logodds_sd = 10,
-    visit_spacing = 1.2,
-    median_time_to_next_event = matrix(c(
-      3, 3, 6
-    ), byrow = TRUE, nrow = 1, ncol = 3),
-    median_time_to_next_event_sd = matrix(10, byrow = TRUE, nrow = 1, ncol = 3)
+    A = srp_group_prior()
   )
   tbl_data <- tribble(
     ~subject_id, ~group_id, ~t,     ~state,

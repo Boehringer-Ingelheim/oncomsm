@@ -21,16 +21,16 @@ format.Model <- function(x, ...) class(x)[1] # nocov
 #' @template param-dotdotdot
 #' @rdname Model
 #' @export
-print.Model <- function(x, ...) cat(format(x, ...), "\n")
+print.Model <- function(x, ...) cat(format(x, ...), "\n") # nocov
 
 # Checks for internal consistency of object "Model"
 # Returns TRUE if consistent, otherwise throws an error
-is_valid <- function(model) {
-  UseMethod("is_valid")
+check_valid <- function(model) {
+  UseMethod("check_valid")
 }
 
-is_valid.Model <- function(model) {
-  stop("Not implemented") # nocov
+check_valid.Model <- function(model) {
+  stop("not implemented") # nocov
 }
 
 #' Sample model prior parameters
@@ -218,7 +218,7 @@ impute.Model <- function(
   n_per_group = NULL,
   now = NULL,
   seed = NULL,
-  recruitment_rates = attr(model, "recruitment_rate"),
+  recruitment_rates = model$recruitment_rate,
   sample = NULL,
   nsim_parameters = 1000L,
   warmup_parameters = 250L,
@@ -228,7 +228,7 @@ impute.Model <- function(
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  group_ids <- attr(model, "group_id")
+  group_ids <- model$group_id
   if (is.null(sample)) {
     sample <- sample_posterior(model,
                                data = data, seed = seed,
@@ -326,12 +326,12 @@ impute.Model <- function(
     data <- visits_to_mstate(data, model, now)
   }
   # combine prior information with data for stan
-  stan_data <- c(as.list(model), data2standata(data, model))
+  stan_data <- data2standata(data, model)
   # global seed affects permutation of extracted parameters if not set
   set.seed(seed)
   # sample
   res <- rstan::sampling(
-    attr(model, "stanmodel"),
+    model$stan_model,
     data = stan_data,
     chains = 1L, cores = 1L,
     iter = warmup + nsim, warmup = warmup,

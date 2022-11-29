@@ -2,6 +2,7 @@
 % Please edit documentation in R/srp_model.R, R/srp_model_plotting.R
 \name{srp_model}
 \alias{srp_model}
+\alias{srp_group_prior}
 \alias{create_srp_model}
 \alias{format.srp_model}
 \alias{visits_to_mstate.srp_model}
@@ -11,22 +12,23 @@
 \alias{plot_response_probability.srp_model}
 \alias{plot_pfs.srp_model}
 \alias{plot.srp_model}
-\title{A Stable-Response-Progression Model}
+\title{Combine SRP group priors to model object}
 \usage{
-create_srp_model(
-  group_id,
-  logodds_mean,
-  logodds_sd = rep(0.01, length(group_id)),
-  median_time_to_next_event_mean,
-  median_time_to_next_event_sd = matrix(0.1, nrow = length(group_id), ncol = 3),
-  visit_spacing,
-  recruitment_rate = rep(1, length(group_id)),
-  max_time = 10 * 12,
-  logodds_min = rep(logodds(0.001), length(group_id)),
-  logodds_max = rep(logodds(0.999), length(group_id)),
-  shape_min = matrix(0.99, nrow = length(group_id), ncol = 3),
-  shape_max = matrix(1.01, nrow = length(group_id), ncol = 3)
+srp_group_prior(
+  p_mean = 0.5,
+  p_n = 3,
+  p_eta = 0,
+  p_min = 0,
+  p_max = 1,
+  median_t_q05 = c(1, 1, 3),
+  median_t_q95 = c(12, 12, 24),
+  shape_q05 = c(0.99, 0.99, 0.99),
+  shape_q95 = c(1.01, 1.01, 1.01),
+  visit_spacing = 1,
+  recruitment_rate = 1
 )
+
+create_srp_model(..., maximal_time = 10 * 12)
 
 \method{format}{srp_model}(x, ...)
 
@@ -66,6 +68,7 @@ create_srp_model(
   dt_n_grid = 25,
   dt_expand = 1.1,
   dt_grid = NULL,
+  confidence = NULL,
   ...
 )
 
@@ -90,6 +93,7 @@ create_srp_model(
   dt_n_grid = 25,
   dt_expand = 1.1,
   dt_grid = NULL,
+  confidence = NULL,
   ...
 )
 
@@ -104,53 +108,48 @@ create_srp_model(
   dt_n_grid = 25,
   dt_expand = 1.1,
   dt_grid = NULL,
+  confidence = NULL,
   ...
 )
 }
 \arguments{
-\item{group_id}{a character vector with the group ids, these are used to
-check compatibility of data later}
+\item{p_mean}{numeric, mean of the beta prior for the response probability}
 
-\item{logodds_mean}{a vector with the means of the (truncated) normal priors
-on the log-odds of the response probability}
+\item{p_n}{numeric, beta prior equivalent sample size (a + b)}
 
-\item{logodds_sd}{a vector with the standard deviations of the (truncated)
-normal priors on the log-odds of the response probability}
+\item{p_eta}{numeric, robustification parameter for beta prior; actual
+prior is (1 - eta) beta + eta; i.e., eta is the non-informative weight.}
 
-\item{median_time_to_next_event_mean}{a matrix with the means of the
-(truncated) normal priors on the median time to next event for each of the
-Weibull transition probabilities, the (i,j)-th entry is the i-th group
-median time to next event for transition j
-(1=stable-response, 2=stable-progression, 3=response-progression)}
+\item{p_min}{numeric, minimal response probability}
 
-\item{median_time_to_next_event_sd}{a matrix with the standard deviations of
-the (truncated) normal priors on the median time to next event for each of
-the Weibull transition probabilities, the (i,j)-th entry is the i-th group
-median time to next event for transition j
-(1=stable-response, 2=stable-progression, 3=response-progression)}
+\item{p_max}{numeric, maximal response probability}
 
-\item{visit_spacing}{vector of time differences between visits per group,
-only relevant for sampling from the predictive distribution}
+\item{median_t_q05}{numeric of length three,
+5\% quantiles of the log-normal distributions for the
+median time-to-next-event for the three transitions s->r, s->p, r->p.}
 
-\item{recruitment_rate}{vector with per-group recruitment rates,
-only relevant for sampling from the predictive distribution}
+\item{median_t_q95}{numeric of length three,
+95\% quantiles of the log-normal distributions for the
+median time-to-next-event for the three transitions s->r, s->p, r->p.}
 
-\item{max_time}{maximal overall runtime from first visit,
-only relevant for sampling from the predictive distribution}
+\item{shape_q05}{numeric of length three,
+5\% quantiles of the log-normal distributions for the shapes of the
+time-to-next-event distributions for the three transitions s->r, s->p, r->p.}
 
-\item{logodds_min}{lower boundary on the log-odds per group}
+\item{shape_q95}{numeric of length three,
+95\% quantiles of the log-normal distributions for the shapes of the
+time-to-next-event distributions for the three transitions s->r, s->p, r->p.}
 
-\item{logodds_max}{upper boundary on the log-odds per group}
+\item{visit_spacing}{numeric, fixed duration between visits}
 
-\item{shape_min}{matrix of lower boundaries of the uniform prior of the
-Weibull distribution per group/transition}
-
-\item{shape_max}{matrix of upper boundaries of the uniform prior of the
-Weibull distribution per group/transition}
-
-\item{x}{the model to plot}
+\item{recruitment_rate}{numeric, constant recruitment rate}
 
 \item{...}{further arguments passed to method implementations}
+
+\item{maximal_time}{the maximal overall runtime of the trial as measured from
+the first visit of any group. No visits past this point are sampled.}
+
+\item{x}{the model to plot}
 
 \item{tbl_visits}{visit data in long format}
 
@@ -190,13 +189,26 @@ plotting interval}
 automatic interval detection}
 
 \item{dt_grid}{numeric vector of time points to use for plotting}
+
+\item{confidence}{numeric in (0, 1) confidence level for point-wise
+confidence bands around mean; none plotted if NULL.}
+}
+\value{
+An object of type srp_group_prior holding all prior information in a
+list-like structure; visit_spacing and recruitment_rate are accessible as
+attributes.
+
+an object of class srp_model; a named list of the group_ids,
+the maximal time, the visit spacing, the recruitment rate, and a list of
+prior parameters for the response probability, the median transition times,
+and the shape of the transition time distribution (Weibull)
 }
 \description{
-Create a new instance of an SRP model
-}
-\details{
-TODO
-}
-\seealso{
-\link{Model}
+This function takes one or more prior-specifications for an SRP multi-state
+model and combines them into a joint model.
+Groups are still treated as independent.
+
+This function takes one or more prior-specifications for an SRP multi-state
+model and combines them into a joint model.
+Groups are still treated as independent.
 }

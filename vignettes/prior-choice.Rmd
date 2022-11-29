@@ -1,0 +1,258 @@
+---
+title: "Prior Choice"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Prior Choice}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  eval = FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(oncomsm)
+```
+
+
+
+## Why Weibull transition times?
+
+In `oncomsm` the distributions of the between-state transition times are
+always modeled as Weibull distributions.
+This restriction in terms of the class of distribution is an implicit prior
+on the transition times.
+The rationale is mainly due to a trade-off between model flexibility and
+model complexity.
+The Weibull family is a two parameter distribution family where the
+probability density function is given by
+
+$$
+f(t|a,b) = \frac a b \bigg(\frac t b\bigg)^{a - 1} e^{-\big(\frac t b\big)^a} \quad t > 0
+$$
+where $a$ is the shape and $b$ the scale parameter.
+The corresponding hazard function is given by 
+
+$$
+h(t|a,b) = \frac b a \bigg(\frac t a\bigg)^{b - 1} \ .
+$$
+
+The one-parameter exponential distribution is recovered as a special case when
+$b = 1$.
+The Weibull distribution family adds flexibility in one important aspect since
+it allows the hazard rate to be either increasing ($b<1$) or decreasing ($b>1$) 
+over time.
+
+```{r weibull-hazards}
+h <- function(t, a, b) b / a * (t / a)^(b - 1)
+t <- pmax(0.1, seq(0, 36, length.out = 100))
+tidyr::expand_grid(
+  t = t , 
+  tibble(
+    a = c(3, 6, 12, 12, 12, 12), 
+    b = c(1, 1, 1, .5, 1.5, 3)
+  )
+) %>% 
+mutate(
+  hazard = h(t, a, b),
+  label = sprintf("a=%5.2f, b=%5.2f", a, b)
+) %>% 
+  ggplot() + 
+    aes(t, hazard, color = label) +
+    geom_line() +
+    scale_y_continuous(limits = c(0, 1))
+```
+
+Combined with a three-state model, this provides quite some flexibility to
+model different disease progression characteristics without increasing model
+complexity too much.
+Compared to an exponential model, the three-state Weibull model has
+7 instead of 4 parameters.
+
+Other two-parameter survival distributions like the log-normal or Gamma
+distribution are equally viable but the characteristics of their hazard
+functions are more intricate.
+Realistically, proper model selection or the identification of more complex
+patterns in the hazard function are unfeasible with small sample sizes.
+In settings with larger sample sizes, e.g., model selection in a frequentist
+framework, is often feasible.
+The excellent `flexsurv` package covers a large number of common parametric
+survival models and supports multi-state models.
+
+
+## Paramter prior choice
+
+Since both parameters are of interest, the reference prior for a Weibull 
+distribution is proportional to $1/(a b)$ (A note on non-informative priors for Weibull distributions).
+This corresponds to the measure-preserving determinant of the inverse 
+transformation
+
+$$
+(a, b) \mapsto \big(\log(a), \log(b) \big)
+$$
+
+hence, it corresponds to an improper uniform distribution on $\log(a)$ and
+$\log(b)$.
+
+A weakly alternative proper alternative is thus to place independent normal
+distributions on the log parameters or, equivalently, to use independent 
+log-normal priors on $a$ and $b$.
+Let 
+
+$$
+g(x | \mu, \sigma) = \frac e^{-\frac {(\log(x) - \mu)^2} {2\sigma^2} } {x\sigma\sqrt{2\pi}}
+$$
+
+be the density of a log-normal distribution with parameters $\mu, \sigma$.
+The question is then how to chose the parameters in practice. 
+Due to the potentially large skew of a log-normal distribution it might be more
+intuitive to specify the mode of the distribution as 'typical' values 
+and a quantile, e.g., the $0.9$-quantile to indicate long transition times.
+The mode would thus be chosen as a somewhat feasible value or a 'best guess'
+and a relatively large $0.90$-quantile would indicate vagueness.
+Solving for the specified mode and standard deviation of the log-normal
+distribution then specified both $\mu$ and $\sigma$ uniquely.
+
+```{r solving-for-mu-sigma}
+get_mu_sigma <- function(mean, sd, prob = 0.9) {
+  f <- function(x) {
+    mu <- x[1]
+    sigma <- x[2]
+    c(
+      exp(mu - sigma^2), # mode
+      qlnorm(prob, mu, sigma)
+    )
+  }
+  res <- optim(
+    c(1, 0.5),
+    function(x) sum((f(x) - c(mean, sd))^2),
+    lower = c(-Inf, 0.001),
+    method = "L-BFGS-B"
+  )
+  return(tibble(
+    mu = res$par[1],
+    sigma = res$par[2],
+    res = list(res)
+  ))
+}
+```
+
+If, for instance, a typical time from stable to response is around 3 months,
+a $0.9$-quantile of 10 times the mode leads to an fairly vague prior with heavy
+right tail.
+
+```{r}
+res <- get_mu_sigma(5, 20)
+median_transition_time <- t
+ggplot(tibble(median_transition_time = median_transition_time, pdf = dlnorm(median_transition_time, res$mu, res$sigma)), aes(median_transition_time, pdf)) + geom_line()
+```
+
+While there will be typically at least some degree of information on the median
+time to transition,
+the choice of the prior on shape is much less obvious and a weakly informative
+prior centered at $1$ (neither increasing nor decreasing hazard is suggested as
+default.
+
+```{r}
+tmp <- 5
+res <- get_mu_sigma(1, tmp)
+shape <- seq(0, 5, length.out = 100)
+ggplot(tibble(shape = shape, pdf = dlnorm(shape, res$mu, res$sigma)), aes(shape, pdf)) + geom_line()
+```
+
+The following plot demonstrates the shape variety of the Weibull distributions
+for a fixed median of 6.
+
+```{r}
+#set.seed(251L)
+tibble(
+  b = rlnorm(50, get_mu_sigma(1, tmp)$mu, get_mu_sigma(1, tmp)$sigma),
+  a = 6
+) %>% 
+expand_grid(t = t) %>% 
+mutate(
+  survival = 1 - pweibull(t, b, a), 
+  label = sprintf("a=%5.2f, b=%5.2f", a, b)
+) %>% 
+ggplot() + 
+  aes(t, survival, group = label) +
+  geom_line(alpha = .2)
+```
+
+To sample from the joint prior over the median time to response and shape,
+we first sample the shape parameter.
+For a given shape $b$, the median is $a \log(2)^{(1/b)}$ hence the mode and
+quantile of the log-normal distribution on the scale need to be divided by a 
+factor $\log(2)^{(1/b)}$.
+
+```{r}
+set.seed(251L)
+tibble(
+  b = rlnorm(20, get_mu_sigma(1, tmp)$mu, get_mu_sigma(1, tmp)$sigma),
+  a = purrr::map_dbl(b, function(x) {
+      fct <- (log(2)^(1 / x))
+      res <- get_mu_sigma(3 / fct, 30 / fct)
+      rlnorm(1, res$mu, res$sigma)
+    }
+  )
+) %>% 
+expand_grid(t = t) %>% 
+mutate(
+  survival = 1 - pweibull(t, b, a), 
+  label = sprintf("a=%5.2f, b=%5.2f", a, b)
+) %>% 
+ggplot() + 
+  aes(t, survival, group = label) +
+  geom_line()
+```
+
+```{r}
+mdl <- create_srp_model(
+  "A", 
+  0, 
+  .5, 
+  matrix(c(3, 3, 6), nrow = 1), 
+  matrix(c(.1, .1, .1), nrow = 1), 
+  c(1, 1, 1),
+  shape_mode = matrix(c(1, 1, 1), nrow = 1),
+  shape_90q = matrix(c(5, 5, 5), nrow = 1),
+  median_t_mode = matrix(c(3, 3, 6), nrow = 1),
+  median_t_90q = matrix(c(30, 30, 60), nrow = 1),
+  visit_spacing = c(.1, .1, .1),
+  p_mean = .5,
+  p_n = 20,
+  p_eta = .0
+)
+
+plot(mdl)
+
+sample_prior(mdl)
+tbl_prior_predictive <- sample_predictive(mdl, 1e3)
+
+tbl_prior_predictive %>%
+      distinct(subject_id, iter, state, .keep_all = TRUE) %>%
+      group_by(iter, group_id, subject_id) %>%
+      summarize(
+        dt = t - lag(t),
+        from = lag(state),
+        to = state,
+        .groups = "drop"
+      ) %>%
+      filter(to != "stable") %>%
+      group_by(group_id, from, to) %>%
+      summarize(
+        median = median(dt),
+        .groups = "drop"
+      )
+
+```
+
+

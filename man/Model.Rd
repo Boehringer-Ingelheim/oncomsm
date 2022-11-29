@@ -62,7 +62,7 @@
   n_per_group = NULL,
   now = NULL,
   seed = NULL,
-  recruitment_rates = attr(model, "recruitment_rate"),
+  recruitment_rates = model$recruitment_rate,
   sample = NULL,
   nsim_parameters = 1000L,
   warmup_parameters = 250L,
