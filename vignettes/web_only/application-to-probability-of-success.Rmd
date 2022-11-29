@@ -247,14 +247,14 @@ and thus the probability of 'go'.
 ```{r}
 tbl_data <- sample_predictive(
     mdl,
-    p = c(0.45, 0.65),
+    p = c(0.4, 0.7),
     shape = matrix(c(
       1, 1, 1,
       1, 1, 1
     ), ncol = 3),
     scale = matrix(c( # median = scale * log(2)^(1/shape)
-      6, 6, 12,
-      3, 12, 24
+      3, 6, 12,
+      2, 8, 24
     ), ncol = 3) / log(2),
     n_per_group = c(40L, 40L),
     nsim = 1,
