@@ -31,6 +31,7 @@ reference:
   - visits_to_mstate
   - parameter_sample_to_tibble
   - compute_pfs
+  - simulate_decision_rule
 - title: "Stable-Response-Progression model"
   contents:
   - srp_model

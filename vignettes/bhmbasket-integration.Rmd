@@ -83,7 +83,7 @@ posterior probability according to the BHM that the response rate is larger
 than $0.3$.
 
 ```{r}
-go <- function(data, nsim = 250) {
+go <- function(model, data, nsim = 250) {
   set.seed(2340239L)
   # convert data to bhmbasket format (multi-state to binary counts)
   data <- data %>%
@@ -117,7 +117,7 @@ go <- function(data, nsim = 250) {
   ))
   # 'go' if posterior quantile of response rate is sufficiently large
   return(tibble(
-    group_id = mdl$group_id,
+    group_id = model$group_id,
     go = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
   ))
 }
@@ -161,7 +161,7 @@ The 'go' criterion can then be applied to each of the resampled data sets.
 tbl_results <- tbl_prior_predictive %>%
   mutate(
     res = furrr::future_map(
-      data, go,
+      data, ~go(model, .),
       .options = furrr::furrr_options(seed = TRUE)
     )
   ) %>%
@@ -217,12 +217,12 @@ The prior can now be updated with this data
 smpl_prior <- sample_prior(mdl, seed = 2314513)
 smpl_posterior <- sample_posterior(mdl, tbl_interim, seed = 2314)
 
-rstan::extract(smpl_prior, "p")[[1]] %>% colMeans()
-rstan::extract(smpl_posterior, "p")[[1]] %>% colMeans()
+rstan::extract(smpl_prior, "p")[[1]] %>% colMeans() %>% round(3)
+rstan::extract(smpl_posterior, "p")[[1]] %>% colMeans() %>% round(3)
 ```
 
-Clearly, the posterior starts to shift under the conflicting evidence.
-Now, the probability of 'go' can be updated by sampling forward from the 
+The posterior shifts under the extreme evidence.
+The probability of 'go' is then updated by sampling forward from the 
 posterior predictive.
 
 ```{r}
@@ -241,14 +241,14 @@ tbl_posterior_predictive <- impute(
 tbl_posterior_predictive
 ```
 
-The probability of go can then be computed in exactly the same way as before
+The probability of 'go' can then be computed in exactly the same way as before
 using the predictive sample.
 
 ```{r}
 tbl_posterior_predictive %>%
   mutate(
     res = furrr::future_map(
-      data, go,
+      data, ~go(model, .),
       .options = furrr::furrr_options(seed = TRUE)
     )
   ) %>%
@@ -260,3 +260,13 @@ tbl_posterior_predictive %>%
   )
 ```
 
+A shorthand for the these sampling steps is available with 
+
+```{r}
+tbl_decisions <- simulate_decision_rule(mdl, c(40, 40, 40), go,
+                                        data = tbl_interim, seed = 32487,
+                                        nsim = 100)
+tbl_decisions %>% 
+  group_by(group_id) %>% 
+  summarize(`Pr[go]` = mean(go))
+```
