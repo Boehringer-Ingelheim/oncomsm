@@ -129,7 +129,7 @@ go <- function(data, nsim = 250) {
 The probability of 'go' at the planning stage can be computed by sampling from
 the prior-predictive distribution an then applying the defined 'go' criterion.
 
-```{r, warning=FALSE}
+```{r}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 3),
@@ -157,7 +157,7 @@ tbl_prior_predictive
 
 The 'go' criterion can then be applied to each of the resampled data sets.
 
-```{r}
+```{r, warning=FALSE}
 tbl_results <- tbl_prior_predictive %>%
   mutate(
     res = furrr::future_map(

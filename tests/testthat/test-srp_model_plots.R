@@ -11,30 +11,30 @@ test_that("default plotting works as intended", {
     )
   )
   # use stored sample to ensure cross-platform consistency
-  # smpl <- sample_prior(mdl, seed = 1414322) # nolint
+  # smpl <- sample_prior(mdl, seed = 1414322, nsim = 500L) # nolint
   # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_1.rds", version = 3) # nolint
   smpl <- readRDS(
     system.file("testthat/prior_smpl_plotting_1.rds", package = "oncomsm")
   )
-  plt <- plot(mdl, parameter_sample = smpl, confidence = 0.9)
+  plt <- plot(mdl, parameter_sample = smpl, confidence = 0.9, dt_n_grid = 5)
   vdiffr::expect_doppelganger("plot.srp_model_1", plt)
 
   mdl <- create_srp_model(
     A = srp_group_prior()
   )
-  # smpl <- sample_prior(mdl, seed = 1414322) # nolint
+  # smpl <- sample_prior(mdl, seed = 1414322, nsim = 500L) # nolint
   # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_2.rds", version = 3) # nolint
   smpl <- readRDS(
     system.file("testthat/prior_smpl_plotting_2.rds", package = "oncomsm")
   )
-  plt <- plot(mdl, parameter_sample = smpl, n_grid = 10)
+  plt <- plot(mdl, parameter_sample = smpl, n_grid = 5)
   vdiffr::expect_doppelganger("plot.srp_model_2", plt)
   # check that plotting without sample works
-  plot(mdl)
+  plot(mdl, dt_n_grid = 5, nsim = 250L)
   # check that plotting sub functions work (output is subsumed in plot())
-  plot_pfs(mdl)
-  plot_transition_times(mdl)
-  plot_response_probability(mdl)
+  plot_pfs(mdl, dt_n_grid = 5, nsim = 250L)
+  plot_transition_times(mdl, dt_n_grid = 5, nsim = 250L)
+  plot_response_probability(mdl, nsim = 250L)
 })
 
 

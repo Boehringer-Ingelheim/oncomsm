@@ -4,12 +4,12 @@ test_that("Testing that fixed seed works", {
     B = srp_group_prior(),
     C = srp_group_prior()
   )
-  smpl_prior1 <- sample_prior(mdl, seed = 36L)
+  smpl_prior1 <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl1 <- sample_predictive(mdl,
     sample = smpl_prior1,
     n_per_group = c(1L, 0L, 1L), nsim = 20, seed = 423
   )
-  smpl_prior2 <- sample_prior(mdl, seed = 36L)
+  smpl_prior2 <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl2 <- sample_predictive(mdl,
     sample = smpl_prior1,
     n_per_group = c(1L, 0L, 1L), nsim = 20, seed = 423
@@ -57,10 +57,10 @@ test_that("Testing marginal calibration of sampling from the prior", {
       ),
     maximal_time = 12 * 100
   )
-  smpl_prior <- sample_prior(mdl, seed = 36L)
+  smpl_prior <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl_prior_predictive <- sample_predictive(mdl,
     sample = smpl_prior,
-    n_per_group = 1, nsim = 5*1e3,
+    n_per_group = 1, nsim = 1e3,
     p = 0.5, # sample under fixed value
     seed = 948935435
   )
@@ -107,7 +107,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
   # testing for comparison with theoretical mean, allowing for estimation error
   expect_true(all(with(
     tbl_means,
-    abs(estimated_mean - theoretical_mean) <= 2 * se
+    abs(estimated_mean - theoretical_mean) <= 3 * se
   )))
   # check for two groups ------------------------------------------------------
   mdl <- create_srp_model(
@@ -121,7 +121,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     ),
     maximal_time = 12 * 100
   )
-  smpl_prior <- sample_prior(mdl, seed = 36L, nsim = 5000L)
+  smpl_prior <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl <- sample_predictive(mdl,
     sample = smpl_prior,
     n_per_group = c(1L, 1L), nsim = 1e3, seed = 423
@@ -161,7 +161,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
       ),
     maximal_time = 100 * 12
   )
-  smpl_prior <- sample_prior(mdl, seed = 36L)
+  smpl_prior <- sample_prior(mdl, seed = 36L, nsim = 500L)
   # define test function to estimate scale/shape from sampled data
   scale_default <- matrix(c(4, 6, 12), ncol = 1, nrow = 3)
   test_calibration <- function(scale_factor, shape) {
@@ -171,7 +171,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
       sample = smpl_prior,
       scale = scale_default * scale_factor,
       shape = matrix(shape, ncol = 1, nrow = 3),
-      n_per_group = 1L, nsim = 2*1e3,
+      n_per_group = 1L, nsim = 1e3,
       seed = 342
     )
     # check calibration of times to next event, use midpoints of intervals as
