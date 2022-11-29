@@ -3,7 +3,7 @@ title: "Integration with bhmbasket"
 author: "Kevin Kunzmann"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{integration-with-bhmbasket}
+  %\VignetteIndexEntry{bhmbasket-integration}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -124,149 +124,95 @@ go <- function(model, data, nsim = 250) {
 ```
 
 
-## Sample from the prior predictive 
-
-The probability of 'go' at the planning stage can be computed by sampling from
-the prior-predictive distribution an then applying the defined 'go' criterion.
-
-```{r}
-tbl_prior_predictive <- sample_predictive(
-    mdl,
-    n_per_group = rep(40L, 3),
-    nsim = 250L,
-    seed = 34930L
-  )
-
-tbl_prior_predictive
-```
-
-Next, the data can be nested by iteration (resample) fo facilitate further
-processing on a per-dataset basis.
-
-```{r}
-tbl_prior_predictive <- tbl_prior_predictive %>%
-  group_by(iter) %>%
-  tidyr::nest() %>%
-  ungroup()
-
-tbl_prior_predictive
-```
-
-
-## Calculate probability of 'go'
+## Probability of 'go' before start of the trial
 
 The 'go' criterion can then be applied to each of the resampled data sets.
 
 ```{r, warning=FALSE}
-tbl_results <- tbl_prior_predictive %>%
-  mutate(
-    res = furrr::future_map(
-      data, ~go(model, .),
-      .options = furrr::furrr_options(seed = TRUE)
-    )
-  ) %>%
-  select(-data) %>%
-  tidyr::unnest(res)
+tbl_decisions <- simulate_decision_rule(mdl, 
+                                        c(40, 40, 40), 
+                                        go,
+                                        nsim = 250,
+                                        seed = 32487)
 
-tbl_results
-```
+tbl_pr_go_planning <- tbl_decisions %>% 
+  group_by(group_id) %>% 
+  summarize(`Pr[go] planning` = mean(go))
 
-Finally, probability of 'go' can be computed as the average 'go' rate.
-
-```{r}
-tbl_results %>%
-  group_by(group_id) %>%
-  summarize(
-    `Pr[go]` = mean(go)
-  )
+tbl_pr_go_planning
 ```
 
 
 ## Update probability of 'go'
 
 Now assume that some interim data is available.
+The data is fairly extreme for both group A and group B.
 
 ```{r}
 tbl_interim <- tribble(
    ~subject_id, ~group_id, ~t, ~state,
-   "s1", "A", 0, "stable",
-   "s1", "A", 1.5, "stable",
-   "s1", "A", 2.25, "response",
-   "s2", "A", 1, "stable",
-   "s2", "A", 2, "response",
-   "s3", "A", 3, "stable",
-   "s3", "A", 4.5, "response",
-   
-   "s4", "B", 0, "stable",
-   "s5", "B", 1.5, "stable",
-   
-   "s6", "C", 0, "stable",
-   "s6", "C", 1.5, "progression",
-   "s7", "C", 2.25, "stable",
-   "s7", "C", 3, "progression",
-   "s8", "C", 2, "stable",
-   "s8", "C", 3, "progression"
+          "s1", "A", 0, "stable",
+          "s1", "A", 1.5, "stable",
+          "s1", "A", 2.25, "response",
+          "s2", "A", 1, "stable",
+          "s2", "A", 2, "response",
+          "s3", "A", 3, "stable",
+          "s3", "A", 4.5, "response",
+          
+          "s4", "B", 0, "stable",
+          "s5", "B", 1.5, "stable",
+          
+          "s6", "C", 0, "stable",
+          "s6", "C", 1.5, "progression",
+          "s7", "C", 2.25, "stable",
+          "s7", "C", 3, "progression",
+          "s8", "C", 2, "stable",
+          "s8", "C", 3, "progression",
+          "s9", "C", 2, "stable",
+          "s9", "C", 2.6, "stable",
+          "s9", "C", 3, "progression",
+         "s10", "C", 3, "stable",
+         "s10", "C", 5, "progression"
 )
 
-tbl_interim
+# plot it
+visits_to_mstate(tbl_interim, mdl) %>% 
+  plot_mstate(mdl, relative_to_sot = FALSE)
 ```
 
-The prior can now be updated with this data
+The prior can now be updated with this data.
 
 ```{r}
 smpl_prior <- sample_prior(mdl, seed = 2314513)
 smpl_posterior <- sample_posterior(mdl, tbl_interim, seed = 2314)
 
-rstan::extract(smpl_prior, "p")[[1]] %>% colMeans() %>% round(3)
-rstan::extract(smpl_posterior, "p")[[1]] %>% colMeans() %>% round(3)
+tibble(
+  group_id = mdl$group_id,
+  prior = rstan::extract(smpl_prior, "p")[[1]] %>% colMeans(),
+  posterior = rstan::extract(smpl_posterior, "p")[[1]] %>% colMeans()
+)
 ```
 
-The posterior shifts under the extreme evidence.
 The probability of 'go' is then updated by sampling forward from the 
 posterior predictive.
 
-```{r}
-tbl_posterior_predictive <- impute(
-    mdl,
-    data = tbl_interim,
-    sample = smpl_posterior,
-    n_per_group = rep(40L, 3),
-    nsim = 250L,
-    seed = 34930L
-  ) %>% 
-  group_by(iter) %>%
-  tidyr::nest() %>%
-  ungroup()
+```{r, warning=FALSE}
+tbl_decisions_interim <- simulate_decision_rule(
+  mdl,
+  c(40, 40, 40), 
+  go,
+  data = tbl_interim,
+  nsim = 250,
+  seed = 32487
+)
 
-tbl_posterior_predictive
-```
-
-The probability of 'go' can then be computed in exactly the same way as before
-using the predictive sample.
-
-```{r}
-tbl_posterior_predictive %>%
-  mutate(
-    res = furrr::future_map(
-      data, ~go(model, .),
-      .options = furrr::furrr_options(seed = TRUE)
-    )
-  ) %>%
-  select(-data) %>%
-  tidyr::unnest(res) %>%
-  group_by(group_id) %>%
-  summarize(
-    `Pr[go]` = mean(go)
+tbl_pr_go_planning %>% 
+  left_join(
+    tbl_decisions_interim %>% 
+    group_by(group_id) %>% 
+    summarize(
+      `Pr[go] interim` = mean(go)
+    ),
+    by = "group_id"
   )
-```
-
-A shorthand for the these sampling steps is available with 
-
-```{r}
-tbl_decisions <- simulate_decision_rule(mdl, c(40, 40, 40), go,
-                                        data = tbl_interim, seed = 32487,
-                                        nsim = 100)
-tbl_decisions %>% 
-  group_by(group_id) %>% 
-  summarize(`Pr[go]` = mean(go))
 ```

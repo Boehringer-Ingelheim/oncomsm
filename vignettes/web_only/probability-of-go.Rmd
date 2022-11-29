@@ -46,7 +46,7 @@ package, see the vignette *Multi-state Models for Early Oncology*.
 
 
 
-## Decision criteria and probability of 'go'
+## Decision criteria
 
 Let $D_t \in \mathbb{D}$ be the observed (visit) data at time point 
 $t$ after the start of the trial.
@@ -57,6 +57,18 @@ The final decision on 'go' can then be modeled as a function
 $\phi: \mathbb{D} \to \{0,1\}$ with 
 
 $$\phi(D_\tau)=1 :\Leftrightarrow D_\tau\ \ \text{leads to 'go'}\ . $$
+
+Examples for such decision rules could be
+
+1. a quantile of the posterior distribution of the response rate being above a
+certain relevance threshold,
+2. a quantile of the posterior distribution of the PFS6 rate being above a
+certain relevance threshold,
+3. a quantile of the posterior distribution of PFS being above a certain threshold,
+4. or a combination of the above.
+
+
+## Probability of 'go'
 
 Let $\theta$ be a vector of parameters for a generative model that allows to
 sample data $D_\tau|\theta$.
@@ -77,37 +89,19 @@ $$
 where $f(\theta\,|\,D_t=d_t)$ is the posterior density given the data $d_t$
 observed up to time $t$.
 
-Examples for such decision rules could be
 
-1. a quantile of the posterior distribution of the response rate being above a
-certain relevance threshold,
-2. a quantile of the posterior distribution of the PFS6 rate being above a
-certain relevance threshold,
-3. a quantile of the posterior distribution of PFS being above a certain threshold,
-4. or a combination of the above.
+## Example
 
-
-
-Consider a situation with a trial including two different arms 
-"A" and "B".
-We start with a fairly vague prior except for the shape which is fixed to 
-about 1 (default) in absence of other evidence.
-This is required to stabilize inference on the other model parameters.
 
 ```{r prior-specification}
 mdl <- create_srp_model(
   A = srp_group_prior(
     p_mean = 0.5, p_n = 3, p_eta = 0.2,
     recruitment_rate = 2
-  ),
-  B = srp_group_prior(
-    p_mean = 0.5, p_n = 3, p_eta = 0.2,
-    recruitment_rate = 2
   )
 )
 ```
 
-One can now sample from the prior and visualize the prior assumptions.
 
 ```{r sample-from-prios}
 smpl_prior <- sample_prior(mdl, seed = 6835L)
@@ -116,7 +110,7 @@ plot(mdl, parameter_sample = smpl_prior, confidence = 0.9)
 ```
 
 
-## A composite ORR and PFS12 'go' criterion
+### ORR and PFS 'go' criterion
 
 Assume that a 'go' is defined as a combination of a sufficiently high
 response rate and a sufficiently high progression-free-survival rate at 12
@@ -130,18 +124,18 @@ $$\phi(D_\tau) := \begin{cases}
 This decision criterion can be implemented as the following function:
 
 ```{r}
-go <- function(data, nsim = 200L) {
+go <- function(model, data, nsim = 200L) {
   set.seed(3819308) # fix the seed for reproducibility
   smpl <- suppressWarnings( # low sample size leads to stan warnings on ESS
                             # can be ignored, errors average out
                             # can also be avoided by increasing nsim
-    sample_posterior(mdl, data = data, warmup = 200L, nsim = nsim)
+    sample_posterior(model, data = data, warmup = 200L, nsim = nsim)
   )
   tbl_pfs_orr <- inner_join(
-    compute_pfs(mdl, 12, smpl), # PFS 12
-    parameter_sample_to_tibble(mdl, smpl) %>% # ORR
+    compute_pfs(model, 12, smpl), # PFS 12
+    parameter_sample_to_tibble(model, smpl) %>% # ORR
       filter(parameter == "p") %>%
-      transmute(iter = 1:(2*nsim), group_id, orr = value),
+      transmute(iter = 1:nsim, group_id, orr = value),
     by = c("iter", "group_id")
   )
   res <- tbl_pfs_orr %>% # apply decision criterion
@@ -153,23 +147,18 @@ go <- function(data, nsim = 200L) {
 }
 ```
 
-An example of how to apply the criterion to a sample from the prior predictive 
-distribution conditional on specific response rates is given below
+The criterion can be tested by sampling from the model under fixed, very
+favorable parameters - here we clearly expect a 'go'.
 
 ```{r}
 tbl_prior_predictive <- sample_predictive(
     mdl,
-    n_per_group = rep(40L, 2),
+    n_per_group = 40L,
     sample = smpl_prior,
-    p = c(0, 1), 
-    shape = matrix(c(
-      1, 1, 1,
-      1, 1, 1
-    ), ncol = 3),
-    scale = matrix(c( # median = scale * log(2)^(1/shape)
-      6, 6, 12,
-      3, 12, 24
-    ), ncol = 3) / log(2),
+    p = 1, 
+    shape = matrix(c(1, 1, 1), ncol = 3),
+     # median = scale * log(2)^(1/shape)
+    scale = matrix(c(4, 2, 24), ncol = 3) / log(2),
     nsim = 1L,
     seed = 34930L
   )
@@ -178,8 +167,11 @@ tbl_prior_predictive %>%
   visits_to_mstate(mdl) %>% 
   plot_mstate(mdl, relative_to_sot = FALSE)
 
-go(tbl_prior_predictive)
+go(mdl, tbl_prior_predictive)
 ```
+
+
+## Calculating 'go' probability
 
 Next, we can create a table of multiple prior-predictive samples.
 Grouping them by iteration and nesting the data frames results in a data frame
@@ -189,17 +181,13 @@ in the $i$-th resample.
 ```{r sample-prior-predictive}
 tbl_prior_predictive <- sample_predictive(
     mdl,
-    n_per_group = rep(40L, 2),
-    p = c(.45, .65), 
-    shape = matrix(c(
-      1, 1, 1,
-      1, 1, 1
-    ), ncol = 3),
-    scale = matrix(c( # median = scale * log(2)^(1/shape)
-      6, 6, 12,
-      3, 12, 24
-    ), ncol = 3) / log(2),
-    nsim = 100L, # same, here, only for demonstration purposes
+    n_per_group = 40L,
+    sample = smpl_prior,
+    p = 0.6, 
+    shape = matrix(c(1, 1, 1), ncol = 3),
+     # median = scale * log(2)^(1/shape)
+    scale = matrix(c(3, 12, 24), ncol = 3) / log(2),
+    nsim = 100L,
     seed = 34930L
   ) %>%
   group_by(iter) %>%
@@ -215,7 +203,7 @@ iterations is an MCMC approximation of the probability of 'go'.
 ```{r}
 # compute results in parallel
 res <- foreach(i = seq_len(nrow(tbl_prior_predictive))) %dorng% {
-  go(tbl_prior_predictive$data[[i]])
+  go(mdl, tbl_prior_predictive$data[[i]])
 }
 
 # bind results together and aggregate to probability of 'go'
@@ -229,9 +217,20 @@ tbl_pr_go <- bind_rows(res, .id = "iter") %>%
 print(tbl_pr_go)
 ```
 
+The same functionality is available is the function 
+`oncomsm::simulate_decision_rule`.
+
+```{r eval=FALSE}
+simulate_decision_rule(mdl, 40L, go, nsim = 100L, seed = 324879) %>% 
+  group_by(group_id) %>%
+  summarize(
+    `Pr[go]` = mean(go),
+    se  = sd(go) / sqrt(n())
+  )
+```
 
 
-## Updating the probability of 'go' during a trial
+## Probability of 'go' during a trial
 
 The Bayesian generative model allows calculating the posterior distribution 
 at any time point given the data observed up to that point.
@@ -244,24 +243,10 @@ conflict with the prior mean is sampled as hypothetical data.
 As data accrues, the evidence will lead to a shift in the posterior probability
 and thus the probability of 'go'.
 
-```{r}
-tbl_data <- sample_predictive(
-    mdl,
-    p = c(0.4, 0.7),
-    shape = matrix(c(
-      1, 1, 1,
-      1, 1, 1
-    ), ncol = 3),
-    scale = matrix(c( # median = scale * log(2)^(1/shape)
-      3, 6, 12,
-      2, 8, 24
-    ), ncol = 3) / log(2),
-    n_per_group = c(40L, 40L),
-    nsim = 1,
-    seed = 23849
-  )
+We just take the first sampled trial as ground truth.
 
-print(tbl_data)
+```{r}
+tbl_data <- tbl_prior_predictive$data[[1]]
 ```
 
 Next, interim views of the full data set at a sequence of time points can be
@@ -271,73 +256,13 @@ analyses.
 
 ```{r}
 tbl_data_interims <- tibble(
-    t_interim = c(1, 3, 6, 9, 12, 18, 24, 36) # interim time point (months)
+    t_interim = c(1, 3, 6, 9, 12, 18, 24) # interim time point (months)
   ) %>%
   mutate(
     data = purrr::map(t_interim, ~filter(tbl_data, t <= .))
   )
 
 print(tbl_data_interims)
-```
-
-For each such interim data set, the remainder of the trial can be imputed by 
-sampling form the posterior-predictive distribution given the data observed
-up to this point.
-The probability of 'go' is then the average 'go' rate in the posterior
-predictive sample when applying the decision criterion.
-
-First, the calculation of the probability to 'go' is wrapped in a function that
-accepts a dataset (`tbl`) and the number of resamples (`nsim`).
-
-```{r}
-pr_go <- function(tbl, nsim) {
-  # sample forward from the posterior predictive distribution given data in tbl
-  tbl_posterior_predictive <- impute(
-      mdl, tbl, n_per_group = rep(40L, 2), nsim = nsim
-    ) %>%
-    group_by(iter) %>%
-    tidyr::nest()
-  # determine for each sampled trial whether it ends in a 'go'
-  res <- foreach(i = 1:nsim) %dorng% {
-    go(tbl_posterior_predictive$data[[i]])
-  }
-  tbl_pr_go <- bind_rows(res, .id = "iter") %>%
-    group_by(group_id) %>%
-    summarize(
-      `Pr[go]` = mean(go),
-      se  = sd(go) / sqrt(n())
-    )
-  return(tbl_pr_go)
-}
-```
-
-Next, this function is mapped over all interim time points with the respective
-interim data.
-The number of simulations is the main factor in determining the runtime of the
-program besides the number of samples drawn from the posterior distribution to
-evaluate the decision criterion.
-
-```{r simulate}
-tbl_pr_go_over_time <- tbl_data_interims %>%
-  mutate(
-    res = purrr::map(data, pr_go, nsim = 33L)
-  ) %>%
-  tidyr::unnest(res)
-
-tbl_pr_go_over_time
-```
-
-The change of the 'go' probability over time is shown below with error bars
-corresponding to the standard error of the simulation.
-
-```{r}
-ggplot(tbl_pr_go_over_time) +
-  aes(t_interim) +
-  geom_errorbar(aes(ymin = `Pr[go]` - se, ymax = `Pr[go]` + se,
-                    color = group_id), width = 1) +
-  geom_line(aes(y = `Pr[go]`, color = group_id), alpha = 0.33) +
-  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
-  scale_y_continuous(breaks = seq(0, 1, by = 0.1), limits = c(0, 1))
 ```
 
 This can be compared to the number of available responses, progressions, and
@@ -367,15 +292,66 @@ tibble(
 ) %>%
 unnest(summary) %>% 
 ggplot() +
-  aes(t_interim, n, color = status, linetype = group_id) +
-  geom_line() +
+  aes(t_interim, n, color = status) +
+  geom_step() +
+  geom_point() +
   scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
   scale_y_continuous("", breaks = seq(0, 30, by = 5))
 ```
 
+For each such interim data set, the remainder of the trial can be imputed by 
+sampling form the posterior-predictive distribution given the data observed
+up to this point.
+The probability of 'go' is then the average 'go' rate in the posterior
+predictive sample when applying the decision criterion.
 
-## Session info
+First, the calculation of the probability to 'go' is wrapped in a function that
+accepts a dataset (`tbl`) and the number of resamples (`nsim`).
 
-```{r session-info}
-sessionInfo()
+This wrapper around `oncomsm::simulate_decision_rule`
+
+```{r}
+pr_go <- function(tbl, model, nsim = 100L) {
+  tbl_pr_go <- simulate_decision_rule(mdl, 40, go, data = tbl,
+                                      nsim = nsim, seed = 27307) %>% 
+    group_by(group_id) %>%
+    summarize(
+      `Pr[go]` = mean(go),
+      se  = sd(go) / sqrt(n())
+    )
+  return(tbl_pr_go)
+}
+```
+
+Next, this function is mapped over all interim time points with the respective
+interim data.
+The number of simulations is the main factor in determining the runtime of the
+program besides the number of samples drawn from the posterior distribution to
+evaluate the decision criterion.
+
+```{r simulate}
+tbl_pr_go_over_time <- tbl_data_interims %>%
+  mutate(
+    res = purrr::map(data, pr_go, nsim = 33L)
+  ) %>%
+  tidyr::unnest(res)
+
+tbl_pr_go_over_time
+```
+
+The change of the 'go' probability over time is shown below with error bars
+corresponding to the standard error of the simulation.
+
+```{r}
+t_last_patient_follow_up <- tbl_data %>%
+  visits_to_mstate(mdl) %>%
+  pull(t_sot) %>%
+  max() + 3 # assuming minimal follow-up of three months
+ggplot(tbl_pr_go_over_time) +
+  aes(t_interim) +
+  geom_errorbar(aes(ymin = `Pr[go]` - se, ymax = `Pr[go]` + se), width = 1) +
+  geom_line(aes(y = `Pr[go]`), alpha = 0.33) +
+  geom_vline(xintercept = t_last_patient_follow_up) +
+  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), limits = c(0, 1))
 ```

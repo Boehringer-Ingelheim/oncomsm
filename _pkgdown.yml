@@ -10,6 +10,14 @@ navbar:
     left:  [intro, articles, reference, news]
     right: [search, github]
 
+articles:
+- title: Get started
+  navbar: ~
+  contents:
+  - prior-choice
+  - web_only/probability-of-go
+  - bhmbasket-integration
+
 reference:
 - title: "Package documentation"
   contents:
