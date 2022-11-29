@@ -47,16 +47,24 @@ Start by defining a prior specification for a multi-group trial.
 
 ```{r prior-specification}
 mdl <- create_srp_model(
-  group_id = c("A", "B", "C"),
-  logodds_mean = c(logodds(.3), logodds(.4), logodds(.5)),
-  logodds_sd = c(.5, .5, .5),
-  median_time_to_next_event = matrix(c(
-    3, 2, 6,
-    2.5, 8, 18,
-    2, 12, 24
-  ), byrow = TRUE, nrow = 3, ncol = 3),
-  median_time_to_next_event_sd = matrix(1, byrow = TRUE, nrow = 3, ncol = 3),
-  visit_spacing = c(1.2, 1.2, 1.2)
+  A = srp_group_prior(
+      p_mean = 0.3, p_n = 20,
+      median_t_q05 = c(3, 2, 6) - 1,
+      median_t_q95 = c(3, 2, 6) + 1,
+      recruitment_rate = 2
+    ),
+  B = srp_group_prior(
+      p_mean = 0.4, p_n = 20,
+      median_t_q05 = c(2.5, 8, 18) - 1,
+      median_t_q95 = c(2.5, 8, 18) + 1,
+      recruitment_rate = 2
+    ),
+  C = srp_group_prior(
+      p_mean = 0.5, p_n = 20,
+      median_t_q05 = c(2, 12, 24) - 1,
+      median_t_q95 = c(2, 12, 24) + 1,
+      recruitment_rate = 2
+    )
 )
 ```
 
@@ -109,7 +117,7 @@ go <- function(data, nsim = 250) {
   ))
   # 'go' if posterior quantile of response rate is sufficiently large
   return(tibble(
-    group_id = attr(mdl, "group_id"),
+    group_id = mdl$group_id,
     go = res$scenario_1$quantiles_list$berry[[1]][5, 2:4] >= .3
   ))
 }
@@ -144,6 +152,7 @@ tbl_prior_predictive <- tbl_prior_predictive %>%
 tbl_prior_predictive
 ```
 
+
 ## Calculate probability of 'go'
 
 The 'go' criterion can then be applied to each of the resampled data sets.
@@ -171,3 +180,83 @@ tbl_results %>%
     `Pr[go]` = mean(go)
   )
 ```
+
+
+## Update probability of 'go'
+
+Now assume that some interim data is available.
+
+```{r}
+tbl_interim <- tribble(
+   ~subject_id, ~group_id, ~t, ~state,
+   "s1", "A", 0, "stable",
+   "s1", "A", 1.5, "stable",
+   "s1", "A", 2.25, "response",
+   "s2", "A", 1, "stable",
+   "s2", "A", 2, "response",
+   "s3", "A", 3, "stable",
+   "s3", "A", 4.5, "response",
+   
+   "s4", "B", 0, "stable",
+   "s5", "B", 1.5, "stable",
+   
+   "s6", "C", 0, "stable",
+   "s6", "C", 1.5, "progression",
+   "s7", "C", 2.25, "stable",
+   "s7", "C", 3, "progression",
+   "s8", "C", 2, "stable",
+   "s8", "C", 3, "progression"
+)
+
+tbl_interim
+```
+
+The prior can now be updated with this data
+
+```{r}
+smpl_prior <- sample_prior(mdl, seed = 2314513)
+smpl_posterior <- sample_posterior(mdl, tbl_interim, seed = 2314)
+
+rstan::extract(smpl_prior, "p")[[1]] %>% colMeans()
+rstan::extract(interim_posterior, "p")[[1]] %>% colMeans()
+```
+
+Clearly, the posterior starts to shift under the conflicting evidence.
+Now, the probability of 'go' can be updated by sampling forward from the 
+posterior predictive.
+
+```{r}
+tbl_posterior_predictive <- impute(
+    mdl,
+    data = tbl_interim,
+    sample = smpl_posterior,
+    n_per_group = rep(40L, 3),
+    nsim = 250L,
+    seed = 34930L
+  ) %>% 
+  group_by(iter) %>%
+  tidyr::nest() %>%
+  ungroup()
+
+tbl_posterior_predictive
+```
+
+The probability of go can then be computed in exactly the same way as before
+using the predictive sample.
+
+```{r}
+tbl_posterior_predictive %>%
+  mutate(
+    res = furrr::future_map(
+      data, go,
+      .options = furrr::furrr_options(seed = TRUE)
+    )
+  ) %>%
+  select(-data) %>%
+  tidyr::unnest(res) %>%
+  group_by(group_id) %>%
+  summarize(
+    `Pr[go]` = mean(go)
+  )
+```
+

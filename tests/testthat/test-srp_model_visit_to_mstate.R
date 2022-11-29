@@ -1,11 +1,6 @@
 test_that("visits to mstate conversion works", {
   mdl <- create_srp_model(
-    c("A"),
-    logodds_mean = 0,
-    median_time_to_next_event_mean = matrix(c(
-      3, 3, 5
-    ), nrow = 1, byrow = TRUE),
-    visit_spacing = 1.2
+    A = srp_group_prior()
   )
   # base case
   tbl_visits <- tibble::tribble(

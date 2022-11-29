@@ -31,6 +31,7 @@ data {
   int<lower=1> M_groups;
   int<lower=0> N;
   int<lower=0> N_subjects;
+  real<lower=0> maximal_time;
 
   int<lower=1> subject_id[N];
   int<lower=1> group_id[N];
@@ -40,28 +41,18 @@ data {
   real<lower=0> t_min[N];
   real<lower=0> t_max[N];
 
-  // event probability (via logit)
-  // logodds[i] is logodds of group i for response from stable
-  real logodds_mean[M_groups];
-  real<lower=machine_precision()> logodds_sd[M_groups];
-  real logodds_min[M_groups];
-  real logodds_max[M_groups];
+  // event probability
   real<lower=machine_precision(),upper=1-machine_precision()> p_mean[M_groups];
   real<lower=machine_precision()> p_n[M_groups];
   real<lower=0.0,upper=1.0> p_eta[M_groups];
   real<lower=0.0,upper=1.0> p_min[M_groups];
   real<lower=0.0,upper=1.0> p_max[M_groups];
-  // alpha (weibull shape)
-  real<lower=machine_precision()> shape_min[M_groups, 3];
-  real<lower=machine_precision()> shape_max[M_groups, 3];
+  // weibull shape
   real shape_mu[M_groups, 3];
   real<lower=machine_precision()> shape_sigma[M_groups, 3];
   // weibull median
-  real median_time_to_next_event_mean[M_groups, 3];
-  real<lower=machine_precision()> median_time_to_next_event_sd[M_groups, 3];
   real median_t_mu[M_groups, 3];
   real<lower=machine_precision()> median_t_sigma[M_groups, 3];
-  real<lower=machine_precision()> median_t_max[M_groups, 3];
 
 }
 
@@ -69,11 +60,10 @@ data {
 
 parameters {
 
-  real<lower=0,upper=1> logodds_raw[M_groups]; // the boundaries here are for scaling!
+  real<lower=0.5> shape[M_groups, 3];
   real<lower=0,upper=1> p_raw[M_groups]; // the boundaries here are for scaling!
   real<lower=0,upper=1> t_jump_from_stable_raw[N_subjects]; // the boundaries here are for scaling!
-  real<lower=sqrt(machine_precision())> median_time_to_next_event[M_groups, 3];
-  real<lower=0,upper=1> shape_raw[M_groups, 3];
+  real<lower=sqrt(machine_precision())> median_t[M_groups, 3];
 
 }
 
@@ -81,19 +71,14 @@ parameters {
 
 transformed parameters {
 
-  //real logodds[M_groups];
   real p[M_groups];
   real scale[M_groups, 3];
-  real shape[M_groups, 3];
   real<lower=0> t_jump_from_stable[N_subjects];
 
   for (g in 1:M_groups) {
-    //logodds[g] = logodds_min[g] + (logodds_max[g] - logodds_min[g]) * logodds_raw[g]; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
-    // p[g] = 1/(1 + exp(-logodds[g]));
     p[g] = p_min[g] + (p_max[g] - p_min[g]) * p_raw[g]; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
     for (j in 1:3) {
-      shape[g, j] = shape_min[g, j] + (shape_max[g, j] - shape_min[g, j]) * shape_raw[g, j];
-      scale[g, j] = median_time_to_next_event[g, j]/(log(2)^(1/shape[g, j])); // solve for scale given shape and median
+      scale[g, j] = median_t[g, j]/(log(2)^(1/shape[g, j])); // solve for scale given shape and median
     }
   }
 
@@ -102,7 +87,7 @@ transformed parameters {
       if (to[i] != 4) {
         t_jump_from_stable[subject_id[i]] = t_min[i] + (t_max[i] - t_min[i]) * t_jump_from_stable_raw[subject_id[i]]; // https://mc-stan.org/docs/2_18/stan-users-guide/vectors-with-varying-bounds.html
       } else {
-        t_jump_from_stable[subject_id[i]] = t_min[i] + (9999 - t_min[i]) * t_jump_from_stable_raw[subject_id[i]]; // upper limit is infinity
+        t_jump_from_stable[subject_id[i]] = t_min[i] + (maximal_time - t_min[i]) * t_jump_from_stable_raw[subject_id[i]]; // upper limit is infinity
       }
     }
   }
@@ -126,19 +111,14 @@ model {
 
   // handle prior contribution to log likelihood target
   for (gg in 1:M_groups) {
-    // use mixture prior with weight eta at uniform
-    // p[gg] ~ beta(p_mean[gg] * p_n[gg], (1 - p_mean[gg]) * p_n[gg]);
-    print(p[gg], p_mean[gg], p_n[gg], p_eta[gg], p_min[gg], p_max[gg]);
+    // use mixture prior with weight eta on uniform
     target += beta_mix_trunc_lpdf(p[gg] | p_mean[gg], p_n[gg], p_eta[gg],
       p_min[gg], p_max[gg]);
+    // transition time Weibull parameter priors
     for (j in 1:3) {
-      shape[gg, j] ~ lognormal(
-        shape_mu[gg, j], shape_sigma[gg, j]
-      ) T[shape_min[gg, j], shape_max[gg, j]];
+      shape[gg, j] ~ lognormal(shape_mu[gg, j], shape_sigma[gg, j]);
       // this is a linear transformation and does not require a jacobian
-      median_time_to_next_event[gg, j] ~ lognormal(
-          median_t_mu[gg, j], median_t_sigma[gg, j]
-        ) T[0, median_t_max[gg, j]];
+      median_t[gg, j] ~ lognormal(median_t_mu[gg, j], median_t_sigma[gg, j]);
     }
   }
 
@@ -166,8 +146,8 @@ model {
         // here we need to use the mixture distribution since the next state
         // is unknown
         target += log(
-                 p[g]  * exp(weibull_trunc_lpdf(dt_jump | shape[g, 1], scale[g, 1], dt_jump_min, 9999))
-          + (1 - p[g]) * exp(weibull_trunc_lpdf(dt_jump | shape[g, 2], scale[g, 2], dt_jump_min, 9999))
+                 p[g]  * exp(weibull_trunc_lpdf(dt_jump | shape[g, 1], scale[g, 1], dt_jump_min, maximal_time))
+          + (1 - p[g]) * exp(weibull_trunc_lpdf(dt_jump | shape[g, 2], scale[g, 2], dt_jump_min, maximal_time))
           + eps // numerical stability, prevent log(0)
         );
       }

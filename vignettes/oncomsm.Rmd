@@ -123,44 +123,54 @@ $$
 \operatorname{scale} = \frac{\operatorname{median}}{\log(2)^{1/\operatorname{shape}}} . 
 $$
 
-The following priors are used:
+The following prior classes are used.
 
-1. a normal prior for the log-odds of response $\operatorname{logit}(p) \sim \mathcal{N}(\mu_p,\sigma_p^2)$
-2. a truncated normal prior for the median of each transition $\operatorname{median}_{\,i} \sim \mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)$
-3. a flat prior on the shape of each transition $\operatorname{shape}_{\,i} \sim \operatorname{Uniform}(a_i, b_i)$
-4. it is assumed that the observation process (visit spacing) is fixed, e.g. every 6 weeks. 
-This means that all transition times are interval censored.
+For the response probability $p$, a $(1-\eta)\,\operatorname{Beta}(a,b)+\eta\,\operatorname{Unif}(0,1)$ is used.
+The prior is specified via the equivalent sample size $a+b$ and the mean of the
+informative component $a/(a+b)$.
 
-We treat recruitment times as independent of outcome. 
-They can be modeled separately if required.
+A log-normal distribution is used for the median time-to-next event, the
+parameters are inferred from specified $0.05$ and $0.95$ quantiles.
 
-We assume that all times are given in months.
+A log-normal distribution is used for the shape parameter of the Weibull
+distributions,
+the parameters are inferred from specified $0.05$ and $0.95$ quantiles.
+
+It is assumed that the observation process (visit spacing) is fixed. 
+Since transitions can only be recorded after the next visit,
+all transition times are interval censored.
+
+Recruitment times are assumed to follow a poisson distribution.
+
+Default parameters assume a timescale in months.
 
 
 ## Specifying the model
 
 The following code defined the prior assumptions for a two-group trial with
-a visit-spacing of 1.2 months, i.e., about 6 weeks.
+a visit-spacing of 1 months.
+The prior variance on the shape parameter is very low.
+For sampling form the prior, this does not not matter and more uncertainty about
+the Weibull shape parameters can be assumed.
+During posterior inference, identifying shape and scale (median time to event)
+from a small sample of interval censored observations is not feasible and leads
+to divergent MCMC samples.
+The shape thus has to be kept almost fixed in most cases when doing inference.
 
 ```{r specify-model}
 mdl <- create_srp_model(
-  # names of the arms/groups
-  group_id = c("A", "B"),
-  # per-group logodds of response|stable
-  logodds_mean = c(logodds(.4), logodds(.6)),
-  logodds_sd = c(1, 1),
-  # m[i,j] is the median time to next event for group i and transition j
-  median_time_to_next_event = matrix(c(
-    3, 2, 6,
-    2, 8, 12
-  ), byrow = TRUE, nrow = 2, ncol = 3),
-  # fixed standard deviation of the prior for all median times
-  median_time_to_next_event_sd = matrix(
-    1,
-    byrow = TRUE, nrow = 2, ncol = 3
+  A = srp_group_prior(
+    p_mean = 0.4, p_n = 10,
+    median_t_q05 = c(3, 2, 6) - 1, # s->r s->p r->p
+    median_t_q95 = c(3, 2, 6) + 1
   ),
-  # the visit interval
-  visit_spacing = c(1.2, 1.2)
+  B = srp_group_prior(
+    p_mean = 0.6, p_n = 10,
+    median_t_q05 = c(2, 8, 3) - 1, # s->r s->p r->p
+    median_t_q95 = c(2, 8, 12) + 1,
+    shape_q05 = c(2, 2, 0.75),
+    shape_q95 = c(2.1, 2.1, 0.76)
+  )
 )
 
 print(mdl)
@@ -202,7 +212,7 @@ function of the "progression or death" event.
 smpl_prior <- sample_prior(mdl, seed = 36L)
 
 # plot(mdl) also works but need to resample prior further below
-plot(mdl, parameter_sample = smpl_prior)
+plot(mdl, parameter_sample = smpl_prior, confidence = 0.9)
 ```
 
 
@@ -365,7 +375,7 @@ in the direction of the observed response rates.
 ```{r}
 smpl_posterior <- sample_posterior(mdl, tbl_data_interim, seed = 43L)
 
-plot(mdl, parameter_sample = smpl_posterior) # plot under posterior
+plot(mdl, parameter_sample = smpl_posterior, confidence = 0.9) # plot under posterior
 
 # calculate posterior quantiles of response probability
 smpl_posterior %>%

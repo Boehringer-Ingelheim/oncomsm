@@ -3,11 +3,9 @@
 #' @export
 plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # nolint
                                   relative_to_sot = TRUE, ...) {
-  starting_state <- attr(model, "states")[1]
-
+  starting_state <- model$states[1]
   tbl_mstate <- data %>%
     rename(`Group ID` = "group_id")
-
   if (relative_to_sot) {
     tbl_mstate <- tbl_mstate %>%
       mutate(
@@ -16,7 +14,6 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
         t_sot = 0
       )
   }
-
   tbl_points <- tbl_mstate %>%
     mutate(
       tmp = purrr::pmap(
@@ -33,7 +30,6 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
     filter(is.finite(.data$t), .data$t < now) %>%
     distinct() %>%
     arrange(.data$subject_id, .data$t)
-
   tbl_intervals <- tbl_mstate %>%
     bind_rows(
       select(tbl_mstate, all_of(c("subject_id", "Group ID", "t_sot"))) %>%
@@ -62,7 +58,6 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
       !is.na(.data$state), is.finite(.data$tmp1), is.finite(.data$tmp2),
       .data$tmp2 > .data$tmp1
     )
-
   tbl_at_risk <- tbl_mstate %>%
     filter(.data$t_max == Inf) %>%
     transmute(
@@ -71,7 +66,6 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
       t = .data$t_min,
       state = .data$from
     )
-
   tbl_censored <- tbl_mstate %>%
     filter(.data$t_max == -Inf) %>%
     transmute(
@@ -80,9 +74,7 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
       t = .data$t_min,
       state = .data$from
     )
-
   scale <- max(tbl_points$t)
-
   ggplot2::ggplot() +
     ggplot2::geom_segment(
       ggplot2::aes(

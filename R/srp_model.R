@@ -1,21 +1,55 @@
+#' Combine SRP group priors to model object
+#'
+#' This function takes one or more prior-specifications for an SRP multi-state
+#' model and combines them into a joint model.
+#' Groups are still treated as independent.
+#'
+#' @param p_mean numeric, mean of the beta prior for the response probability
+#' @param p_n numeric, beta prior equivalent sample size (a + b)
+#' @param p_eta numeric, robustification parameter for beta prior; actual
+#' prior is (1 - eta) beta + eta; i.e., eta is the non-informative weight.
+#' @param p_min numeric, minimal response probability
+#' @param p_max numeric, maximal response probability
+#' @param median_t_q05 numeric of length three,
+#' 5% quantiles of the log-normal distributions for the
+#' median time-to-next-event for the three transitions s->r, s->p, r->p.
+#' @param median_t_q95 numeric of length three,
+#' 95% quantiles of the log-normal distributions for the
+#' median time-to-next-event for the three transitions s->r, s->p, r->p.
+#' @param shape_q05 numeric of length three,
+#' 5% quantiles of the log-normal distributions for the shapes of the
+#' time-to-next-event distributions for the three transitions s->r, s->p, r->p.
+#' @param shape_q95 numeric of length three,
+#' 95% quantiles of the log-normal distributions for the shapes of the
+#' time-to-next-event distributions for the three transitions s->r, s->p, r->p.
+#' @param visit_spacing numeric, fixed duration between visits
+#' @param recruitment_rate numeric, constant recruitment rate
+#'
+#' @return An object of type srp_group_prior holding all prior information in a
+#' list-like structure; visit_spacing and recruitment_rate are accessible as
+#' attributes.
+#'
 #' @name srp_model
 #' @export
 srp_group_prior <- function(
   p_mean = 0.5,
-  p_n = 1,
+  p_n = 3,
   p_eta = 0.0,
   p_min = 0.0,
   p_max = 1.0,
-  median_t_mode = c(3, 3, 6),
-  median_t_90q = c(30, 30, 60),
-  median_t_max = c(Inf, Inf, Inf),
-  shape_mode = c(1, 1, 1),
-  shape_90q = c(5, 5, 5),
-  shape_min = c(0.01, 0.01, 0.01),
-  shape_max = c(20, 20, 20), # about .999 quantile
+  median_t_q05 = c(1, 1, 3),
+  median_t_q95 = c(12, 12, 24),
+  shape_q05 = c(.99, .99, .99),
+  shape_q95 = c(1.01, 1.01, 1.01),
   visit_spacing = 1, # months
   recruitment_rate = 1
 ) {
+  checkmate::assert_vector(median_t_q05, len = 3, any.missing = FALSE)
+  checkmate::assert_vector(median_t_q95, len = 3, any.missing = FALSE)
+  checkmate::assert_vector(shape_q05, len = 3, any.missing = FALSE)
+  checkmate::assert_vector(shape_q95, len = 3, any.missing = FALSE)
+  if (visit_spacing <= 0) stop("visit spacing must be positive")
+  if (recruitment_rate <= 0) stop("recruitment_rate must be positive")
   params <- as.list(environment())
   params$visit_spacing <- NULL
   params$recrutiment_rate <- NULL
@@ -28,15 +62,36 @@ srp_group_prior <- function(
   return(res)
 }
 
+
+
+#' Combine SRP group priors to model object
 #'
+#' This function takes one or more prior-specifications for an SRP multi-state
+#' model and combines them into a joint model.
+#' Groups are still treated as independent.
+#'
+#' @param ... named srp_group_prior objects; the argument names serve as
+#' group labels
+#' @param maximal_time the maximal overall runtime of the trial as measured from
+#' the first visit of any group. No visits past this point are sampled.
+#'
+#' @return an object of class srp_model; a named list of the group_ids,
+#' the maximal time, the visit spacing, the recruitment rate, and a list of
+#' prior parameters for the response probability, the median transition times,
+#' and the shape of the transition time distribution (Weibull)
+#'
+#' @name srp_model
 #' @export
-srp_modell <- function(
+create_srp_model <- function(
   ...,
   maximal_time = 10 * 12
 ) {
   group_priors <- list(...)
   group_id <- names(group_priors)
   k <- length(group_id)
+  if (k == 0) {
+    stop("at least one group prior must be specified")
+  }
   if (any(group_id == "")) {
     stop("All arguments passed to ... must be named.") # nocov
   }
@@ -46,12 +101,11 @@ srp_modell <- function(
   transition_labels <- c("s->r", "s->p", "r->p")
   p <- matrix(NA_real_, nrow = k, ncol = 5,
               dimnames = list(group_id, c("mean", "n", "eta", "min", "max")))
-  median_t <- array(NA_real_, dim = c(k, 3, 3),
+  median_t <- array(NA_real_, dim = c(k, 3, 2),
                     dimnames = list(group_id, transition_labels,
-                                    c("mode", "90q", "max")))
-  shape <- array(NA_real_, dim = c(k, 3, 4),
-                 dimnames = list(group_id, transition_labels,
-                                 c("mode", "90q", "min", "max")))
+                                    c("q05", "q95")))
+  shape <- array(NA_real_, dim = c(k, 3, 2),
+                 dimnames = list(group_id, transition_labels, c("q05", "q95")))
   visit_spacing <- numeric(k)
   names(visit_spacing) <- group_id
   recruitment_rate <- numeric(k)
@@ -61,10 +115,8 @@ srp_modell <- function(
     visit_spacing[g] <- attr(group, "visit_spacing")
     recruitment_rate[g] <- attr(group, "recruitment_rate")
     p[g, ] <- c(group$p_mean, group$p_n, group$p_eta, group$p_min, group$p_max)
-    median_t[g, , ] <- cbind(group$median_t_mode, group$median_t_90q,
-                             group$median_t_max)
-    shape[g, , ] <- cbind(group$shape_mode, group$shape_90q, group$shape_min,
-                          group$shape_max)
+    median_t[g, , ] <- cbind(group$median_t_q05, group$median_t_q95)
+    shape[g, , ] <- cbind(group$shape_mode, group$shape_q05, group$shape_q95)
   }
   res <- structure(
     list(
@@ -72,129 +124,19 @@ srp_modell <- function(
       maximal_time = maximal_time,
       visit_spacing = visit_spacing,
       recruitment_rate = recruitment_rate,
+      stan_model = stanmodels$srp_model,
+      states = c("stable", "response", "progression"),
       prior = list(
         p = p, median_t = median_t, shape = shape
       )
     ),
-    class = "srp_model"
+    class = c("srp_model", "Model", "list"),
+    parameter_names = c("p", "median_t", "shape", "scale")
   )
+  check_valid(res)
   return(res)
 }
 
-
-
-#' A Stable-Response-Progression Model
-#'
-#' Create a new instance of an SRP model
-#'
-#' TODO
-#'
-#' @param group_id a character vector with the group ids, these are used to
-#'   check compatibility of data later
-#' @param logodds_mean a vector with the means of the (truncated) normal priors
-#'   on the log-odds of the response probability
-#' @param logodds_sd a vector with the standard deviations of the (truncated)
-#'   normal priors on the log-odds of the response probability
-#' @param median_time_to_next_event_mean a matrix with the means of the
-#'   (truncated) normal priors on the median time to next event for each of the
-#'   Weibull transition probabilities, the (i,j)-th entry is the i-th group
-#'   median time to next event for transition j
-#'   (1=stable-response, 2=stable-progression, 3=response-progression)
-#' @param median_time_to_next_event_sd a matrix with the standard deviations of
-#'   the (truncated) normal priors on the median time to next event for each of
-#'   the Weibull transition probabilities, the (i,j)-th entry is the i-th group
-#'   median time to next event for transition j
-#'   (1=stable-response, 2=stable-progression, 3=response-progression)
-#' @param visit_spacing vector of time differences between visits per group,
-#' only relevant for sampling from the predictive distribution
-#' @param recruitment_rate vector with per-group recruitment rates,
-#' only relevant for sampling from the predictive distribution
-#' @param max_time maximal overall runtime from first visit,
-#' only relevant for sampling from the predictive distribution
-#' @param logodds_min lower boundary on the log-odds per group
-#' @param logodds_max upper boundary on the log-odds per group
-#' @param shape_min matrix of lower boundaries of the uniform prior of the
-#'   Weibull distribution per group/transition
-#' @param shape_max matrix of upper boundaries of the uniform prior of the
-#'   Weibull distribution per group/transition
-#'
-#' @name srp_model
-#' @aliases create_srp_model
-#' @seealso [Model]
-#'
-#' @export
-create_srp_model <- function(
-  group_id,
-  logodds_mean,
-  logodds_sd = rep(0.01, length(group_id)),
-  median_time_to_next_event_mean,
-  median_time_to_next_event_sd = matrix(0.1, nrow = length(group_id), ncol = 3),
-  visit_spacing,
-  recruitment_rate = rep(1, length(group_id)),
-  max_time = 10 * 12,
-  logodds_min = rep(logodds(.001), length(group_id)),
-  logodds_max = rep(logodds(.999), length(group_id)),
-  shape_min = matrix(.001, nrow = length(group_id), ncol = 3),
-  shape_max = matrix(20, nrow = length(group_id), ncol = 3), # about .999 quantile
-  shape_mode = matrix(1, nrow = length(group_id), ncol = 3),
-  shape_90q = matrix(5, nrow = length(group_id), ncol = 3),
-  median_t_mode = matrix(6, nrow = length(group_id), ncol = 3),
-  median_t_90q = matrix(12, nrow = length(group_id), ncol = 3),
-  median_t_max = matrix(Inf, nrow = length(group_id), ncol = 3),
-  p_mean = rep(0.5, length(group_id)),
-  p_n = rep(1, length(group_id)),
-  p_eta = rep(0.0, length(group_id)),
-  p_min = rep(0.0, length(group_id)),
-  p_max = rep(1.0, length(group_id))
-) {
-  # calculate mu, sigma for log-normal priors
-  shape_mu <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
-  shape_sigma <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
-  median_t_mu <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
-  median_t_sigma <- matrix(NA_real_, nrow = length(group_id), ncol = 3)
-  for (i in 1:3) {
-    for (j in 1:length(group_id)) {
-      tmp <- get_mu_sigma(shape_mode[j, i], shape_90q[j, i])
-      shape_mu[j, i] <- tmp$mu
-      shape_sigma[j, i] <- tmp$sigma
-      tmp <- get_mu_sigma(median_t_mode[j, i], median_t_90q[j, i])
-      median_t_mu[j, i] <- tmp$mu
-      median_t_sigma[j, i] <- tmp$sigma
-    }
-  }
-  mdl <- list(
-    logodds_mean = logodds_mean,
-    logodds_sd = logodds_sd,
-    median_time_to_next_event_mean = median_time_to_next_event_mean,
-    median_time_to_next_event_sd = median_time_to_next_event_sd,
-    logodds_min = logodds_min,
-    logodds_max = logodds_max,
-    shape_min = shape_min,
-    shape_max = shape_max,
-    shape_mu = shape_mu,
-    shape_sigma = shape_sigma,
-    median_t_mu = median_t_mu,
-    median_t_sigma = median_t_sigma,
-    median_t_max = median_t_max,
-    p_mean = p_mean,
-    p_n = p_n,
-    p_eta = p_eta,
-    p_min = p_min,
-    p_max = p_max
-  )
-  mdl <- lapply(mdl, base::as.array)
-  attr(mdl, "group_id") <- as.character(group_id) # assert type
-  attr(mdl, "states") <- c("stable", "response", "progression")
-  attr(mdl, "visit_spacing") <- as.array(visit_spacing)
-  attr(mdl, "recruitment_rate") <- as.array(recruitment_rate)
-  attr(mdl, "max_time") <- as.array(max_time)
-  attr(mdl, "stanmodel") <- stanmodels[["srp_model"]]
-  attr(mdl, "parameter_names") <- c("p", "shape", "scale",
-                                    "median_time_to_next_event")
-  class(mdl) <- c("srp_model", "Model", class(mdl))
-  is_valid(mdl)
-  return(mdl)
-}
 
 
 #' @param x SRP model to format
@@ -202,54 +144,32 @@ create_srp_model <- function(
 #' @rdname srp_model
 #' @export
 format.srp_model <- function(x, ...) {
-  sprintf("srp_model<%s>", paste(attr(x, "group_id"), collapse = ","))
+  sprintf("srp_model<%s>", paste(x$group_id, collapse = ","))
 }
 
 
-is_valid.srp_model <- function(mdl) { # nolint
-  with(mdl, {
-    checkmate::assert_vector(logodds_mean,
-      len = length(attr(mdl, "group_id")),
-      any.missing = FALSE, .var.name = "logodds_mean"
-    )
-    checkmate::assert_vector(logodds_sd,
-      len = length(attr(mdl, "group_id")),
-      any.missing = FALSE, .var.name = "logodds_mean"
-    )
-    checkmate::assert_array(median_time_to_next_event_mean,
-      d = 2,
-      any.missing = FALSE,
-      .var.name = "median_time_to_next_event_mean"
-    )
-    checkmate::assert_array(median_time_to_next_event_sd,
-      d = 2,
-      any.missing = FALSE,
-      .var.name = "median_time_to_next_event_sd"
-    )
-    checkmate::assert_vector(median_time_to_next_event_sd,
-      len = length(attr(mdl, "group_id")) *
-        length(attr(mdl, "states")), any.missing = FALSE,
-      .var.name = "median_time_to_next_event_sd"
-    )
-    checkmate::assert_vector(median_time_to_next_event_mean,
-      len = length(attr(mdl, "group_id")) *
-        length(attr(mdl, "states")), any.missing = FALSE,
-      .var.name = "median_time_to_next_event_mean"
-    )
-    checkmate::assertTRUE(all(logodds_mean < logodds_max),
-      .var.name = "logodds_mean < logodds_max"
-    )
-    with(
-      mdl,
-      checkmate::assert_numeric(
-        median_time_to_next_event_mean[median_time_to_next_event_mean < 0],
-        lower = 0, upper = 0,
-        .var.name = "median_time_to_next_event_mean"
-      )
-    )
-  })
+check_valid.srp_model <- function(model) { # nolint # nocov start
+  checkmate::assert_character(model$group_id)
+  group_ids <- model$group_id
+  k <- length(group_ids)
+  if (model$maximal_time <= 0) stop("maximal time must be positive")
+  checkmate::assert_vector(model$visit_spacing, len = k)
+  if (any(model$visit_spacing <= 0)) stop("visit spacing must be positive")
+  checkmate::assert_vector(model$recruitment_rate, len = k)
+  if (any(model$recruitment_rate <= 0)) stop("recruitment rate must be positive")
+  checkmate::assert_class(model$stan_model, "stanmodel")
+  checkmate::assert_true(all(model$prior$p[, "mean"] > 0))
+  checkmate::assert_true(all(model$prior$p[, "n"] > 0))
+  checkmate::assert_true(all(model$prior$p[, "min"] < model$prior$p[, "mean"]))
+  checkmate::assert_true(all(model$prior$p[, "mean"] < model$prior$p[, "max"]))
+  checkmate::assert_true(all(model$prior$median_t[, , "q05"] > 0))
+  checkmate::assert_true(all(model$prior$median_t[, , "q05"] <
+                               model$prior$median_t[, , "q95"]))
+  checkmate::assert_true(all(model$prior$shape[, , "q05"] > 0))
+  checkmate::assert_true(all(model$prior$shape[, , "q05"] <
+                               model$prior$shape[, , "q95"]))
   return(TRUE)
-}
+} # nocov end
 
 # see Model.R
 .impute.srp_model <- function(model, data, nsim, parameter_sample = NULL, # nolint
@@ -258,7 +178,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  n_groups <- length(attr(model, "group_id"))
+  n_groups <- length(model$group_id)
   # make sure that either parameter sample or p, scale, shape are given
   if (!is.null(parameter_sample)) {
     stopifnot(isa(parameter_sample, "stanfit"))
@@ -274,7 +194,7 @@ is_valid.srp_model <- function(mdl) { # nolint
   } # nocov end
   # extract subject and group id levels for conversion to and back from integer
   subject_id_levels <- unique(as.character(data$subject_id))
-  group_id_levels <- attr(model, "group_id") # important to maintain ordering
+  group_id_levels <- model$group_id # important to maintain ordering
   if (is.null(p)) {
     # extract parameter arrays from stanfit object
     # p[i,j] is probability for ith sample for jth group
@@ -318,8 +238,8 @@ is_valid.srp_model <- function(mdl) { # nolint
     scales <- matrix(scale[idx[iter], , ], ncol = 3)
     # sample using C++ implementation
     res <- impute_srp_model(data, response_probabilities, shapes, scales,
-        visit_spacing = attr(model, "visit_spacing"),
-        max_time = attr(model, "max_time")
+        visit_spacing = model$visit_spacing,
+        max_time = model$maximal_time
       ) %>%
       as_tibble() %>%
       mutate(
@@ -358,8 +278,8 @@ is_valid.srp_model <- function(mdl) { # nolint
     set.seed(seed) # nocov
   }
   n <- sum(n_per_group)
-  group_ids <- attr(model, "group_id")
-  rr <- attr(model, "recruitment_rate")
+  group_ids <- model$group_id
+  rr <- model$recruitment_rate
   res <- tibble()
   for (i in seq_along(group_ids)) {
     if (n_per_group[i] < 1) {
@@ -381,19 +301,20 @@ is_valid.srp_model <- function(mdl) { # nolint
 
 # convert time to event data to stan data list
 data2standata.srp_model <- function(data, model) { # nolint
+  # first prepare any data (if available)
   lst_stan_data <- data %>%
     mutate(
       group_id = as.integer(factor(.data$group_id,
-        levels = attr(model, "group_id")
+        levels = model$group_id
       )),
       subject_id = as.integer(factor(.data$subject_id)),
-      from = as.integer(factor(.data$from, levels = attr(model, "states"))),
+      from = as.integer(factor(.data$from, levels = model$states)),
       to = if_else(
         is.na(.data$to),
         "unknown",
         as.character(.data$to)
       ) %>%
-      factor(levels = c(attr(model, "states"), "unknown")) %>%
+      factor(levels = c(model$states, "unknown")) %>%
       as.integer(),
       t_min = .data$t_min - .data$t_sot,
       t_max = .data$t_max - .data$t_sot
@@ -404,10 +325,43 @@ data2standata.srp_model <- function(data, model) { # nolint
   for (i in seq_along(lst_stan_data)) {
     lst_stan_data[[i]] <- as.array(lst_stan_data[[i]])
   }
-  lst_stan_data$M_groups <- length(attr(model, "group_id"))
+  # data meta information
   lst_stan_data$N <- nrow(data)
   lst_stan_data$N_subjects <- length(unique(data$subject_id))
-  lst_stan_data <- c(lst_stan_data, as.list(model))
+  # model meta information and priors
+  lst_stan_data$M_groups <- length(model$group_id)
+  lst_stan_data$maximal_time <- model$maximal_time
+  lst_prior_parameters <- list(
+    p_mean = model$prior$p[, "mean"] %>% as.array(),
+    p_n = model$prior$p[, "n"] %>% as.array(),
+    p_eta = model$prior$p[, "eta"] %>% as.array(),
+    p_min = model$prior$p[, "min"] %>% as.array(),
+    p_max = model$prior$p[, "max"] %>% as.array(),
+    median_t_mu = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3) %>%
+      matrix(ncol = 3),
+    median_t_sigma = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3) %>%  # nolint
+      matrix(ncol = 3),
+    shape_mu = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3),
+    shape_sigma = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3)
+  )
+  # calculate mu/sigma for log-normal priors based on modes/90% quantiles
+  for (g in 1:lst_stan_data$M_groups) {
+    for (trans in 1:3) {
+      res <- get_mu_sigma(
+        model$prior$median_t[g, trans, "q05"],
+        model$prior$median_t[g, trans, "q95"]
+      )
+      lst_prior_parameters$median_t_mu[g, trans] <- res$mu
+      lst_prior_parameters$median_t_sigma[g, trans] <- res$sigma
+      res <- get_mu_sigma(
+        model$prior$shape[g, trans, "q05"],
+        model$prior$shape[g, trans, "q95"]
+      )
+      lst_prior_parameters$shape_mu[g, trans] <- res$mu
+      lst_prior_parameters$shape_sigma[g, trans] <- res$sigma
+    }
+  }
+  lst_stan_data <- c(lst_stan_data, lst_prior_parameters)
   return(lst_stan_data)
 }
 
@@ -431,7 +385,7 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
       sep = "[\\]|,]", fill = "right", extra = "drop"
     ) %>%
     mutate(
-      group_id = attr(model, "group_id")[as.integer(stringr::str_extract(
+      group_id = model$group_id[as.integer(stringr::str_extract(
         .data$group_id, "[0-9]+"
       ))],
       transition = as.integer(.data$transition)
@@ -543,9 +497,9 @@ compute_pfs.srp_model <- function( # nolint
   if (is.null(parameter_sample)) {
     parameter_sample <- sample_prior(model,
                                      warmup = warmup, nsim = nsim, seed = seed,
-                                     pars = attr(model, "parameter_names"), ...)
+                                     ...)
   }
-  group_ids <- attr(model, "group_id")
+  group_ids <- model$group_id
   n_groups <- length(group_ids)
   n_smpl <- dim(parameter_sample)[[1]]
   n_t <- length(t)

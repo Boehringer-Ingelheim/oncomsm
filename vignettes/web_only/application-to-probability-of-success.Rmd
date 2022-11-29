@@ -90,21 +90,20 @@ certain relevance threshold,
 
 Consider a situation with a trial including two different arms 
 "A" and "B".
-Assume that the following prior for the Weibull SRP multi-state model with 
-three arms/groups is given.
+We start with a fairly vague prior except for the shape which is fixed to 
+about 1 (default) in absence of other evidence.
+This is required to stabilize inference on the other model parameters.
 
 ```{r prior-specification}
 mdl <- create_srp_model(
-  group_id = c("A", "B"),
-  logodds_mean = logodds(c(0.1, 0.9)),
-  logodds_sd = rep(3, 2L),
-  median_time_to_next_event = matrix(c(
-    2, 6, 24,
-    2, 6, 24
-  ), byrow = TRUE, nrow = 2, ncol = 3),
-  median_time_to_next_event_sd = matrix(3, byrow = TRUE, nrow = 2, ncol = 3),
-  visit_spacing = rep(1.2, 2),
-  recruitment_rate = c(40 / 24, 40 / 24)
+  A = srp_group_prior(
+    p_mean = 0.5, p_n = 3, p_eta = 0.2,
+    recruitment_rate = 2
+  ),
+  B = srp_group_prior(
+    p_mean = 0.5, p_n = 3, p_eta = 0.2,
+    recruitment_rate = 2
+  )
 )
 ```
 
@@ -113,7 +112,7 @@ One can now sample from the prior and visualize the prior assumptions.
 ```{r sample-from-prios}
 smpl_prior <- sample_prior(mdl, seed = 6835L)
 
-plot(mdl, parameter_sample = smpl_prior)
+plot(mdl, parameter_sample = smpl_prior, confidence = 0.9)
 ```
 
 
@@ -138,12 +137,13 @@ go <- function(data, nsim = 200L) {
                             # can also be avoided by increasing nsim
     sample_posterior(mdl, data = data, warmup = 200L, nsim = nsim)
   )
-  tbl_pfs_orr <- bind_cols(
-      compute_pfs(mdl, 12, smpl), # PFS 12
-      parameter_sample_to_tibble(mdl, smpl) %>% # ORR
-        filter(parameter == "p") %>%
-        transmute(orr = value)
-    )
+  tbl_pfs_orr <- inner_join(
+    compute_pfs(mdl, 12, smpl), # PFS 12
+    parameter_sample_to_tibble(mdl, smpl) %>% # ORR
+      filter(parameter == "p") %>%
+      transmute(iter = 1:(2*nsim), group_id, orr = value),
+    by = c("iter", "group_id")
+  )
   res <- tbl_pfs_orr %>% # apply decision criterion
     group_by(group_id) %>%
     summarize(
@@ -154,16 +154,29 @@ go <- function(data, nsim = 200L) {
 ```
 
 An example of how to apply the criterion to a sample from the prior predictive 
-distribution is given below:
+distribution conditional on specific response rates is given below
 
 ```{r}
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 2),
     sample = smpl_prior,
+    p = c(0, 1), 
+    shape = matrix(c(
+      1, 1, 1,
+      1, 1, 1
+    ), ncol = 3),
+    scale = matrix(c( # median = scale * log(2)^(1/shape)
+      6, 6, 12,
+      3, 12, 24
+    ), ncol = 3) / log(2),
     nsim = 1L,
     seed = 34930L
   )
+
+tbl_prior_predictive %>% 
+  visits_to_mstate(mdl) %>% 
+  plot_mstate(mdl, relative_to_sot = FALSE)
 
 go(tbl_prior_predictive)
 ```
@@ -177,7 +190,15 @@ in the $i$-th resample.
 tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = rep(40L, 2),
-    sample = smpl_prior,
+    p = c(.45, .65), 
+    shape = matrix(c(
+      1, 1, 1,
+      1, 1, 1
+    ), ncol = 3),
+    scale = matrix(c( # median = scale * log(2)^(1/shape)
+      6, 6, 12,
+      3, 12, 24
+    ), ncol = 3) / log(2),
     nsim = 100L, # same, here, only for demonstration purposes
     seed = 34930L
   ) %>%
@@ -226,7 +247,15 @@ and thus the probability of 'go'.
 ```{r}
 tbl_data <- sample_predictive(
     mdl,
-    p = c(0.65, 0.45), ## conflicting prior expectation
+    p = c(0.45, 0.65),
+    shape = matrix(c(
+      1, 1, 1,
+      1, 1, 1
+    ), ncol = 3),
+    scale = matrix(c( # median = scale * log(2)^(1/shape)
+      6, 6, 12,
+      3, 12, 24
+    ), ncol = 3) / log(2),
     n_per_group = c(40L, 40L),
     nsim = 1,
     seed = 23849
@@ -319,30 +348,29 @@ f <- function(tbl) {
   tbl %>%
   group_by(group_id, subject_id) %>%
   summarize(
-    responder = any(state == "response") && all(state != "progression"),
-    progressor = any(state == "progression"),
-    stable = all(state == "stable"),
+    status = {
+      if (all(state == "stable")) {
+        "stable"
+      } else {
+        state[which(state != "stable")[1]]
+      }
+    },
     .groups = "drop_last"
-  ) %>%
-  summarize(
-    response = sum(responder),
-    progression = sum(progressor),
-    stable = sum(stable)
-  )
+  ) %>% 
+  group_by(group_id, status) %>% 
+  summarize(n = n(), .groups = "drop")
 }
 
-tbl <- tibble(
-    t_interim = tbl_data_interims$t_interim,
-    summary = purrr::map(tbl_data_interims$data, f)
-  ) %>%
-  unnest(summary)
-
-pivot_longer(tbl, c(response, progression, stable), names_to = "event") %>%
-  ggplot() +
-    aes(t_interim, value, color = event, linetype = group_id) +
-    geom_line() +
-    scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
-    scale_y_continuous("", breaks = seq(0, 30, by = 5))
+tibble(
+  t_interim = tbl_data_interims$t_interim,
+  summary = purrr::map(tbl_data_interims$data, f)
+) %>%
+unnest(summary) %>% 
+ggplot() +
+  aes(t_interim, n, color = status, linetype = group_id) +
+  geom_line() +
+  scale_x_continuous("t [months]", breaks = seq(0, 36, by = 6)) +
+  scale_y_continuous("", breaks = seq(0, 30, by = 5))
 ```
 
 
