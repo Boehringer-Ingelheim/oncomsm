@@ -42,6 +42,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
+    <a class="dropdown-item" href="../articles/prior-choice.html">Prior Choice</a>
     <a class="dropdown-item" href="../articles/web_only/application-to-probability-of-success.html">Application to Probability of 'go'</a>
   </div>
 </li>
@@ -105,8 +106,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-42cc70ef20543bacf27e" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-42cc70ef20543bacf27e">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-d220e3ed8c12b1a48c7a" style="width:672px;height:200px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-d220e3ed8c12b1a48c7a">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -167,48 +168,45 @@ recovered via the relationship</p>
 \operatorname{scale} =
 \frac{\operatorname{median}}{\log(2)^{1/\operatorname{shape}}} .
 \]</span></p>
-<p>The following priors are used:</p>
-<ol style="list-style-type: decimal">
-<li>a normal prior for the log-odds of response <span class="math inline">\(\operatorname{logit}(p) \sim
-\mathcal{N}(\mu_p,\sigma_p^2)\)</span>
-</li>
-<li>a truncated normal prior for the median of each transition <span class="math inline">\(\operatorname{median}_{\,i} \sim
-\mathcal{N}(\mu_i,\sigma_i^2)[\,0,\infty)\)</span>
-</li>
-<li>a flat prior on the shape of each transition <span class="math inline">\(\operatorname{shape}_{\,i} \sim
-\operatorname{Uniform}(a_i, b_i)\)</span>
-</li>
-<li>it is assumed that the observation process (visit spacing) is fixed,
-e.g. every 6 weeks. This means that all transition times are interval
-censored.</li>
-</ol>
-<p>We treat recruitment times as independent of outcome. They can be
-modeled separately if required.</p>
-<p>We assume that all times are given in months.</p>
+<p>The following prior classes are used.</p>
+<p>For the response probability <span class="math inline">\(p\)</span>,
+a <span class="math inline">\((1-\eta)\,\operatorname{Beta}(a,b)+\eta\,\operatorname{Unif}(0,1)\)</span>
+is used. The prior is specified via the equivalent sample size <span class="math inline">\(a+b\)</span> and the mean of the informative
+component <span class="math inline">\(a/(a+b)\)</span>.</p>
+<p>A log-normal distribution is used for the median time-to-next event,
+the parameters are inferred from specified <span class="math inline">\(0.05\)</span> and <span class="math inline">\(0.95\)</span> quantiles.</p>
+<p>A log-normal distribution is used for the shape parameter of the
+Weibull distributions, the parameters are inferred from specified <span class="math inline">\(0.05\)</span> and <span class="math inline">\(0.95\)</span> quantiles.</p>
+<p>It is assumed that the observation process (visit spacing) is fixed.
+Since transitions can only be recorded after the next visit, all
+transition times are interval censored.</p>
+<p>Recruitment times are assumed to follow a poisson distribution.</p>
+<p>Default parameters assume a timescale in months.</p>
 <div class="section level2">
 <h2 id="specifying-the-model">Specifying the model<a class="anchor" aria-label="anchor" href="#specifying-the-model"></a>
 </h2>
 <p>The following code defined the prior assumptions for a two-group
-trial with a visit-spacing of 1.2 months, i.e., about 6 weeks.</p>
+trial with a visit-spacing of 1 months. The prior variance on the shape
+parameter is very low. For sampling form the prior, this does not not
+matter and more uncertainty about the Weibull shape parameters can be
+assumed. During posterior inference, identifying shape and scale (median
+time to event) from a small sample of interval censored observations is
+not feasible and leads to divergent MCMC samples. The shape thus has to
+be kept almost fixed in most cases when doing inference.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/srp_model.html">create_srp_model</a></span><span class="op">(</span></span>
-<span>  <span class="co"># names of the arms/groups</span></span>
-<span>  group_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
-<span>  <span class="co"># per-group logodds of response|stable</span></span>
-<span>  logodds_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="../reference/logodds.html">logodds</a></span><span class="op">(</span><span class="fl">.4</span><span class="op">)</span>, <span class="fu"><a href="../reference/logodds.html">logodds</a></span><span class="op">(</span><span class="fl">.6</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  logodds_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  <span class="co"># m[i,j] is the median time to next event for group i and transition j</span></span>
-<span>  median_time_to_next_event <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span>,</span>
-<span>    <span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">12</span></span>
-<span>  <span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  <span class="co"># fixed standard deviation of the prior for all median times</span></span>
-<span>  median_time_to_next_event_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
-<span>    <span class="fl">1</span>,</span>
-<span>    byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2</span>, ncol <span class="op">=</span> <span class="fl">3</span></span>
+<span>  A <span class="op">=</span> <span class="fu"><a href="../reference/srp_model.html">srp_group_prior</a></span><span class="op">(</span></span>
+<span>    p_mean <span class="op">=</span> <span class="fl">0.4</span>, p_n <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>    median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, <span class="co"># s-&gt;r s-&gt;p r-&gt;p</span></span>
+<span>    median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  <span class="co"># the visit interval</span></span>
-<span>  visit_spacing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.2</span><span class="op">)</span></span>
+<span>  B <span class="op">=</span> <span class="fu"><a href="../reference/srp_model.html">srp_group_prior</a></span><span class="op">(</span></span>
+<span>    p_mean <span class="op">=</span> <span class="fl">0.6</span>, p_n <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>    median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, <span class="co"># s-&gt;r s-&gt;p r-&gt;p</span></span>
+<span>    median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">12</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span>,</span>
+<span>    shape_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">0.75</span><span class="op">)</span>,</span>
+<span>    shape_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.1</span>, <span class="fl">2.1</span>, <span class="fl">0.76</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">mdl</span><span class="op">)</span></span>
@@ -253,7 +251,7 @@ event.</p>
 <code class="sourceCode R"><span><span class="va">smpl_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_prior.html">sample_prior</a></span><span class="op">(</span><span class="va">mdl</span>, seed <span class="op">=</span> <span class="fl">36L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># plot(mdl) also works but need to resample prior further below</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_prior</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_prior</span>, confidence <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span></code></pre></div>
 <p><img src="oncomsm_files/figure-html/plotting-the-prior-1.png" width="672" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
@@ -272,35 +270,35 @@ re-use the sample prior sample already used for plotting.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tbl_prior_predictive</span>, n <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 67,938 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 59,667 × 5</span></span></span>
 <span><span class="co">#&gt;    subject_id group_id     t state     iter</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00010865 B         11.2 stable       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B         12.4 stable       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00010865 B         13.6 stable       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00010865 B         14.8 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00010865 B         16.0 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00010865 B         17.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00010865 B         18.4 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00010865 B         19.6 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID00010865 B         20.8 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID00010865 B         22.0 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> ID00010865 B         23.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> ID00010865 B         24.4 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> ID00010865 B         25.6 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> ID00010865 B         26.8 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> ID00010865 B         28.0 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> ID00010865 B         29.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> ID00010865 B         30.4 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> ID00010865 B         31.6 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> ID00010865 B         32.8 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> ID00010865 B         34.0 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> ID00010865 B         35.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> ID00010865 B         36.4 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> ID00010865 B         37.6 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> ID00010865 B         38.8 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> ID00010865 B         40.0 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 67,913 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B         12.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00010865 B         13.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00010865 B         14.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00010865 B         15.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00010865 B         16.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00010865 B         17.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00010865 B         18.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID00010865 B         19.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID00010865 B         20.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> ID00010865 B         21.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> ID00010865 B         22.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> ID00010865 B         23.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> ID00010865 B         24.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> ID00010865 B         25.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> ID00010865 B         26.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> ID00010865 B         27.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> ID00010865 B         28.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> ID00010865 B         29.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> ID00010865 B         30.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> ID00010865 B         31.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> ID00010865 B         32.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> ID00010865 B         33.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> ID00010865 B         34.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> ID00010865 B         35.2 response     1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 59,642 more rows</span></span></span></code></pre></div>
 <p>We can then run some quick checks on the sampled data, e.g., the
 observed response rates.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -318,8 +316,8 @@ observed response rates.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id p_response      se</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.367 0.008<span style="text-decoration: underline;">80</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.559 0.009<span style="text-decoration: underline;">07</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.353 0.008<span style="text-decoration: underline;">72</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.515 0.009<span style="text-decoration: underline;">13</span></span></span></code></pre></div>
 <p>A crude approximation of the median transition times can be compared
 with the prior means.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -341,12 +339,12 @@ with the prior means.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">#&gt;   group_id from     to          `median transition time`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        response progression                     6   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> A        stable   progression                     2.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> A        stable   response                        3.60</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> B        response progression                    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> B        stable   progression                     8.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> B        stable   response                        2.4</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        response progression                        7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> A        stable   progression                        2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> A        stable   response                           3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> B        response progression                        5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> B        stable   progression                        7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> B        stable   response                           2</span></span></code></pre></div>
 <p>By default, the prior predictive distribution is given in terms of
 panel visit data. The data can be transformed to interval-censored
 multi-state representation, (here only first sampled trial).</p>
@@ -356,20 +354,20 @@ multi-state representation, (here only first sampled trial).</p>
 <span>  <span class="fu"><a href="../reference/visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span><span class="va">mdl</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl_mstate</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 92 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 80 × 7</span></span></span>
 <span><span class="co">#&gt;    subject_id group_id from     to          t_min t_max t_sot</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00010865 B        stable   response    13.6  14.8  11.2 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B        response progression 55.6  56.8  11.2 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00019694 B        stable   progression 33.8  35.0  18.2 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00294641 B        stable   progression 28.6  29.8  23.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00559801 B        stable   response    22.9  24.1  22.9 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00559801 B        response progression 43.3  44.5  22.9 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00827488 A        stable   progression 13.2  14.4   7.19</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID01007254 A        stable   response    24.6  25.8  23.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID01007254 A        response progression 34.2  35.4  23.4 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID01039842 A        stable   response     1.45  2.65  1.45</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 82 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00010865 B        stable   response    11.2  12.2  11.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B        response progression 77.2  78.2  11.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00019694 B        stable   progression 30.2  31.2  18.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00294641 B        stable   progression 29.8  30.8  23.8 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00559801 B        stable   response    22.9  23.9  22.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00559801 B        response progression 48.9  49.9  22.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00827488 A        stable   response    16.2  17.2   7.19</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00827488 A        response progression 17.2  18.2   7.19</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID01007254 A        stable   progression 27.4  28.4  23.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID01039842 A        stable   progression  1.45  2.45  1.45</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># … with 70 more rows</span></span></span></code></pre></div>
 <p>The multi-state data can be visualized in swimmer plots.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">tbl_mstate</span>, <span class="va">mdl</span><span class="op">)</span></span></code></pre></div>
@@ -402,7 +400,7 @@ fixed values of <span class="math inline">\(0.1\)</span> and <span class="math i
 <span><span class="co">#&gt;   group_id p_response      se</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.093 0.005<span style="text-decoration: underline;">30</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.863 0.006<span style="text-decoration: underline;">28</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.792 0.007<span style="text-decoration: underline;">41</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="a-hypothetical-interim-analysis">A hypothetical interim analysis<a class="anchor" aria-label="anchor" href="#a-hypothetical-interim-analysis"></a>
@@ -447,8 +445,8 @@ the interim time point, the response rate estimate is biased.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id p_response    se</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.143 0.143</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.7   0.153</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A               0     0  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B               0.9   0.1</span></span></code></pre></div>
 <p>Instead, one can now do inference by drawing sample from the
 posterior distribution this will account for censoring. Since the data
 conflicts with the prior, the posterior mass will move in the direction
@@ -456,7 +454,7 @@ of the observed response rates.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">smpl_posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_data_interim</span>, seed <span class="op">=</span> <span class="fl">43L</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_posterior</span><span class="op">)</span> <span class="co"># plot under posterior</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_posterior</span>, confidence <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span> <span class="co"># plot under posterior</span></span></code></pre></div>
 <p><img src="oncomsm_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
@@ -473,8 +471,8 @@ of the observed response rates.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
 <span><span class="co">#&gt;   group_id p_posterior_mean   q25   q75</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                   0.287 0.203 0.395</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                   0.838 0.763 0.894</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                   0.298 0.212 0.387</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                   0.760 0.682 0.826</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
@@ -513,7 +511,7 @@ of the observed response rates.</p>
 <span><span class="co">#&gt; [25] stringr_1.4.1        htmlwidgets_1.5.4    loo_2.5.1           </span></span>
 <span><span class="co">#&gt; [28] munsell_0.5.0        compiler_4.2.2       xfun_0.35           </span></span>
 <span><span class="co">#&gt; [31] rstan_2.21.7         pkgconfig_2.0.3      systemfonts_1.0.4   </span></span>
-<span><span class="co">#&gt; [34] pkgbuild_1.3.1       htmltools_0.5.3      tidyselect_1.2.0    </span></span>
+<span><span class="co">#&gt; [34] pkgbuild_1.4.0       htmltools_0.5.3      tidyselect_1.2.0    </span></span>
 <span><span class="co">#&gt; [37] tibble_3.1.8         gridExtra_2.3        codetools_0.2-18    </span></span>
 <span><span class="co">#&gt; [40] matrixStats_0.63.0   fansi_1.0.3          crayon_1.5.2        </span></span>
 <span><span class="co">#&gt; [43] withr_2.5.0          grid_4.2.2           jsonlite_1.8.3      </span></span>

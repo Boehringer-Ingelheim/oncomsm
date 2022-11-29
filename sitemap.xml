@@ -19,6 +19,9 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html</loc>
   </url>
   <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/prior-choice.html</loc>
+  </url>
+  <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html</loc>
   </url>
   <url>
@@ -38,9 +41,6 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/logodds.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/oncomsm-package.html</loc>
