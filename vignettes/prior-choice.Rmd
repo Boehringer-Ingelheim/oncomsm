@@ -36,7 +36,7 @@ time-to-next-event for the time-to-event components.*
 
 ## Why Weibull transition times?
 
-In `oncomsm` the distributions of the between-state transition times are
+In `oncomsm`, the distributions of the between-state transition times are
 modeled as Weibull distributions.
 This restriction in terms of the class of distribution is an implicit prior
 on the transition times.
@@ -94,7 +94,8 @@ functions either more intricate (non-monotonous) or less flexible than the
 Weibull distribution.
 Additionally, the Weibull distribution is the only distribution which can be
 interpreted both in terms of proportional hazards and accelerated failure
-times.Note that covariate modelling is not yet implemented in `oncomsm`.
+times.
+Note that covariate modelling is not yet implemented in `oncomsm`.
 Realistically, proper model selection or the identification of more complex
 patterns in the hazard function are unfeasible with small sample sizes.
 The Weibull distribution is this primarily chosen due to the intuitive
@@ -111,10 +112,9 @@ multi-state models as well.
 Since both parameters are of interest, the reference prior for a Weibull 
 distribution is proportional to $1/(a\, b)$ 
 (see, [A note on non-informative priors for Weibull distributions](https://doi.org/10.1016/S0378-3758(96)00155-3)).
-
 Any differentiable re-parameterization $g^{-1}:g(a,b)\mapsto (a,b)$ whose
-Jacobian's absolute determinant is $1/(a,b)$ thus leads to an (improper)
-uniform reference prior via pull-back of the reference prior.
+Jacobian's absolute determinant is $1/(a\,b)$ thus leads to an (improper)
+uniform reference prior via pull-back of the reference prior on $(a,b)$.
 The transformation given by
 
 $$
@@ -147,9 +147,9 @@ Assuming independence of shape and median, this implies that log-normal priors
 on both shape and median are a natural weakly-informative class of priors for
 the Weibull distribution.
 
-For the response probability $p$, we suggest a mixture prior consisting of a
+For the response probability $p$, a mixture prior consisting of a
 $\operatorname{Beta}(\alpha,\beta)$ component with weight $1-\eta$ and a 
-uniform component, $\operatorname{Beta}(1,1)$, with weight $\eta$.
+uniform component, $\operatorname{Beta}(1,1)$, with weight $\eta$ is suggested.
 
 
 
@@ -217,7 +217,7 @@ ggplot() +
 Even with such a strong regularization, small samples might lead to a small 
 number divergent transitions during sampling from the posterior.
 This small number can be ignored or the prior can be chosen even narrower around a
-supected shape paramters to avoid samplping issues completey.
+suspected shape parameters to avoid sampling issues completey.
 
 A sample from the joint prior then reflects the overall variability.
 
