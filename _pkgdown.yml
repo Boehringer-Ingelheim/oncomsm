@@ -28,7 +28,6 @@ reference:
   - plot_mstate
 - title: "Other functions"
   contents:
-  - logodds
   - visits_to_mstate
   - parameter_sample_to_tibble
   - compute_pfs

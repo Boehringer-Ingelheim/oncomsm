@@ -149,7 +149,7 @@ a $0.9$-quantile of 10 times the mode leads to an fairly vague prior with heavy
 right tail.
 
 ```{r}
-res <- get_mu_sigma(3, 30)
+res <- get_mu_sigma(5, 20)
 median_transition_time <- t
 ggplot(tibble(median_transition_time = median_transition_time, pdf = dlnorm(median_transition_time, res$mu, res$sigma)), aes(median_transition_time, pdf)) + geom_line()
 ```
@@ -163,7 +163,7 @@ default.
 ```{r}
 tmp <- 5
 res <- get_mu_sigma(1, tmp)
-shape <- seq(0, 20, length.out = 100)
+shape <- seq(0, 5, length.out = 100)
 ggplot(tibble(shape = shape, pdf = dlnorm(shape, res$mu, res$sigma)), aes(shape, pdf)) + geom_line()
 ```
 

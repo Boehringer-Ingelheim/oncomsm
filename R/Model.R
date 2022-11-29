@@ -21,7 +21,7 @@ format.Model <- function(x, ...) class(x)[1] # nocov
 #' @template param-dotdotdot
 #' @rdname Model
 #' @export
-print.Model <- function(x, ...) cat(format(x, ...), "\n")
+print.Model <- function(x, ...) cat(format(x, ...), "\n") # nocov
 
 # Checks for internal consistency of object "Model"
 # Returns TRUE if consistent, otherwise throws an error

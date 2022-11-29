@@ -48,8 +48,8 @@ srp_group_prior <- function(
   checkmate::assert_vector(median_t_q95, len = 3, any.missing = FALSE)
   checkmate::assert_vector(shape_q05, len = 3, any.missing = FALSE)
   checkmate::assert_vector(shape_q95, len = 3, any.missing = FALSE)
-  if (visit_spacing <= 0) stop("visit spacing must be positive")
-  if (recruitment_rate <= 0) stop("recruitment_rate must be positive")
+  if (visit_spacing <= 0) stop("visit spacing must be positive") # nocov
+  if (recruitment_rate <= 0) stop("recruitment_rate must be positive") # nocov
   params <- as.list(environment())
   params$visit_spacing <- NULL
   params$recrutiment_rate <- NULL
@@ -90,7 +90,7 @@ create_srp_model <- function(
   group_id <- names(group_priors)
   k <- length(group_id)
   if (k == 0) {
-    stop("at least one group prior must be specified")
+    stop("at least one group prior must be specified") # nocov
   }
   if (any(group_id == "")) {
     stop("All arguments passed to ... must be named.") # nocov
