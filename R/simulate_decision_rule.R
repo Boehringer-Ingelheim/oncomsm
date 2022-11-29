@@ -42,12 +42,12 @@ simulate_decision_rule <- function(model,
   }
   # apply decision rule
   res <- tbl_complete %>%
-    group_by(iter) %>%
+    group_by(.data$iter) %>%
     tidyr::nest() %>%
     ungroup() %>%
     transmute(
       iter,
-      res = furrr:::future_map(
+      res = furrr::future_map(
         data, ~decision_rule(model, data = .),
         .options = furrr::furrr_options(seed = TRUE)
       )
