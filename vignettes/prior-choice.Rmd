@@ -10,8 +10,10 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  eval = FALSE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 7 / 1.61,
+  fig.align = "center"
 )
 ```
 
@@ -24,10 +26,18 @@ library(oncomsm)
 
 
 
+**tl;dr:** *Identification of the shape parameter is difficult settings with
+little data and it is thus recommended to restrict the shape
+parameter to $1$ (exponential model) if no historical data for the construction
+of an informative prior is available. A beta-mixture prior is suggested for the
+response probability and log-normal priors on shape and median
+time-to-next-event for the time-to-event components.*
+
+
 ## Why Weibull transition times?
 
-In `oncomsm` the distributions of the between-state transition times are
-always modeled as Weibull distributions.
+In `oncomsm`, the distributions of the between-state transition times are
+modeled as Weibull distributions.
 This restriction in terms of the class of distribution is an implicit prior
 on the transition times.
 The rationale is mainly due to a trade-off between model flexibility and
@@ -51,130 +61,142 @@ The Weibull distribution family adds flexibility in one important aspect since
 it allows the hazard rate to be either increasing ($b<1$) or decreasing ($b>1$) 
 over time.
 
-```{r weibull-hazards}
+```{r weibull-hazards, echo=FALSE, warning=FALSE}
 h <- function(t, a, b) b / a * (t / a)^(b - 1)
-t <- pmax(0.1, seq(0, 36, length.out = 100))
+shapes <- c(0.5, 0.75, 1, 2, 3)
+t <- pmax(0.1, seq(0, 12, length.out = 100))
 tidyr::expand_grid(
   t = t , 
   tibble(
-    a = c(3, 6, 12, 12, 12, 12), 
-    b = c(1, 1, 1, .5, 1.5, 3)
+    a = rep(6, length(shapes)) / log(2)^(1/shapes), 
+    b = shapes
   )
 ) %>% 
 mutate(
   hazard = h(t, a, b),
-  label = sprintf("a=%5.2f, b=%5.2f", a, b)
+  label = sprintf("median=%5.2f, b=%5.2f", a * log(2)^(1/shapes), b)
 ) %>% 
-  ggplot() + 
-    aes(t, hazard, color = label) +
-    geom_line() +
-    scale_y_continuous(limits = c(0, 1))
+ggplot() + 
+  aes(t, hazard, color = label) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1))
 ```
 
-Combined with a three-state model, this provides quite some flexibility to
-model different disease progression characteristics without increasing model
-complexity too much.
+Combined with a three-state model, the Weibull-model provides quite some
+flexibility to model different disease progression characteristics without
+increasing model complexity too much.
 Compared to an exponential model, the three-state Weibull model has
 7 instead of 4 parameters.
 
 Other two-parameter survival distributions like the log-normal or Gamma
 distribution are equally viable but the characteristics of their hazard
-functions are more intricate.
+functions either more intricate (non-monotonous) or less flexible than the
+Weibull distribution.
+Additionally, the Weibull distribution is the only distribution which can be
+interpreted both in terms of proportional hazards and accelerated failure
+times.
+Note that covariate modelling is not yet implemented in `oncomsm`.
 Realistically, proper model selection or the identification of more complex
 patterns in the hazard function are unfeasible with small sample sizes.
-In settings with larger sample sizes, e.g., model selection in a frequentist
-framework, is often feasible.
-The excellent `flexsurv` package covers a large number of common parametric
-survival models and supports multi-state models.
+The Weibull distribution is this primarily chosen due to the intuitive
+interpretation of its parameters.
+
+In settings with larger sample sizes model selection is more feasible.
+The [`flexsurv`](https://cran.r-project.org/package=flexsurv) package covers
+a large number of common parametric survival models and supports 
+multi-state models as well.
 
 
-## Paramter prior choice
+## Parameterization and prior classes
 
 Since both parameters are of interest, the reference prior for a Weibull 
-distribution is proportional to $1/(a b)$ (A note on non-informative priors for Weibull distributions).
-This corresponds to the measure-preserving determinant of the inverse 
-transformation
+distribution is proportional to $1/(a\, b)$ 
+(see, [A note on non-informative priors for Weibull distributions](https://doi.org/10.1016/S0378-3758(96)00155-3)).
+Any differentiable re-parameterization $g^{-1}:g(a,b)\mapsto (a,b)$ whose
+Jacobian's absolute determinant is $1/(a\,b)$ thus leads to an (improper)
+uniform reference prior via pull-back of the reference prior on $(a,b)$.
+The transformation given by
 
 $$
-(a, b) \mapsto \big(\log(a), \log(b) \big)
+g^{-1}(a, b) = \Bigg(\ \log\bigg(\ \underbrace{a \log(2)^{1/b}}_{\text{median}} \ \bigg),\ \log(b) \ \Bigg)
 $$
 
-hence, it corresponds to an improper uniform distribution on $\log(a)$ and
-$\log(b)$.
-
-A weakly alternative proper alternative is thus to place independent normal
-distributions on the log parameters or, equivalently, to use independent 
-log-normal priors on $a$ and $b$.
-Let 
+that transforms scale $a$ and shape $b$ to the log-median and log-shape has
+Jacobian
 
 $$
-g(x | \mu, \sigma) = \frac e^{-\frac {(\log(x) - \mu)^2} {2\sigma^2} } {x\sigma\sqrt{2\pi}}
+\begin{pmatrix}
+  \frac 1 a & - \frac{\log(\log(2))}{b^2} \\
+  0 & \frac 1 b
+\end{pmatrix}
 $$
 
-be the density of a log-normal distribution with parameters $\mu, \sigma$.
-The question is then how to chose the parameters in practice. 
-Due to the potentially large skew of a log-normal distribution it might be more
-intuitive to specify the mode of the distribution as 'typical' values 
-and a quantile, e.g., the $0.9$-quantile to indicate long transition times.
-The mode would thus be chosen as a somewhat feasible value or a 'best guess'
-and a relatively large $0.90$-quantile would indicate vagueness.
-Solving for the specified mode and standard deviation of the log-normal
-distribution then specified both $\mu$ and $\sigma$ uniquely.
+and thus determinant $1/(a\,b)$. 
+In this sense, the median and log-shape are a natural parameterization for the
+Weibull distribution since the reference and Jeffreys prior coincide to the
+(improper) uniform distribution on this parameter space.
+A practical benefit of using the median instead of the raw scale parameter is
+that it has a more direct interpretation for practitioners.
 
-```{r solving-for-mu-sigma}
-get_mu_sigma <- function(mean, sd, prob = 0.9) {
-  f <- function(x) {
-    mu <- x[1]
-    sigma <- x[2]
-    c(
-      exp(mu - sigma^2), # mode
-      qlnorm(prob, mu, sigma)
-    )
-  }
-  res <- optim(
-    c(1, 0.5),
-    function(x) sum((f(x) - c(mean, sd))^2),
-    lower = c(-Inf, 0.001),
-    method = "L-BFGS-B"
-  )
-  return(tibble(
-    mu = res$par[1],
-    sigma = res$par[2],
-    res = list(res)
-  ))
-}
-```
+To stabilize inference in settings with little data, it is often advisable to
+use weakly informative priors instead of completely non-informative ones.
+If one is only willing to specify the first two moments for a distribution on 
+$\mathbb{R}^2$, the normal distribution is the unique maximum entropy 
+distribution.
+Assuming independence of shape and median, this implies that log-normal priors
+on both shape and median are a natural weakly-informative class of priors for
+the Weibull distribution.
 
-If, for instance, a typical time from stable to response is around 3 months,
-a $0.9$-quantile of 10 times the mode leads to an fairly vague prior with heavy
-right tail.
+For the response probability $p$, a mixture prior consisting of a
+$\operatorname{Beta}(\alpha,\beta)$ component with weight $1-\eta$ and a 
+uniform component, $\operatorname{Beta}(1,1)$, with weight $\eta$ is suggested.
+
+
+
+## Choice of hyperparameters
+
+Instead of specifying mean and variance of the underlying normal distribution on
+the log median and log shape directly,
+the $0.05$ and $0.95$ quantiles of the median and shape can be elicited to cover
+a broad range of plausible values.
+These two constraints are then sufficient to identify the mean and variance
+parameters of the log-normal distribution.
+
+If, for instance, a typical time from stable to response is 2 to 6 months
+the corresponding log-normal prior for the median time-to-response would be:
 
 ```{r}
-res <- get_mu_sigma(5, 20)
+res <- oncomsm:::get_mu_sigma(2, 6)
 median_transition_time <- t
-ggplot(tibble(median_transition_time = median_transition_time, pdf = dlnorm(median_transition_time, res$mu, res$sigma)), aes(median_transition_time, pdf)) + geom_line()
-```
-
-While there will be typically at least some degree of information on the median
-time to transition,
-the choice of the prior on shape is much less obvious and a weakly informative
-prior centered at $1$ (neither increasing nor decreasing hazard is suggested as
-default.
-
-```{r}
-tmp <- 5
-res <- get_mu_sigma(1, tmp)
-shape <- seq(0, 5, length.out = 100)
-ggplot(tibble(shape = shape, pdf = dlnorm(shape, res$mu, res$sigma)), aes(shape, pdf)) + geom_line()
-```
-
-The following plot demonstrates the shape variety of the Weibull distributions
-for a fixed median of 6.
-
-```{r}
-#set.seed(251L)
 tibble(
-  b = rlnorm(50, get_mu_sigma(1, tmp)$mu, get_mu_sigma(1, tmp)$sigma),
+  median_transition_time = median_transition_time, 
+  pdf = dlnorm(median_transition_time, res$mu, res$sigma)
+) %>% 
+ggplot() + 
+  aes(median_transition_time, pdf) + 
+  geom_line()
+```
+
+The choice of the prior on the shape is more difficult since the shape parameter
+is almost unidentifiable from only a few data points per transition.
+To avoid convergence issues `oncomsm` uses a default of a point prior on $1$,
+i.e. an exponential model.
+If changes in the hazards over time are expected, it can make sense to
+relax the prior at the risk of divergent transitions during sampling.
+A small number of divergent transitions can usually be tolerated.
+In practice, it is always possible to reduce the prior variability post-hoc or
+(fine-tune the MCMC parameters to obtain stable inference)[https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions]. 
+
+A sensible default choice seems to be to chose the quantiles $\pm 0.2$ around $\log(1.2)$
+on the log scale, more variation allows extreme deviations in the shape that are 
+less likely to occur in practice.
+
+```{r}
+res <- oncomsm:::get_mu_sigma(0.98, 1.46) # exp(log(1.2) - 0.2), exp(log(1.2) + 0.2)
+shape <- seq(0, 5, length.out = 100)
+set.seed(251L)
+tibble(
+  b = rlnorm(100, res$mu, res$sigma),
   a = 6
 ) %>% 
 expand_grid(t = t) %>% 
@@ -187,20 +209,29 @@ ggplot() +
   geom_line(alpha = .2)
 ```
 
-To sample from the joint prior over the median time to response and shape,
-we first sample the shape parameter.
-For a given shape $b$, the median is $a \log(2)^{(1/b)}$ hence the mode and
-quantile of the log-normal distribution on the scale need to be divided by a 
-factor $\log(2)^{(1/b)}$.
+The resulting Weibull density is 
+
+```{r}
+tibble(shape = shape, pdf = dlnorm(shape, res$mu, res$sigma)) %>% 
+ggplot() + 
+  aes(shape, pdf) + 
+  geom_line()
+```
+
+Even with such a strong regularization, small samples might lead to a small 
+number divergent transitions during sampling from the posterior.
+This small number can be ignored or the prior can be chosen even narrower around a
+suspected shape parameters to avoid sampling issues completey.
+
+A sample from the joint prior then reflects the overall variability.
 
 ```{r}
 set.seed(251L)
 tibble(
-  b = rlnorm(20, get_mu_sigma(1, tmp)$mu, get_mu_sigma(1, tmp)$sigma),
+  b = rlnorm(100, oncomsm:::get_mu_sigma(0.98, 1.46)$mu, oncomsm:::get_mu_sigma(0.98, 1.46)$sigma),
   a = purrr::map_dbl(b, function(x) {
-      fct <- (log(2)^(1 / x))
-      res <- get_mu_sigma(3 / fct, 30 / fct)
-      rlnorm(1, res$mu, res$sigma)
+      res <- oncomsm:::get_mu_sigma(2, 6)
+      rlnorm(1, res$mu, res$sigma) / log(2)^(1 / x)
     }
   )
 ) %>% 
@@ -211,48 +242,5 @@ mutate(
 ) %>% 
 ggplot() + 
   aes(t, survival, group = label) +
-  geom_line()
+  geom_line(alpha = .2)
 ```
-
-```{r}
-mdl <- create_srp_model(
-  "A", 
-  0, 
-  .5, 
-  matrix(c(3, 3, 6), nrow = 1), 
-  matrix(c(.1, .1, .1), nrow = 1), 
-  c(1, 1, 1),
-  shape_mode = matrix(c(1, 1, 1), nrow = 1),
-  shape_90q = matrix(c(5, 5, 5), nrow = 1),
-  median_t_mode = matrix(c(3, 3, 6), nrow = 1),
-  median_t_90q = matrix(c(30, 30, 60), nrow = 1),
-  visit_spacing = c(.1, .1, .1),
-  p_mean = .5,
-  p_n = 20,
-  p_eta = .0
-)
-
-plot(mdl)
-
-sample_prior(mdl)
-tbl_prior_predictive <- sample_predictive(mdl, 1e3)
-
-tbl_prior_predictive %>%
-      distinct(subject_id, iter, state, .keep_all = TRUE) %>%
-      group_by(iter, group_id, subject_id) %>%
-      summarize(
-        dt = t - lag(t),
-        from = lag(state),
-        to = state,
-        .groups = "drop"
-      ) %>%
-      filter(to != "stable") %>%
-      group_by(group_id, from, to) %>%
-      summarize(
-        median = median(dt),
-        .groups = "drop"
-      )
-
-```
-
-

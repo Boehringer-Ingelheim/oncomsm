@@ -43,9 +43,9 @@ get_mu_sigma <- function(q05, q95) {
   f <- function(x) {
     mu <- x[1]
     sigma <- x[2]
-    qlnorm(c(0.05, 0.95), mu, sigma)
+    stats::qlnorm(c(0.05, 0.95), mu, sigma)
   }
-  res <- optim(
+  res <- stats::optim(
     c(1, 0.5),
     function(x) sum((f(x) - c(q05, q95))^2),
     lower = c(-Inf, 0.001),

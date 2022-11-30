@@ -30,7 +30,7 @@ library(ggplot2)
 
 **tl;dr:** *The multi-state characteristics of RECIST-like visit data
 in oncology can be exploited to reduce bias at interim analyses of objective
-response rate and drive event prediction for probability of success 
+response rate and drive event prediction for probability of success/go 
 calculations.*
 
 In early oncology trials, (objective tumor) response based on the RECIST
