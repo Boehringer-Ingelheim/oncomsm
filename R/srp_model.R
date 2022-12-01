@@ -29,9 +29,9 @@
 #' list-like structure; visit_spacing and recruitment_rate are accessible as
 #' attributes.
 #'
-#' @name srp_model
+#' @name model
 #' @export
-srp_group_prior <- function(
+group_prior <- function(
   p_mean = 0.5,
   p_n = 3,
   p_eta = 0.0,
@@ -57,7 +57,7 @@ srp_group_prior <- function(
     as.list(environment()),
     visit_spacing = visit_spacing,
     recruitment_rate = recruitment_rate,
-    class = "srp_group_prior"
+    class = "group_prior"
   )
   return(res)
 }
@@ -80,9 +80,9 @@ srp_group_prior <- function(
 #' prior parameters for the response probability, the median transition times,
 #' and the shape of the transition time distribution (Weibull)
 #'
-#' @name srp_model
+#' @name model
 #' @export
-create_srp_model <- function(
+create_model <- function(
   ...,
   maximal_time = 10 * 12
 ) {
@@ -130,7 +130,7 @@ create_srp_model <- function(
         p = p, median_t = median_t, shape = shape
       )
     ),
-    class = c("srp_model", "Model", "list"),
+    class = c("model", "list"),
     parameter_names = c("p", "median_t", "shape", "scale")
   )
   check_valid(res)
@@ -141,38 +141,17 @@ create_srp_model <- function(
 
 #' @param x SRP model to format
 #' @template param-dotdotdot
-#' @rdname srp_model
+#' @rdname model
 #' @export
-format.srp_model <- function(x, ...) {
-  sprintf("srp_model<%s>", paste(x$group_id, collapse = ","))
+format.model <- function(x, ...) {
+  sprintf("model<%s>", paste(x$group_id, collapse = ","))
 }
 
 
-check_valid.srp_model <- function(model) { # nolint # nocov start
-  checkmate::assert_character(model$group_id)
-  group_ids <- model$group_id
-  k <- length(group_ids)
-  if (model$maximal_time <= 0) stop("maximal time must be positive")
-  checkmate::assert_vector(model$visit_spacing, len = k)
-  if (any(model$visit_spacing <= 0)) stop("visit spacing must be positive")
-  checkmate::assert_vector(model$recruitment_rate, len = k)
-  if (any(model$recruitment_rate <= 0)) stop("recruitment rate must be positive")
-  checkmate::assert_class(model$stan_model, "stanmodel")
-  checkmate::assert_true(all(model$prior$p[, "mean"] > 0))
-  checkmate::assert_true(all(model$prior$p[, "n"] > 0))
-  checkmate::assert_true(all(model$prior$p[, "min"] < model$prior$p[, "mean"]))
-  checkmate::assert_true(all(model$prior$p[, "mean"] < model$prior$p[, "max"]))
-  checkmate::assert_true(all(model$prior$median_t[, , "q05"] > 0))
-  checkmate::assert_true(all(model$prior$median_t[, , "q05"] <
-                               model$prior$median_t[, , "q95"]))
-  checkmate::assert_true(all(model$prior$shape[, , "q05"] > 0))
-  checkmate::assert_true(all(model$prior$shape[, , "q05"] <
-                               model$prior$shape[, , "q95"]))
-  return(TRUE)
-} # nocov end
+
 
 # see Model.R
-.impute.srp_model <- function(model, data, nsim, parameter_sample = NULL, # nolint
+.impute.model <- function(model, data, nsim, parameter_sample = NULL, # nolint
                               seed = NULL, p = NULL, shape = NULL,
                               scale = NULL, as_mstate = FALSE, ...) {
   if (!is.null(seed)) {
@@ -258,7 +237,7 @@ check_valid.srp_model <- function(model) { # nolint # nocov start
 
 
 # helper to create empty standata for model
-.nodata.srp_model <- function(model) { # nolint
+.nodata.model <- function(model) { # nolint
   tibble(
     subject_id = integer(),
     group_id = integer(),
@@ -273,7 +252,7 @@ check_valid.srp_model <- function(model) { # nolint # nocov start
 
 
 # helper to create all-missing standata for model
-.emptydata.srp_model <- function(model, n_per_group, seed = NULL) { # nolint
+.emptydata.model <- function(model, n_per_group, seed = NULL) { # nolint
   if (!is.null(seed)) {
     set.seed(seed) # nocov
   }
@@ -300,7 +279,7 @@ check_valid.srp_model <- function(model) { # nolint # nocov start
 
 
 # convert time to event data to stan data list
-data2standata.srp_model <- function(data, model) { # nolint
+data2standata.model <- function(data, model) { # nolint
   # first prepare any data (if available)
   lst_stan_data <- data %>%
     mutate(
@@ -367,7 +346,7 @@ data2standata.srp_model <- function(data, model) { # nolint
 
 #' @importFrom stringr str_extract
 #' @export
-parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
+parameter_sample_to_tibble.model <- function(model, sample, ...) { # nolint
   stopifnot(isa(sample, "stanfit"))
   as.matrix(sample) %>%
     as_tibble() %>%
@@ -395,9 +374,9 @@ parameter_sample_to_tibble.srp_model <- function(model, sample, ...) { # nolint
 
 
 #' @inheritParams visits_to_mstate
-#' @name srp_model
+#' @name model
 #' @export
-visits_to_mstate.srp_model <- function(tbl_visits, model, # nolint
+visits_to_mstate.model <- function(tbl_visits, model, # nolint
                                        now = max(tbl_visits$t),
                                        eof_indicator = "EOF") {
   # make sure everything is sorted
@@ -483,9 +462,9 @@ visits_to_mstate.srp_model <- function(tbl_visits, model, # nolint
 #' @inheritParams compute_pfs
 #' @template param-warmup
 #'
-#' @rdname srp_model
+#' @rdname model
 #' @export
-compute_pfs.srp_model <- function( # nolint
+compute_pfs.model <- function( # nolint
   model,
   t,
   parameter_sample = NULL,

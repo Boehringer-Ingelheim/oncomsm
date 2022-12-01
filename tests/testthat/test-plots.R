@@ -1,12 +1,12 @@
 # plot() =======================================================================
 test_that("default plotting works as intended", {
-  mdl <- create_srp_model(
-    A = srp_group_prior(
+  mdl <- create_model(
+    A = group_prior(
       p_n = 10,
       median_t_q05 = c(1, 1, 3), median_t_q95 = c(3, 6, 12),
       shape_q05 = c(0.5, 3, 3), shape_q95 = c(1, 5, 5)
     ),
-    B = srp_group_prior(
+    B = group_prior(
       p_mean = 0.75, p_n = 25, p_eta = 0.3
     )
   )
@@ -19,8 +19,8 @@ test_that("default plotting works as intended", {
   plt <- plot(mdl, parameter_sample = smpl, confidence = 0.9, dt_n_grid = 5)
   vdiffr::expect_doppelganger("plot.srp_model_1", plt)
 
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   # smpl <- sample_prior(mdl, seed = 1414322, nsim = 500L) # nolint
   # saveRDS(smpl, file = "inst/testthat/prior_smpl_plotting_2.rds", version = 3) # nolint
@@ -42,8 +42,8 @@ test_that("default plotting works as intended", {
 # plot_mstate() ================================================================
 test_that("can plot mstate data for SRP model", {
   # one group
-  mdl <- create_srp_model(
-    `1` = srp_group_prior()
+  mdl <- create_model(
+    `1` = group_prior()
   )
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id, ~t, ~state,
@@ -64,9 +64,9 @@ test_that("can plot mstate data for SRP model", {
   plt <- plot_mstate(tbl_mstate, mdl, relative_to_sot = FALSE)
   vdiffr::expect_doppelganger("plot_mstate.srp_model_1", plt)
   # two groups
-  mdl <- create_srp_model(
-    `1` = srp_group_prior(),
-    `2` = srp_group_prior()
+  mdl <- create_model(
+    `1` = group_prior(),
+    `2` = group_prior()
   )
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id, ~t, ~state,

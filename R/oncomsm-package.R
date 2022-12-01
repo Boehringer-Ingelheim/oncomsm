@@ -1,10 +1,9 @@
-#' The oncomsm package.
+#' The oncomsm package
 #'
 #' @description This package implements methods to dynamically predict response
 #' and progression of individuals in early oncology trials using parametric
 #' multi-state models and Bayesian inference.
 #' This allows the dynamic computation of Probability of Success for a wide
-#' range of success criteria.
 #' The inference is implemented using stan.
 #'
 #' @docType package
@@ -14,6 +13,7 @@
 #' @import methods
 #' @import Rcpp
 #' @import dplyr
+#' @import purrr
 #' @import RcppNumerical
 #' @importFrom rstan sampling
 #' @importFrom rlang .data

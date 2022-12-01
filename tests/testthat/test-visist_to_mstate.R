@@ -1,6 +1,6 @@
 test_that("visits to mstate conversion works", {
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   # base case
   tbl_visits <- tibble::tribble(

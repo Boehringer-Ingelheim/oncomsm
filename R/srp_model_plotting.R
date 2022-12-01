@@ -1,7 +1,7 @@
 #' @inheritParams plot_mstate
-#' @name srp_model
+#' @name model
 #' @export
-plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # nolint
+plot_mstate.model <- function(data, model, now = max(tbl_mstate$t_max), # nolint
                                   relative_to_sot = TRUE, ...) {
   starting_state <- model$states[1]
   tbl_mstate <- data %>%
@@ -134,9 +134,9 @@ plot_mstate.srp_model <- function(data, model, now = max(tbl_mstate$t_max), # no
 #' @param confidence numeric in (0, 1) confidence level for point-wise
 #' confidence bands around mean; none plotted if NULL.
 #'
-#' @rdname srp_model
+#' @rdname model
 #' @export
-plot_transition_times.srp_model <- function(model, # nolint
+plot_transition_times.model <- function(model, # nolint
                                             parameter_sample = NULL,
                                             seed = 42L,
                                             nsim = 500L,
@@ -232,9 +232,9 @@ plot_transition_times.srp_model <- function(model, # nolint
 #' @template param-nsim
 #' @template param-warmup
 #'
-#' @rdname srp_model
+#' @rdname model
 #' @export
-plot_response_probability.srp_model <- function(model, # nolint
+plot_response_probability.model <- function(model, # nolint
                                                 parameter_sample = NULL,
                                                 seed = 42L,
                                                 nsim = 500L,
@@ -283,9 +283,9 @@ plot_response_probability.srp_model <- function(model, # nolint
 #' @param confidence numeric in (0, 1) confidence level for point-wise
 #' confidence bands around mean; none plotted if NULL.
 #'
-#' @rdname srp_model
+#' @rdname model
 #' @export
-plot_pfs.srp_model <- function(model, # nolint
+plot_pfs.model <- function(model, # nolint
                                parameter_sample = NULL,
                                seed = 42L,
                                nsim = 500L,
@@ -360,9 +360,9 @@ plot_pfs.srp_model <- function(model, # nolint
 #' @param confidence numeric in (0, 1) confidence level for point-wise
 #' confidence bands around mean; none plotted if NULL.
 #'
-#' @rdname srp_model
+#' @rdname model
 #' @export
-plot.srp_model <- function(x,
+plot.model <- function(x,
                            parameter_sample = NULL,
                            seed = 42L,
                            nsim = 500L,

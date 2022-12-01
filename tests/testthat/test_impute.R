@@ -1,10 +1,12 @@
 test_that("impute remainder of trial from interim data", {
-  mdl <- create_srp_model(
-    A = srp_group_prior(),
-    B = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior(),
+    B = group_prior()
   )
   # sample some data
-  tbl_data1 <- sample_predictive(mdl, c(20, 20),
+  tbl_data1 <- sample_predictive(
+    mdl,
+    c(20, 20),
     nsim = 1, seed = 43L,
     nsim_parameters = 1500L
   )
@@ -20,8 +22,8 @@ test_that("impute remainder of trial from interim data", {
 
 
 test_that("impute remainder of trial from interim data, no new individuals", {
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   # sample some data and reduce to first visits
   tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
@@ -42,8 +44,8 @@ test_that("impute remainder of trial from interim data, no new individuals", {
 
 
 test_that("impute remainder, without adding subjects", {
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   # sample some data and reduce to first visits
   tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
@@ -64,8 +66,8 @@ test_that("impute remainder, without adding subjects", {
 
 
 test_that("impute to mstate works", {
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   # sample some data and reduce to first visits
   tbl_data <- sample_predictive(mdl, 10, nsim = 1, seed = 55L,
@@ -78,8 +80,8 @@ test_that("impute to mstate works", {
 
 
 test_that("impute throws correct errors", {
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   # create some data in wrong format
   tbl_data <- tribble(
@@ -118,8 +120,8 @@ test_that("impute throws correct errors", {
 
 
 test_that("impute from 'response' works", {
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   tbl_data <- tribble(
     ~subject_id, ~group_id, ~t,     ~state,

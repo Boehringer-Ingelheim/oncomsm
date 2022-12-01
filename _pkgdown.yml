@@ -42,7 +42,4 @@ reference:
   - simulate_decision_rule
 - title: "Stable-Response-Progression model"
   contents:
-  - srp_model
-- title: "Abstract model interface"
-  contents:
-  - Model
+  - model

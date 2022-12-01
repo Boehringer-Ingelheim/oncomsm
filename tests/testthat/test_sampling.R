@@ -1,8 +1,8 @@
 test_that("Testing that fixed seed works", {
-  mdl <- create_srp_model(
-    A = srp_group_prior(),
-    B = srp_group_prior(),
-    C = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior(),
+    B = group_prior(),
+    C = group_prior()
   )
   smpl_prior1 <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl1 <- sample_predictive(mdl,
@@ -45,8 +45,8 @@ test_that("Testing marginal calibration of sampling from the prior", {
   # To minimize this effect, a shape > 1, small visit interval, and long
   # time from response->progression is used
   eps <- 0.01
-  mdl <- create_srp_model(
-    A = srp_group_prior(
+  mdl <- create_model(
+    A = group_prior(
         p_mean = 0.5,
         p_n = 1e2,
         median_t_q05 = c(4, 6, 12) - eps,
@@ -110,12 +110,12 @@ test_that("Testing marginal calibration of sampling from the prior", {
     abs(estimated_mean - theoretical_mean) <= 3 * se
   )))
   # check for two groups ------------------------------------------------------
-  mdl <- create_srp_model(
-    A = srp_group_prior(
+  mdl <- create_model(
+    A = group_prior(
       p_mean = 0.33, p_n = 1e2,
       visit_spacing = 0.1
     ),
-    B = srp_group_prior(
+    B = group_prior(
       p_mean = 0.8, p_n = 1e2,
       visit_spacing = 0.1
     ),
@@ -150,8 +150,8 @@ test_that("Testing marginal calibration of sampling from the prior", {
     } # nolint
   expect_true(res_test$p.value >= 0.01)
   # Testing marginal calibration of sampling from the fixed shape & scale -----
-  mdl <- create_srp_model(
-    A = srp_group_prior(
+  mdl <- create_model(
+    A = group_prior(
         p_mean = 0.5, p_n = 1e2,
         median_t_q05 = c(4, 6, 12) - eps,
         median_t_q95 = c(4, 6, 12) + eps,
@@ -222,8 +222,8 @@ test_that("Testing marginal calibration of sampling from the prior", {
 
 
 test_that("Testing if a single indivdual can be sampled only once in a group", { # nolint
-  mdl <- create_srp_model(
-    A = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior()
   )
   smpl_prior <- sample_prior(mdl, seed = 36L)
   tbl <- sample_predictive(mdl,
@@ -236,9 +236,9 @@ test_that("Testing if a single indivdual can be sampled only once in a group", {
 
 
 test_that("Testing sampling multiple individuals", {
-  mdl <- create_srp_model(
-    A = srp_group_prior(),
-    B = srp_group_prior()
+  mdl <- create_model(
+    A = group_prior(),
+    B = group_prior()
   )
   smpl_prior <- sample_prior(mdl, seed = 36L)
   tbl <- sample_predictive(mdl,
@@ -256,9 +256,9 @@ test_that("Testing sampling multiple individuals", {
 
 
 test_that("posterior shifts as expected", {
-  mdl <- create_srp_model(
-    A = srp_group_prior(p_n = 5, p_eta = .1),
-    B = srp_group_prior(p_n = 5, p_eta = .1)
+  mdl <- create_model(
+    A = group_prior(p_n = 5, p_eta = .1),
+    B = group_prior(p_n = 5, p_eta = .1)
   )
   tbl_data <- sample_predictive(
     mdl,

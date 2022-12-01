@@ -1,127 +1,20 @@
-#' An abstract multi-state model class
-#'
-#' This is abstract class defining a standard set of methods for any implemented
-#' multi-state model.
-#' Objects of class 'Model' cannot be instantiated directly, only objects of
-#' the respective sub-classes can be.
-#'
-#' @seealso [srp_model]
-#'
-#' @name Model
-NULL
-
-
-#' @param x Model to format
-#' @template param-dotdotdot
-#' @rdname Model
-#' @export
-format.Model <- function(x, ...) class(x)[1] # nocov
-
 #' @param x Model to print
 #' @template param-dotdotdot
-#' @rdname Model
+#' @rdname model
 #' @export
-print.Model <- function(x, ...) cat(format(x, ...), "\n") # nocov
-
-# Checks for internal consistency of object "Model"
-# Returns TRUE if consistent, otherwise throws an error
-check_valid <- function(model) {
-  UseMethod("check_valid")
-}
-
-check_valid.Model <- function(model) {
-  stop("not implemented") # nocov
-}
-
-#' Sample model prior parameters
-#'
-#' Sample model parameters from the model prior distribution.
-#'
-#' @template param-model
-#' @template param-nsim
-#' @template param-seed
-#' @template param-dotdotdot
-#'
-#' @return a rstanfit object with the sampled prior parameters
-#'
-#' @seealso [parameter_sample_to_tibble()]
-#'
-#' @export
-sample_prior <- function(model, nsim, seed, ...) {
-  UseMethod("sample_prior")
-}
-
-#' @inheritParams sample_prior
-#' @template param-warmup
-#' @template param-pars
-#' @template param-nuts_control
-#'
-#' @rdname Model
-#' @export
-sample_prior.Model <- function(
-  model,
-  nsim = 2000L,
-  seed = NULL,
-  warmup = 500L,
-  pars = attr(model, "parameter_names"),
-  nuts_control = list(),
-  ...
-) {
-  res <- .sample(
-    model, data = NULL,
-    warmup = warmup, nsim = nsim, seed = seed, pars = pars,
-    nuts_control = nuts_control, ...
-  )
-  return(res)
-}
+print.model <- function(x, ...) cat(format(x, ...), "\n") # nocov
 
 
 
 
 
-#' Sample model posterior parameters
-#'
-#' Posterior sample model of the parameters conditional on a data set.
-#'
-#' @template param-model
-#' @template param-data-condition
-#' @template param-nsim
-#' @template param-seed
-#' @template param-dotdotdot
-#'
-#' @return A rstanfit object with posterior samples.
-#'
-#' @seealso [parameter_sample_to_tibble()]
-#'
-#' @export
-sample_posterior <- function(model, data, nsim, seed, ...) {
-  UseMethod("sample_posterior")
-}
 
-#' @inheritParams sample_posterior
-#' @template param-warmup
-#' @template param-nuts_control
-#' @template param-pars
-#'
-#' @rdname Model
-#' @export
-sample_posterior.Model <- function(
-  model,
-  data,
-  nsim = 2000L,
-  seed = NULL,
-  warmup = 500L,
-  nuts_control = list(),
-  pars = attr(model, "parameter_names"),
-  ...
-) {
-  res <- .sample(
-    model, data = data,
-    warmup = warmup, nsim = nsim, seed = seed, pars = pars,
-    nuts_control = nuts_control, ...
-  )
-  return(res)
-}
+
+
+
+
+
+
 
 
 
@@ -149,9 +42,9 @@ sample_predictive <- function(model, n_per_group, sample, nsim, seed, ...) {
 #' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
 #' @template param-nuts_control
 #'
-#' @rdname Model
+#' @rdname model
 #' @export
-sample_predictive.Model <- function(
+sample_predictive.model <- function(
   model,
   n_per_group,
   sample = NULL,
@@ -209,9 +102,9 @@ impute <- function(model, data, nsim, n_per_group, now, seed, ...) {
 #' @template param-warmup_parameters
 #' @template param-nuts_control
 #'
-#' @rdname Model
+#' @rdname model
 #' @export
-impute.Model <- function(
+impute.model <- function(
   model,
   data,
   nsim,
@@ -303,7 +196,7 @@ impute.Model <- function(
 }
 
 # sample from stan model (hidden)
-.sample.Model <- function( # nolint
+.sample.model <- function( # nolint
   model,
   data = NULL,
   now = NULL,
@@ -359,14 +252,6 @@ parameter_sample_to_tibble <- function(model, sample, ...) {
   UseMethod("parameter_sample_to_tibble")
 }
 
-#' @inheritParams parameter_sample_to_tibble
-#' @rdname Model
-#' @export
-parameter_sample_to_tibble.Model <- function(model, sample, ...) {
-  stop("not implemented") # nocov
-}
-
-
 
 
 
@@ -375,10 +260,6 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
   UseMethod(".nodata")
 }
 
-# helper to create empty standata for model
-.nodata.Model <- function(model) { # nolint
-  stop("not implemented") # nocov
-}
 
 
 
@@ -389,12 +270,6 @@ parameter_sample_to_tibble.Model <- function(model, sample, ...) {
   UseMethod(".emptydata")
 }
 
-# helper to create all-missing standata for model
-.emptydata.Model <- function(model, n_per_group, seed = NULL) { #nolint
-  stop("not implemented") # nocov
-}
-
-
 
 
 
@@ -403,10 +278,6 @@ data2standata <- function(data, model, ...) {
   UseMethod("data2standata", model)
 }
 
-# convert time to event data to stan data list
-data2standata.Model <- function(data, model) {
-  stop("not implemented") # nocov
-}
 
 
 
@@ -421,12 +292,6 @@ plot_transition_times <- function(model, parameter_sample, ...) {
   UseMethod("plot_transition_times")
 }
 
-#' @inheritParams plot_transition_times
-#' @rdname Model
-#' @export
-plot_transition_times.Model <- function(model, parameter_sample, ...) {
-  stop("not implemented") # nocov
-}
 
 
 
@@ -441,12 +306,6 @@ plot_response_probability <- function(model, parameter_sample, ...) {
   UseMethod("plot_response_probability")
 }
 
-#' @inheritParams plot_response_probability
-#' @rdname Model
-#' @export
-plot_response_probability.Model <- function(model, parameter_sample, ...) {
-  stop("not implemented") # nocov
-}
 
 
 
@@ -461,14 +320,6 @@ plot_pfs <- function(model, parameter_sample, ...) {
   UseMethod("plot_pfs")
 }
 
-#' @inheritParams plot_pfs
-#' @rdname Model
-#' @export
-plot_pfs.Model <- function(model, parameter_sample, ...) {
-  stop("not implemented") # nocov
-}
-
-
 
 #' Swimmer-like plot of multi-state data
 #'
@@ -482,13 +333,6 @@ plot_pfs.Model <- function(model, parameter_sample, ...) {
 #' @export
 plot_mstate <- function(data, model, now, relative_to_sot, ...) {
   UseMethod("plot_mstate", object = model)
-}
-
-#' @inheritParams plot_mstate
-#' @name Model
-#' @export
-plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
-  stop("not implemented") # nocov
 }
 
 
@@ -510,14 +354,6 @@ plot_mstate.Model <- function(data, model, now, relative_to_sot, ...) {
 #' @export
 compute_pfs <- function(model, t, parameter_sample, ...) {
   UseMethod("compute_pfs")
-}
-
-#' @inheritParams compute_pfs
-#'
-#' @rdname Model
-#' @export
-compute_pfs.Model <- function(model, t, parameter_sample, ...) {
-  stop("not implemented") # nocov
 }
 
 
@@ -550,10 +386,3 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
   UseMethod("visits_to_mstate", object = model)
 }
 
-#' @inheritParams visits_to_mstate
-#' @rdname Model
-#' @export
-visits_to_mstate.Model <- function(tbl_visits, model, now = max(tbl_visits$t),
-                                   eof_indicator = "EOF") {
-  stop("not implemented") # nocov
-}

@@ -1,4 +1,11 @@
-#' Simulate a custom decision rule
+#' Simulate results under a custom decision rule
+#'
+#' @description `simulate_decision_rule()` simulates from the prior or posterior
+#' predictive distribution of a model and applies a custom decision rule to each
+#' simulated data set.
+#'
+#' @details The sampling is implementing using `furrr::future_map()` and thus
+#' supports parallel execution when specifying a `future::plan()`.
 #'
 #' @param model model to use for sampling
 #' @param decision_rule a function with signature `rule(mdl, data, ...)`
@@ -14,6 +21,15 @@
 #' @return A data frame with columns `iter` (the resample index) and any columns
 #' returned by `decision_rule` applied to each of the `nsim` datasets sampled
 #' from the predictive distribution.
+#'
+#' @examples
+#' mdl <- create_srp_model(A = srp_group_prior())
+#' rule <- function(model, data) {
+#'   tibble::tibble(decision = sample(c(0,1), 1))
+#' }
+#' simulate_decision_rule(mdl, 5, rule, nsim = 3)
+#'
+#' @import furrr
 #'
 #' @export
 simulate_decision_rule <- function(model,
@@ -48,7 +64,7 @@ simulate_decision_rule <- function(model,
     transmute(
       iter,
       res = furrr::future_map(
-        data, ~decision_rule(model, data = .),
+        data, function(data) decision_rule(model, data = data),
         .options = furrr::furrr_options(seed = TRUE)
       )
     ) %>%
