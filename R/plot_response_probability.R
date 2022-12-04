@@ -18,6 +18,7 @@ plot_response_probability <- function(model, parameter_sample, ...) {
 #' @template param-seed
 #' @template param-nsim
 #' @template param-warmup
+#' @template param-nuts_control
 #'
 #' @return a [ggplot2::ggplot] object
 #'

@@ -30,6 +30,9 @@ plot_response_probability(model, parameter_sample, ...)
 
 \item{warmup}{integer, number of warm-up samples for the MCMC sampler
 before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
+
+\item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
+argument in\code{\link[rstan:stan]{rstan::stan()}}}
 }
 \value{
 a \link[ggplot2:ggplot]{ggplot2::ggplot} object

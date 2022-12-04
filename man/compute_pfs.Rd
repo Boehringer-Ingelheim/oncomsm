@@ -28,6 +28,10 @@ compute_pfs(model, t, parameter_sample, ...)
 
 \item{warmup}{integer, number of warm-up samples for the MCMC sampler
 before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
+
+\item{nsim}{integer, number of samples to draw}
+
+\item{seed}{integer, fixed random seed; NULL for no fixed seed}
 }
 \value{
 a data frame with samples of PFS rates at each of the time points

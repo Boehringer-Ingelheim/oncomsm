@@ -18,6 +18,7 @@ plot_pfs <- function(model, parameter_sample, ...) {
 #' @template param-nsim
 #' @template param-warmup
 #' @template param-dt-params
+#' @template param-nuts_control
 #' @param confidence numeric in (0, 1) confidence level for point-wise
 #' confidence bands around mean; none plotted if NULL.
 #'

@@ -36,6 +36,9 @@ plot_pfs(model, parameter_sample, ...)
 \item{warmup}{integer, number of warm-up samples for the MCMC sampler
 before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
 
+\item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
+argument in\code{\link[rstan:stan]{rstan::stan()}}}
+
 \item{dt_interval}{numeric vector of length two with minimal and maximal
 time (relative to individual first visit) to use for plotting}
 

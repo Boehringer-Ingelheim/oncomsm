@@ -19,6 +19,8 @@ compute_pfs <- function(model, t, parameter_sample, ...) {
 
 
 #' @template param-warmup
+#' @template param-nsim
+#' @template param-seed
 #'
 #' @examples
 #' mdl <- create_model(A = group_prior())
