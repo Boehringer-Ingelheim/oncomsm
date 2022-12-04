@@ -19,35 +19,52 @@ sample_posterior(model, data, nsim, seed, ...)
 )
 }
 \arguments{
-\item{model}{a model of class "Model"}
+\item{model}{an object of class \link{model} containing prior information}
 
-\item{data}{a data frame with variables "subject_id", "group_id", "t_recruitment", "dt1" and "dt2"
-where dt1 is the minimal and dt2 the maximal time to the event in question.
-If both are Inf, the individual has not and will never experience the event.
-If dt1 < Inf but dt2 == Inf the individual is still at risk.
-"t_recruitment", "dt1" and "dt2" can also be missing if individual is not yet recruited.}
+\item{data}{a data frame with variables
+\verb{subject_id<chr>} (subject identifier),
+\verb{group_id<chr>} (group identifier),
+\verb{t<dbl>} (time of visit, relative to first visit in study),
+\verb{state<chr>} (state recorded at visit).
+Allowed states are "stable", "response", "progression" (or death),
+and "EOF" (end of follow-up).
+The EOF state marks the end of an individual's follow-up before the absorbing
+state "progression".}
 
-\item{nsim}{number of samples to draw}
+\item{nsim}{integer, number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
 \item{...}{further arguments passed to method implementations}
 
-\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.}
+\item{warmup}{integer, number of warm-up samples for the MCMC sampler
+before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
 
-\item{nuts_control}{control parameters for NUTS algorithm see \code{\link[rstan:stan]{rstan::stan()}}}
+\item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
+argument in\code{\link[rstan:stan]{rstan::stan()}}}
 
-\item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
+\item{pars}{character vector of parameter names to sample}
 }
 \value{
-A rstanfit object with posterior samples.
+A \link[rstan:stanfit-class]{rstan::stanfit} object with posterior samples.
 }
 \description{
 \code{sample_posterior()} draws samples from the
 posterior distribution of the specified model given a data set with
-visit data
+visit data.
+}
+\examples{
+mdl <- create_model(A = group_prior())
+tbl <- tibble::tibble(
+  subject_id = c("A1", "A1"),
+  group_id = c("A", "A"),
+  t = c(0, 1.5),
+  state = c("stable", "response")
+)
+sample_posterior(mdl, tbl, 500L, 42L)
+
 }
 \seealso{
-\code{\link[=parameter_sample_to_tibble]{parameter_sample_to_tibble()}}
+\code{\link[rstan:stan]{rstan::stan()}} \code{\link[=parameter_sample_to_tibble]{parameter_sample_to_tibble()}} \code{\link[=sample_prior]{sample_prior()}}
+\code{\link[=sample_predictive]{sample_predictive()}} \code{\link[=impute]{impute()}}
 }

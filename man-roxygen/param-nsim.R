@@ -1,1 +1,1 @@
-#' @param nsim number of samples to draw
+#' @param nsim integer, number of samples to draw

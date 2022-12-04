@@ -18,33 +18,35 @@ sample_prior(model, nsim, seed, ...)
 )
 }
 \arguments{
-\item{model}{a model of class "Model"}
+\item{model}{an object of class \link{model} containing prior information}
 
-\item{nsim}{number of samples to draw}
+\item{nsim}{integer, number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
 \item{...}{further arguments passed to method implementations}
 
-\item{warmup}{integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-tune the hyperparameters of the MCMC algorithm.}
+\item{warmup}{integer, number of warm-up samples for the MCMC sampler
+before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
 
-\item{pars}{character vector of parameter names to sample; resorting to model defaults if NULL}
+\item{pars}{character vector of parameter names to sample}
 
-\item{nuts_control}{control parameters for NUTS algorithm see \code{\link[rstan:stan]{rstan::stan()}}}
+\item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
+argument in\code{\link[rstan:stan]{rstan::stan()}}}
 }
 \value{
-A rstanfit object with sampled prior parameters.
+A \link[rstan:stanfit-class]{rstan::stanfit} object with sampled prior parameters.
 }
 \description{
 \code{sample_prior()} draws samples from the
-prior distribution of the specified model.
+prior distribution of the specified model object.
 }
 \examples{
-mdl <- create_srp_model(A = srp_group_prior())
+mdl <- create_model(A = group_prior())
 sample_prior(mdl, 1000L, seed = 42L)
 
 }
 \seealso{
-\code{\link[=parameter_sample_to_tibble]{parameter_sample_to_tibble()}}
+\code{\link[rstan:stan]{rstan::stan()}} \code{\link[=parameter_sample_to_tibble]{parameter_sample_to_tibble()}} \code{\link[=sample_posterior]{sample_posterior()}}
+\code{\link[=sample_predictive]{sample_predictive()}} \code{\link[=impute]{impute()}}
 }

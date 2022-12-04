@@ -43,3 +43,4 @@ reference:
 - title: "Stable-Response-Progression model"
   contents:
   - model
+  - plot.model

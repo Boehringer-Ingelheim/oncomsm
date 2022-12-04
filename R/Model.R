@@ -1,193 +1,288 @@
+#' A stable-response-progression model
+#'
+#' `create_model()` takes one or more prior-specifications for an
+#' SRP multi-state model and combines them into a single model object.
+#' Groups are still treated as independent.
+#'
+#' `group_prior()` specifies a prior distribution for a
+#' three state model (stable, response, progression) for
+#' a single group.
+#'
+#' @name model
+NULL
+
+#' @param p_mean numeric, mean of the beta prior for the response probability
+#' @param p_n numeric, beta prior equivalent sample size (a + b)
+#' @param p_eta numeric, robustification parameter for beta prior; actual
+#' prior is (1 - eta) beta + eta; i.e., eta is the non-informative weight.
+#' @param p_min numeric, minimal response probability
+#' @param p_max numeric, maximal response probability
+#' @param median_t_q05 numeric of length three,
+#' 5% quantiles of the log-normal distributions for the
+#' median time-to-next-event for the three transitions s->r, s->p, r->p.
+#' @param median_t_q95 numeric of length three,
+#' 95% quantiles of the log-normal distributions for the
+#' median time-to-next-event for the three transitions s->r, s->p, r->p.
+#' @param shape_q05 numeric of length three,
+#' 5% quantiles of the log-normal distributions for the shapes of the
+#' time-to-next-event distributions for the three transitions s->r, s->p, r->p.
+#' @param shape_q95 numeric of length three,
+#' 95% quantiles of the log-normal distributions for the shapes of the
+#' time-to-next-event distributions for the three transitions s->r, s->p, r->p.
+#' @param visit_spacing numeric, fixed duration between visits
+#' @param recruitment_rate numeric, constant recruitment rate
+#'
+#' @examples
+#' # a model with prior 25% response rate and variance equivalent to
+#' # 10 data points (i.e. a Beta(2.5, 7.5) distribution).
+#' grp <- group_prior(p_mean = 0.25, p_n = 10)
+#'
+#' @rdname model
+#' @export
+group_prior <- function(
+  p_mean = 0.5,
+  p_n = 3,
+  p_eta = 0.0,
+  p_min = 0.0,
+  p_max = 1.0,
+  median_t_q05 = c(1, 1, 3),
+  median_t_q95 = c(12, 12, 24),
+  shape_q05 = rep(0.99, 3),
+  shape_q95 = rep(1.01, 3),
+  visit_spacing = 1, # months
+  recruitment_rate = 1
+) {
+  checkmate::assert_vector(median_t_q05, len = 3, any.missing = FALSE)
+  checkmate::assert_vector(median_t_q95, len = 3, any.missing = FALSE)
+  checkmate::assert_vector(shape_q05, len = 3, any.missing = FALSE)
+  checkmate::assert_vector(shape_q95, len = 3, any.missing = FALSE)
+  if (visit_spacing <= 0) stop("visit spacing must be positive") # nocov
+  if (recruitment_rate <= 0) stop("recruitment_rate must be positive") # nocov
+  params <- as.list(environment())
+  params$visit_spacing <- NULL
+  params$recrutiment_rate <- NULL
+  res <- structure(
+    as.list(environment()),
+    visit_spacing = visit_spacing,
+    recruitment_rate = recruitment_rate,
+    class = "group_prior"
+  )
+  return(res)
+}
+
+
+
+#' @param ... named [`group_prior`] objects; the argument names serve as
+#' group labels
+#' @param maximal_time the maximal overall runtime of the trial as measured from
+#' the first visit of any group. No visits past this point are sampled.
+#'
+#' @examples
+#' # a model with two groups and different priors on the respective response
+#' # probabilities
+#' mdl <- create_model(
+#'   A = group_prior(),
+#'   B = group_prior(p_mean = 0.33, p_n = 10)
+#' )
+#'
+#' @rdname model
+#' @export
+create_model <- function(
+  ...,
+  maximal_time = 10 * 12
+) {
+  group_priors <- list(...)
+  group_id <- names(group_priors)
+  k <- length(group_id)
+  if (k == 0) {
+    stop("at least one group prior must be specified") # nocov
+  }
+  if (any(group_id == "")) {
+    stop("All arguments passed to ... must be named.") # nocov
+  }
+  if (length(unique(group_id)) < k) {
+    stop("All names of arguments passed to ... must be unique.") # nocov
+  }
+  transition_labels <- c("s->r", "s->p", "r->p")
+  p <- matrix(NA_real_, nrow = k, ncol = 5,
+              dimnames = list(group_id, c("mean", "n", "eta", "min", "max")))
+  median_t <- array(NA_real_, dim = c(k, 3, 2),
+                    dimnames = list(group_id, transition_labels,
+                                    c("q05", "q95")))
+  shape <- array(NA_real_, dim = c(k, 3, 2),
+                 dimnames = list(group_id, transition_labels, c("q05", "q95")))
+  visit_spacing <- numeric(k)
+  names(visit_spacing) <- group_id
+  recruitment_rate <- numeric(k)
+  names(recruitment_rate) <- group_id
+  for (g in group_id) {
+    group <- group_priors[[g]]
+    visit_spacing[g] <- attr(group, "visit_spacing")
+    recruitment_rate[g] <- attr(group, "recruitment_rate")
+    p[g, ] <- c(group$p_mean, group$p_n, group$p_eta, group$p_min, group$p_max)
+    median_t[g, , ] <- cbind(group$median_t_q05, group$median_t_q95)
+    shape[g, , ] <- cbind(group$shape_mode, group$shape_q05, group$shape_q95)
+  }
+  res <- structure(
+    list(
+      group_id = group_id,
+      maximal_time = maximal_time,
+      visit_spacing = visit_spacing,
+      recruitment_rate = recruitment_rate,
+      stan_model = stanmodels$srp_model_simple,
+      states = c("stable", "response", "progression"),
+      prior = list(
+        p = p, median_t = median_t, shape = shape
+      )
+    ),
+    class = c("model", "list"),
+    parameter_names = c("p", "median_t", "shape", "scale")
+  )
+  check_valid(res)
+  return(res)
+}
+
+
+
+#' @param x SRP model to format
+#' @template param-dotdotdot
+#' @examples
+#' format(create_model(A = group_prior()))
+#' @rdname model
+#' @export
+format.model <- function(x, ...) {
+  sprintf("model<%s>", paste(x$group_id, collapse = ","))
+}
+
 #' @param x Model to print
 #' @template param-dotdotdot
+#' @examples
+#' print(create_model(A = group_prior()))
 #' @rdname model
 #' @export
 print.model <- function(x, ...) cat(format(x, ...), "\n") # nocov
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#' Sample data from predictive distribution of a model
-#'
-#' @template param-model
-#' @template param-n_per_group
-#' @template param-sample
-#' @template param-nsim
-#' @template param-seed
-#' @template param-dotdotdot
-#'
-#' @return TODO:
-#'
-#' @export
-sample_predictive <- function(model, n_per_group, sample, nsim, seed, ...) {
-  UseMethod("sample_predictive")
+# create a data set with no observations
+.nodata <- function(model) {
+  UseMethod(".nodata")
 }
 
-#' @inheritParams sample_predictive
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
-#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
-#' @template param-nuts_control
-#'
-#' @rdname model
-#' @export
-sample_predictive.model <- function(
-  model,
-  n_per_group,
-  sample = NULL,
-  nsim = 100L,
-  seed = NULL,
-  nsim_parameters = 1000L,
-  warmup_parameters = 250,
-  as_mstate = FALSE,
-  nuts_control = list(),
-  ...
-) {
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
-  if (is.null(sample)) {
-    sample <- sample_prior(model,
-                           warmup = warmup_parameters, nsim = nsim_parameters,
-                           nuts_control = nuts_control)
-  }
-  # construct an empty data set
-  data <- .emptydata(model, n_per_group)
-  # call model-specific imputation method
-  .impute(model = model, data = data, parameter_sample = sample, now = 0,
-          nsim = nsim, as_mstate = as_mstate, ...)
-}
-
-
-
-#' Impute data from predictive distribution
-#'
-#' If no parameter sample is provided, sample from posterior predictive
-#'
-#' @template param-model
-#' @param data the (multi-state) data frame to impute further trajectories for.
-#' @param n_per_group the number of individuals per group to be recruited.
-#' @param now exact time point relative to start of the trial
-#' @template param-nsim
-#' @template param-seed
-#' @template param-dotdotdot
-#'
-#' @return a data frame with imputed version of the input data.
-#'
-#' @export
-impute <- function(model, data, nsim, n_per_group, now, seed, ...) {
-  UseMethod("impute")
-}
-
-#' @inheritParams impute
-#' @param recruitment_rates vector of recruitment rates
-#' @param sample a stanfit object containing samples. These parameter samples
-#'   represent the parameter distribution over which the predictive distribution
-#'   averages. Technically, the parameters are resampled with replacement from
-#'   this sample to match the desired number of imputations.
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
-#' @template param-nuts_control
-#'
-#' @rdname model
-#' @export
-impute.model <- function(
-  model,
-  data,
-  nsim,
-  n_per_group = NULL,
-  now = NULL,
-  seed = NULL,
-  recruitment_rates = model$recruitment_rate,
-  sample = NULL,
-  nsim_parameters = 1000L,
-  warmup_parameters = 250L,
-  nuts_control = list(),
-  ...
-) {
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
-  group_ids <- model$group_id
-  if (is.null(sample)) {
-    sample <- sample_posterior(model,
-                               data = data, seed = seed,
-                               warmup = warmup_parameters,
-                               nsim = nsim_parameters,
-                               nuts_control = nuts_control)
-  }
-  if (is.null(now)) { # convert to visits and take the last time point
-    now <- max(data$t)
-  }
-  if (is.null(n_per_group)) {
-    # no new individuals
-    n_per_group <- data %>%
-      select("group_id", "subject_id") %>%
-      distinct() %>%
-      pull("group_id") %>%
-      table() %>%
-      .[group_ids] %>%
-      as.numeric()
-  } else {
-    if (is.null(recruitment_rates)) {
-      stop("recruitment_rates must be specified") # nocov
-    }
-  }
-  tbl_to_recruit <- tibble(
-    subject_id = character(0L),
-    group_id = character(0L),
-    t = numeric(0L),
-    state = character(0L)
+.nodata.model <- function(model) { # nolint
+  tibble(
+    subject_id = integer(),
+    group_id = integer(),
+    from = integer(),
+    to = integer(),
+    t_min = numeric(),
+    t_max = numeric(),
+    t_sot = numeric()
   )
+}
+
+
+
+# create a data set with no observed data
+.emptydata <- function(model, n_per_group, seed) {
+  UseMethod(".emptydata")
+}
+
+.emptydata.model <- function(model, n_per_group, seed = NULL) { # nolint
+  if (!is.null(seed)) {
+    set.seed(seed) # nocov
+  }
+  n <- sum(n_per_group)
+  group_ids <- model$group_id
+  rr <- model$recruitment_rate
+  res <- tibble()
   for (i in seq_along(group_ids)) {
-    n_recruited <- data %>%
-      filter(.data$group_id == group_ids[i]) %>%
-      pull("subject_id") %>%
-      unique() %>%
-      length()
-    n_to_be_recruited <- n_per_group[i] - n_recruited
-    if (n_to_be_recruited < 0) { # nocov start
-      stop("data contains more individuals than specified in n_per_group") # nolint
-    } # nocov end
-    ids_to_exclude <- c(tbl_to_recruit$subject_id, unique(data$subject_id))
-    if (n_to_be_recruited > 0) {
-      subject_ids <- get_identifier(n = n_to_be_recruited,
-                                    exclude = ids_to_exclude)
-      recruitment_times <- now +
-        cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i]))
-      tbl_to_recruit <- bind_rows(tbl_to_recruit, tibble(
-        subject_id = subject_ids,
-        group_id = group_ids[i],
-        t = recruitment_times,
-        state = "stable" # first visits are always stable
-      ))
+    if (n_per_group[i] < 1) {
+      next
+    }
+    subject_ids <- get_identifier(n = n_per_group[i])
+    recruitment_times <- cumsum(stats::rexp(n_per_group[i], rate = rr[i]))
+    res <- bind_rows(res, tibble(
+      subject_id = subject_ids,
+      group_id = group_ids[i],
+      t = recruitment_times,
+      state = "stable" # first visits are always stable
+    ))
+  }
+  return(arrange(res, t))
+}
+
+
+
+# generic for digesting data into rstan-ready list
+data2standata <- function(data, model, ...) {
+  UseMethod("data2standata", model)
+}
+
+data2standata.model <- function(data, model) { # nolint
+  # first prepare any data (if available)
+  lst_stan_data <- data %>%
+    mutate(
+      group_id = as.integer(factor(.data$group_id,
+        levels = model$group_id
+      )),
+      subject_id = as.integer(factor(.data$subject_id)),
+      from = as.integer(factor(.data$from, levels = model$states)),
+      to = if_else(
+        is.na(.data$to),
+        "unknown",
+        as.character(.data$to)
+      ) %>%
+      factor(levels = c(model$states, "unknown")) %>%
+      as.integer(),
+      t_min = .data$t_min - .data$t_sot,
+      t_max = .data$t_max - .data$t_sot
+    ) %>%
+    arrange(.data$subject_id, .data$from) %>%
+    as.list()
+  # make sure everything is an array
+  for (i in seq_along(lst_stan_data)) {
+    lst_stan_data[[i]] <- as.array(lst_stan_data[[i]])
+  }
+  # data meta information
+  lst_stan_data$N <- nrow(data)
+  lst_stan_data$N_subjects <- length(unique(data$subject_id))
+  # model meta information and priors
+  lst_stan_data$M_groups <- length(model$group_id)
+  lst_stan_data$maximal_time <- model$maximal_time
+  lst_prior_parameters <- list(
+    p_mean = model$prior$p[, "mean"] %>% as.array(),
+    p_n = model$prior$p[, "n"] %>% as.array(),
+    p_eta = model$prior$p[, "eta"] %>% as.array(),
+    p_min = model$prior$p[, "min"] %>% as.array(),
+    p_max = model$prior$p[, "max"] %>% as.array(),
+    median_t_mu = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3) %>%
+      matrix(ncol = 3),
+    median_t_sigma = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3) %>%  # nolint
+      matrix(ncol = 3),
+    shape_mu = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3),
+    shape_sigma = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3)
+  )
+  # calculate mu/sigma for log-normal priors based on modes/90% quantiles
+  for (g in 1:lst_stan_data$M_groups) {
+    for (trans in 1:3) {
+      res <- get_mu_sigma(
+        model$prior$median_t[g, trans, "q05"],
+        model$prior$median_t[g, trans, "q95"]
+      )
+      lst_prior_parameters$median_t_mu[g, trans] <- res$mu
+      lst_prior_parameters$median_t_sigma[g, trans] <- res$sigma
+      res <- get_mu_sigma(
+        model$prior$shape[g, trans, "q05"],
+        model$prior$shape[g, trans, "q95"]
+      )
+      lst_prior_parameters$shape_mu[g, trans] <- res$mu
+      lst_prior_parameters$shape_sigma[g, trans] <- res$sigma
     }
   }
-  tbl_data <- bind_rows(data, tbl_to_recruit)
-  res <- .impute(model = model, data = tbl_data, parameter_sample = sample,
-                 nsim = nsim, seed = seed, ...)
-  return(res) # problem with forward sampling?
+  lst_stan_data <- c(lst_stan_data, lst_prior_parameters)
+  return(lst_stan_data)
 }
-
-# must be implemented by "Model" subclass
-.impute <- function(model, data, sim, now, parameter_sample, ...) {
-  UseMethod(".impute")
-}
-
-
 
 
 
@@ -236,153 +331,58 @@ impute.model <- function(
 }
 
 
-
-
-
-#' Convert stanfit sample to data table
+#' Summary plot of model prior
 #'
-#' @template param-model
-#' @template param-sample
-#' @template param-dotdotdot
-#'
-#' @return a tibble with the sampled parameters in long format
-#'
-#' @export
-parameter_sample_to_tibble <- function(model, sample, ...) {
-  UseMethod("parameter_sample_to_tibble")
-}
-
-
-
-
-# create a data set with no observations
-.nodata <- function(model) {
-  UseMethod(".nodata")
-}
-
-
-
-
-
-
-# create a data set with no observed data
-.emptydata <- function(model, n_per_group, seed) {
-  UseMethod(".emptydata")
-}
-
-
-
-
-# generic for digesting data into rstan-ready list
-data2standata <- function(data, model, ...) {
-  UseMethod("data2standata", model)
-}
-
-
-
-
-#' Plot the transition time distributions of a model
-#'
-#' @template param-model
+#' @param x the model to plot
 #' @template param-parameter_sample
+#' @template param-seed
+#' @template param-nsim
+#' @template param-warmup
+#' @template param-nuts_control
+#' @template param-dt-params
 #' @template param-dotdotdot
+#' @param confidence numeric in (0, 1) confidence level for point-wise
+#' confidence bands around mean; none plotted if NULL.
+#'
+#' @seealso [plot_pfs()] [plot_transition_times()]
+#' [plot_response_probability()]
 #'
 #' @export
-plot_transition_times <- function(model, parameter_sample, ...) {
-  UseMethod("plot_transition_times")
-}
-
-
-
-
-#' Plot the response probability distributions of a model
-#'
-#' @template param-model
-#' @template param-parameter_sample
-#' @template param-dotdotdot
-#'
-#' @export
-plot_response_probability <- function(model, parameter_sample, ...) {
-  UseMethod("plot_response_probability")
-}
-
-
-
-
-#' Plot the progression-free-survival function of a model
-#'
-#' @template param-model
-#' @template param-parameter_sample
-#' @template param-dotdotdot
-#'
-#' @export
-plot_pfs <- function(model, parameter_sample, ...) {
-  UseMethod("plot_pfs")
-}
-
-
-#' Swimmer-like plot of multi-state data
-#'
-#' @template param-model
-#' @param data a data table with multi-state data
-#' @param now the current time relative to the start of the trial (sot)
-#' @param relative_to_sot Boolean, should the timeline be relative to the start
-#'   of trial or the start of treatment for each individual
-#' @template param-dotdotdot
-#'
-#' @export
-plot_mstate <- function(data, model, now, relative_to_sot, ...) {
-  UseMethod("plot_mstate", object = model)
-}
-
-
-
-#' Sample from the progression-free-survival rate
-#'
-#' Progression-free-survival rate at time t (PFS-t rate) is a function of the
-#' parameters of a given multi-state model. Hence any prior or posterior sample
-#' from such a model gives rise to a sample of the corresponding PFS t rate.
-#'
-#' @template param-model
-#' @param t a vector of time-points at which the PFS rate should be computed
-#' @template param-parameter_sample
-#' @template param-dotdotdot
-#'
-#' @return a data frame with samples of PFS rates at each of the time points
-#' in the vector t.
-#'
-#' @export
-compute_pfs <- function(model, t, parameter_sample, ...) {
-  UseMethod("compute_pfs")
-}
-
-
-
-#' Convert cross sectional visit data to time-to-event data
-#'
-#' This function assumes that the visit density is high enough to not miss any
-#' transient state jumps.
-#'
-#' @param tbl_visits visit data in long format
-#' @param model a multi-state model object
-#' @param now time point since start of trial (might be later than last
-#'   recorded visit)
-#' @param eof_indicator state name indicating (exactly observed) end of
-#'   follow up.
-#'
-#' @return A data frame
-#'
-#' @export
-visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
-                             eof_indicator = "EOF") {
-  if (!inherits(tbl_visits, "data.frame")) {
-    stop("'tbl_visits' must be a data.frame") # nocov
-  } else {
-    checkmate::test_true(inherits(tbl_visits$subject_id, "character"))
-    checkmate::test_true(inherits(tbl_visits$group_id, "character"))
-    checkmate::test_true(inherits(tbl_visits$t, "numeric"))
-    checkmate::test_true(inherits(tbl_visits$state, "character"))
+plot.model <- function(x,
+                       parameter_sample = NULL,
+                       seed = 42L,
+                       nsim = 500L,
+                       warmup = 250,
+                       nuts_control = list(),
+                       dt_interval = NULL,
+                       dt_n_grid = 25,
+                       dt_expand = 1.1,
+                       dt_grid = NULL,
+                       confidence = NULL,
+                       ...) {
+  if (!requireNamespace("patchwork", quietly = TRUE)) {
+    stop("the patchwork package is required to plot SRP models") # nocov
   }
-  UseMethod("visits_to_mstate", object = model)
+  if (is.null(parameter_sample)) { # sample parameters from prior if none given
+    parameter_sample <- sample_prior(x,
+                                     seed = seed, nsim = nsim,
+                                     warmup = warmup,
+                                     nuts_control = nuts_control, ...)
+  }
+  if (is.null(dt_grid)) {
+    # determine plotting grid
+    dt_grid <- get_dt_grid(x, parameter_sample, dt_interval,
+                           dt_n_grid, dt_expand, seed)
+  }
+  plt_trans <- plot_transition_times(x, parameter_sample, dt_grid = dt_grid,
+                                     confidence = confidence)
+  plt_pfs <- plot_pfs(x, parameter_sample, dt_grid = dt_grid,
+                      confidence = confidence)
+  plt_pr <- plot_response_probability(x, parameter_sample)
+  design <- "
+  111
+  234
+  "
+  plt_trans + plt_pfs + plt_pr + patchwork::guide_area() +
+    patchwork::plot_layout(design = design, guides = "collect")
 }
-

@@ -1,16 +1,17 @@
 #' Sample from prior distribution of a model
 #'
 #' @description `sample_prior()` draws samples from the
-#' prior distribution of the specified model.
+#' prior distribution of the specified model object.
 #'
 #' @template param-model
 #' @template param-nsim
 #' @template param-seed
 #' @template param-dotdotdot
 #'
-#' @return A rstanfit object with sampled prior parameters.
+#' @return A [rstan::stanfit] object with sampled prior parameters.
 #'
-#' @seealso [parameter_sample_to_tibble()]
+#' @seealso [rstan::stan()] [parameter_sample_to_tibble()] [sample_posterior()]
+#' [sample_predictive()] [impute()]
 #'
 #' @export
 sample_prior <- function(model, nsim, seed, ...) {
@@ -22,7 +23,7 @@ sample_prior <- function(model, nsim, seed, ...) {
 #' @template param-nuts_control
 #'
 #' @examples
-#' mdl <- create_srp_model(A = srp_group_prior())
+#' mdl <- create_model(A = group_prior())
 #' sample_prior(mdl, 1000L, seed = 42L)
 #'
 #' @rdname sample_prior
