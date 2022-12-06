@@ -16,7 +16,7 @@ transitions."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/lib
     
     <a class="navbar-brand me-2" href="../index.html">oncomsm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,7 +102,7 @@ follow up.</p></dd>
 
 <p>A data frame with multi-state data; variables are
 <code>subject_id&lt;chr&gt;</code>, <code>group_id&lt;chr&gt;</code>, <code>subject_id&lt;chr&gt;</code>, <code>from&lt;chr&gt;</code>,
-<code>to&lt;chr&gt;</code>, <code>t_min&lt;dbl&gt;</code>, <code>t_max&lt;dbl&gt;</code>, <code>t_sot&lt;dble&gt;, where </code>to<code>and</code>from<code>indicate the state from which and into which the transitions occurs (stable, response, progression),</code>t_max<code>and</code>t_min<code>specify the interval in which the transition occured relative to</code>t_sot`
+<code>to&lt;chr&gt;</code>, <code>t_min&lt;dbl&gt;</code>, <code>t_max&lt;dbl&gt;</code>, <code>t_sot&lt;dble&gt;, where </code>to<code>and</code>from<code>indicate the state from which and into which the transitions occurs (stable, response, progression),</code>t_max<code>and</code>t_min<code>specify the interval in which the transition occurred relative to</code>t_sot`
 (start of treatment).</p>
     </div>
 
@@ -111,17 +111,14 @@ follow up.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="srpmodel.html">create_srpmodel</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="srpmodel.html">define_srp_prior</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="fu"><a href="sample_predictive.html">sample_predictive</a></span><span class="op">(</span><span class="va">mdl</span>, n_per_group <span class="op">=</span> <span class="fl">5L</span>, nsim <span class="op">=</span> <span class="fl">1</span>, seed <span class="op">=</span> <span class="fl">468L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">visits_to_mstate</span><span class="op">(</span><span class="va">tbl_visits</span>, <span class="va">mdl</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 8 × 7</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   subject_id group_id from     to          t_min t_max t_sot</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ID05135273 A        stable   response    14.8  15.8   5.84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> ID05135273 A        response progression 19.8  20.8   5.84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> ID05466621 A        stable   progression  8.01  9.01  1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ID05662273 A        stable   progression  7.81  8.81  3.81</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> ID05729114 A        stable   response     6.26  7.26  6.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> ID05729114 A        response progression 22.3  23.3   6.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> ID07955012 A        stable   response     5.94  6.94  4.94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">8</span> ID07955012 A        response progression 84.9  85.9   4.94</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   subject_id group_id from   to          t_min t_max t_sot</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ID05135273 A        stable progression  7.84  8.84  5.84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> ID05466621 A        stable progression  1.01  2.01  1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> ID05662273 A        stable progression  3.81  4.81  3.81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ID05729114 A        stable progression  7.26  8.26  6.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> ID07955012 A        stable progression  6.94  7.94  4.94</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
