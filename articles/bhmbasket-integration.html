@@ -89,6 +89,12 @@ Kunzmann</h4>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span>, warn.conflicts <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://future.futureverse.org" class="external-link">future</a></span><span class="op">)</span> <span class="co"># parallel processing</span></span>
 <span></span>
+<span><span class="va">m_cores</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">as.logical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"NOT_CRAN"</span>, unset <span class="op">=</span> <span class="st">"FALSE"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="fl">2L</span> <span class="co"># need to restrict parallel processing on CRAN</span></span>
+<span><span class="op">}</span></span>
+<span></span>
 <span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="va">multisession</span><span class="op">)</span> <span class="co"># instruct future how to run in parallel</span></span></code></pre></div>
 <p><strong>tl;dr:</strong> <em>The <a href="https://cran.r-project.org/web/packages/bhmbasket/index.html" class="external-link"><code>bhmbasket</code></a>
 package implements Bayesian hierarchical methods for basket trials with
@@ -97,20 +103,20 @@ hierarchical modelling, <code>bhmbasket</code> can be used to define
 ‘go’ criteria based on hierarchical models.</em></p>
 <p>Start by defining a prior specification for a multi-group trial.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/srp_model.html">create_srp_model</a></span><span class="op">(</span></span>
-<span>  A <span class="op">=</span> <span class="fu"><a href="../reference/srp_model.html">srp_group_prior</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/srpmodel.html">create_srpmodel</a></span><span class="op">(</span></span>
+<span>  A <span class="op">=</span> <span class="fu"><a href="../reference/srpmodel.html">define_srp_prior</a></span><span class="op">(</span></span>
 <span>      p_mean <span class="op">=</span> <span class="fl">0.3</span>, p_n <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>      median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>      median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span>,</span>
 <span>      recruitment_rate <span class="op">=</span> <span class="fl">2</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  B <span class="op">=</span> <span class="fu"><a href="../reference/srp_model.html">srp_group_prior</a></span><span class="op">(</span></span>
+<span>  B <span class="op">=</span> <span class="fu"><a href="../reference/srpmodel.html">define_srp_prior</a></span><span class="op">(</span></span>
 <span>      p_mean <span class="op">=</span> <span class="fl">0.4</span>, p_n <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>      median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">8</span>, <span class="fl">18</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>      median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">8</span>, <span class="fl">18</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span>,</span>
 <span>      recruitment_rate <span class="op">=</span> <span class="fl">2</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  C <span class="op">=</span> <span class="fu"><a href="../reference/srp_model.html">srp_group_prior</a></span><span class="op">(</span></span>
+<span>  C <span class="op">=</span> <span class="fu"><a href="../reference/srpmodel.html">define_srp_prior</a></span><span class="op">(</span></span>
 <span>      p_mean <span class="op">=</span> <span class="fl">0.5</span>, p_n <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>      median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">12</span>, <span class="fl">24</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>      median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">12</span>, <span class="fl">24</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span>,</span>
@@ -189,9 +195,9 @@ sets.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
 <span><span class="co">#&gt;   group_id `Pr[go] planning`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.252</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.648</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.9</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.228</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.68 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.868</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="update-probability-of-go">Update probability of ‘go’<a class="anchor" aria-label="anchor" href="#update-probability-of-go"></a>
@@ -231,7 +237,7 @@ extreme for both group A and group B.</p>
 <p><img src="bhmbasket-integration_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>The prior can now be updated with this data.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">smpl_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_prior.html">sample_prior</a></span><span class="op">(</span><span class="va">mdl</span>, seed <span class="op">=</span> <span class="fl">2314513</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">smpl_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_prior</a></span><span class="op">(</span><span class="va">mdl</span>, seed <span class="op">=</span> <span class="fl">2314513</span><span class="op">)</span></span>
 <span><span class="va">smpl_posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_interim</span>, seed <span class="op">=</span> <span class="fl">2314</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -242,9 +248,9 @@ extreme for both group A and group B.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id prior posterior</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.300     0.392</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.400     0.383</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.498     0.400</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.300     0.389</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.401     0.383</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.504     0.400</span></span></code></pre></div>
 <p>The probability of ‘go’ is then updated by sampling forward from the
 posterior predictive.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -269,9 +275,9 @@ posterior predictive.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id `Pr[go] planning` `Pr[go] interim`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.252            0.608</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.648            0.632</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.9              0.528</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.228            0.54 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.68             0.608</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.868            0.548</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

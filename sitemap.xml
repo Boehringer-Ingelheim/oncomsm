@@ -31,13 +31,7 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/index.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/Model.html</loc>
-  </url>
-  <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/compute_pfs.html</loc>
-  </url>
-  <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/impute.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/index.html</loc>
@@ -47,6 +41,9 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/parameter_sample_to_tibble.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot.srpmodel.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot_mstate.html</loc>
@@ -61,19 +58,19 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/plot_transition_times.html</loc>
   </url>
   <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/print.srpmodel.html</loc>
+  </url>
+  <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_posterior.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_predictive.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/sample_prior.html</loc>
-  </url>
-  <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/simulate_decision_rule.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/srp_model.html</loc>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/srpmodel.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/reference/visits_to_mstate.html</loc>

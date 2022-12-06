@@ -158,14 +158,14 @@ up to time <span class="math inline">\(t\)</span>.</p>
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/srp_model.html">create_srp_model</a></span><span class="op">(</span></span>
-<span>  A <span class="op">=</span> <span class="fu"><a href="../../reference/srp_model.html">srp_group_prior</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/srpmodel.html">create_srpmodel</a></span><span class="op">(</span></span>
+<span>  A <span class="op">=</span> <span class="fu"><a href="../../reference/srpmodel.html">define_srp_prior</a></span><span class="op">(</span></span>
 <span>    p_mean <span class="op">=</span> <span class="fl">0.5</span>, p_n <span class="op">=</span> <span class="fl">3</span>, p_eta <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>    recruitment_rate <span class="op">=</span> <span class="fl">2</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">smpl_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/sample_prior.html">sample_prior</a></span><span class="op">(</span><span class="va">mdl</span>, seed <span class="op">=</span> <span class="fl">6835L</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">smpl_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/sample_posterior.html">sample_prior</a></span><span class="op">(</span><span class="va">mdl</span>, seed <span class="op">=</span> <span class="fl">6835L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_prior</span>, confidence <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span></code></pre></div>
 <p><img src="probability-of-go_files/figure-html/sample-from-prios-1.png" width="672" style="display: block; margin: auto;"></p>
@@ -407,10 +407,10 @@ criterion.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7 × 5</span></span></span>
 <span><span class="co">#&gt;   t_interim data               group_id `Pr[go]`     se</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1 <span style="color: #949494;">&lt;tibble [2 × 4]&gt;</span>   A           0.242 0.075<span style="text-decoration: underline;">8</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1 <span style="color: #949494;">&lt;tibble [2 × 4]&gt;</span>   A           0.152 0.063<span style="text-decoration: underline;">4</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>         3 <span style="color: #949494;">&lt;tibble [10 × 4]&gt;</span>  A           0.273 0.078<span style="text-decoration: underline;">7</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>         6 <span style="color: #949494;">&lt;tibble [37 × 4]&gt;</span>  A           0.606 0.086<span style="text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>         9 <span style="color: #949494;">&lt;tibble [76 × 4]&gt;</span>  A           0.788 0.072<span style="text-decoration: underline;">3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>         6 <span style="color: #949494;">&lt;tibble [37 × 4]&gt;</span>  A           0.515 0.088<span style="text-decoration: underline;">3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>         9 <span style="color: #949494;">&lt;tibble [76 × 4]&gt;</span>  A           0.758 0.075<span style="text-decoration: underline;">8</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        12 <span style="color: #949494;">&lt;tibble [131 × 4]&gt;</span> A           0.970 0.030<span style="text-decoration: underline;">3</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>        18 <span style="color: #949494;">&lt;tibble [311 × 4]&gt;</span> A           1     0     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>        24 <span style="color: #949494;">&lt;tibble [527 × 4]&gt;</span> A           1     0</span></span></code></pre></div>
