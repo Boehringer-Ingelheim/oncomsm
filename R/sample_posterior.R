@@ -12,7 +12,6 @@
 #' @template param-seed
 #' @template param-warmup
 #' @template param-nuts_control
-#' @template param-pars
 #' @template param-dotdotdot
 #'
 #' @return A [rstan::stanfit] object with posterior samples.
@@ -28,17 +27,16 @@
 #'   t = c(0, 1.5),
 #'   state = c("stable", "response")
 #' )
-#' sample_posterior(mdl, tbl, 500L, 42L)
+#' sample_posterior(mdl, tbl, seed = 42L)
 #'
 #' @export
 sample_posterior <- function(model,
                              data,
                              now = NULL,
-                             nsim = 1000L,
+                             nsim = 2000L,
                              seed = NULL,
                              warmup = 500L,
                              nuts_control = list(),
-                             pars = attr(model, "parameter_names"),
                              ...) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (is.null(seed)) # generate seed if none was specified
@@ -61,7 +59,7 @@ sample_posterior <- function(model,
     data = stan_data,
     chains = 1L, cores = 1L,
     iter = warmup + nsim, warmup = warmup,
-    seed = seed, pars = pars, refresh = 0L,
+    seed = seed, pars = attr(model, "parameter_names"), refresh = 0L,
     control = nuts_control,
     ...
   )

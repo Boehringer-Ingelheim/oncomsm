@@ -36,7 +36,6 @@
 #' @seealso [sample_prior()] [sample_posterior()]
 #'
 #' @examples
-#' mdl <- create_srpmodel(A = define_srp_prior())
 #' sample_predictive(mdl, 1L, 20L, seed = 38L)
 #'
 #' @aliases impute

@@ -63,7 +63,7 @@ simulate_decision_rule <- function(model,
     tidyr::nest() %>%
     ungroup() %>%
     transmute(
-      iter,
+      iter = .data$iter,
       res = furrr::future_map(
         data, function(data) decision_rule(model, data = data),
         .options = furrr::furrr_options(seed = TRUE)

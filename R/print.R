@@ -1,5 +1,6 @@
 #' Print an srpmodel
 #'
+#' @param x model to print
 #' @template param-dotdotdot
 #' @examples
 #' print(create_srpmodel(A = define_srp_prior()))

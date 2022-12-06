@@ -62,8 +62,6 @@ Suggests:
     bhmbasket,
     vdiffr,
     DiagrammeR,
-    future,
-    furrr,
     doFuture,
     doRNG,
     rjags

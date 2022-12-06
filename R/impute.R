@@ -2,7 +2,12 @@
 #' individuals up to a maximum of `n_per_group` from the posterior
 #' predictive distribution of the given model.
 #'
+#' @param now numeric, time since first visit in data if not last recorded
+#' visit time
+#' @template param-data-condition
+#'
 #' @examples
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' tbl <- tibble::tibble(
 #'   subject_id = c("A1", "A1"),
 #'   group_id = c("A", "A"),

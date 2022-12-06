@@ -10,6 +10,8 @@
 \method{format}{srpmodel}(x, ...)
 }
 \arguments{
+\item{x}{model to print}
+
 \item{...}{further arguments passed to method implementations}
 }
 \description{

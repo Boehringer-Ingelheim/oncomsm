@@ -9,20 +9,18 @@ sample_posterior(
   model,
   data,
   now = NULL,
-  nsim = 1000L,
+  nsim = 2000L,
   seed = NULL,
   warmup = 500L,
   nuts_control = list(),
-  pars = attr(model, "parameter_names"),
   ...
 )
 
 sample_prior(
   model,
-  nsim = 1000L,
+  nsim = 2000L,
   seed = NULL,
   warmup = 500L,
-  pars = attr(model, "parameter_names"),
   nuts_control = list(),
   ...
 )
@@ -53,8 +51,6 @@ before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]
 \item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
 
-\item{pars}{character vector of parameter names to sample}
-
 \item{...}{further arguments passed to method implementations}
 }
 \value{
@@ -76,10 +72,9 @@ tbl <- tibble::tibble(
   t = c(0, 1.5),
   state = c("stable", "response")
 )
-sample_posterior(mdl, tbl, 500L, 42L)
+sample_posterior(mdl, tbl, seed = 42L)
 
-mdl <- create_srpmodel(A = define_srp_prior())
-sample_prior(mdl, 1000L, seed = 42L)
+sample_prior(mdl, seed = 42L)
 
 }
 \seealso{

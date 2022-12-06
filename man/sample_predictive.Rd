@@ -42,6 +42,16 @@ sample_predictive(
 \arguments{
 \item{model}{an object of class \link{srpmodel} containing prior information}
 
+\item{data}{a data frame with variables
+\verb{subject_id<chr>} (subject identifier),
+\verb{group_id<chr>} (group identifier),
+\verb{t<dbl>} (time of visit, relative to first visit in study),
+\verb{state<chr>} (state recorded at visit).
+Allowed states are "stable", "response", "progression" (or death),
+and "EOF" (end of follow-up).
+The EOF state marks the end of an individual's follow-up before the absorbing
+state "progression".}
+
 \item{nsim}{integer, number of samples to draw}
 
 \item{n_per_group}{integer vector with number of individuals per group.}
@@ -58,6 +68,9 @@ dimension corresponds to the transitions between s->r, s->p, r->p}
 \item{scale}{numeric, matrix of optional fixed Weibull scale parameters to
 use for sampling must be a matrix of dim c(n_groups, 3) where the second
 dimension corresponds to the transitions between s->r, s->p, r->p}
+
+\item{now}{numeric, time since first visit in data if not last recorded
+visit time}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
@@ -93,6 +106,7 @@ predictive distribution of the given model.
 model given a parameter sample.
 }
 \examples{
+mdl <- create_srpmodel(A = define_srp_prior())
 tbl <- tibble::tibble(
   subject_id = c("A1", "A1"),
   group_id = c("A", "A"),
@@ -101,7 +115,6 @@ tbl <- tibble::tibble(
 )
 impute(mdl, tbl, 1L, seed = 38L)
 
-mdl <- create_srpmodel(A = define_srp_prior())
 sample_predictive(mdl, 1L, 20L, seed = 38L)
 
 }
