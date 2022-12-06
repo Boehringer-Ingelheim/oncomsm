@@ -34,6 +34,12 @@ library(oncomsm)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
 
+m_cores <- if (as.logical(Sys.getenv("NOT_CRAN", unset = "FALSE"))) {
+  parallel::detectCores()
+} else {
+  2L # need to restrict parallel processing on CRAN
+}
+
 plan(multisession) # instruct future how to run in parallel
 ```
 
@@ -46,20 +52,20 @@ Although `oncomsm` does not support hierarchical modelling,
 Start by defining a prior specification for a multi-group trial.
 
 ```{r prior-specification}
-mdl <- create_srp_model(
-  A = srp_group_prior(
+mdl <- create_srpmodel(
+  A = define_srp_prior(
       p_mean = 0.3, p_n = 20,
       median_t_q05 = c(3, 2, 6) - 1,
       median_t_q95 = c(3, 2, 6) + 1,
       recruitment_rate = 2
     ),
-  B = srp_group_prior(
+  B = define_srp_prior(
       p_mean = 0.4, p_n = 20,
       median_t_q05 = c(2.5, 8, 18) - 1,
       median_t_q95 = c(2.5, 8, 18) + 1,
       recruitment_rate = 2
     ),
-  C = srp_group_prior(
+  C = define_srp_prior(
       p_mean = 0.5, p_n = 20,
       median_t_q05 = c(2, 12, 24) - 1,
       median_t_q95 = c(2, 12, 24) + 1,

@@ -11,6 +11,22 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// conditional_response_probability_srp
+double conditional_response_probability_srp(double t, double p, double shape_response, double shape_progression, double scale_response, double scale_progression);
+RcppExport SEXP _oncomsm_conditional_response_probability_srp(SEXP tSEXP, SEXP pSEXP, SEXP shape_responseSEXP, SEXP shape_progressionSEXP, SEXP scale_responseSEXP, SEXP scale_progressionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type t(tSEXP);
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type shape_response(shape_responseSEXP);
+    Rcpp::traits::input_parameter< double >::type shape_progression(shape_progressionSEXP);
+    Rcpp::traits::input_parameter< double >::type scale_response(scale_responseSEXP);
+    Rcpp::traits::input_parameter< double >::type scale_progression(scale_progressionSEXP);
+    rcpp_result_gen = Rcpp::wrap(conditional_response_probability_srp(t, p, shape_response, shape_progression, scale_response, scale_progression));
+    return rcpp_result_gen;
+END_RCPP
+}
 // impute_srp_model
 DataFrame impute_srp_model(DataFrame df, NumericVector response_probabilities, NumericMatrix shapes, NumericMatrix scales, NumericVector visit_spacing, double max_time);
 RcppExport SEXP _oncomsm_impute_srp_model(SEXP dfSEXP, SEXP response_probabilitiesSEXP, SEXP shapesSEXP, SEXP scalesSEXP, SEXP visit_spacingSEXP, SEXP max_timeSEXP) {
@@ -59,6 +75,7 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_stan_fit4srp_model_simple_mod();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_oncomsm_conditional_response_probability_srp", (DL_FUNC) &_oncomsm_conditional_response_probability_srp, 6},
     {"_oncomsm_impute_srp_model", (DL_FUNC) &_oncomsm_impute_srp_model, 6},
     {"_oncomsm_pfs", (DL_FUNC) &_oncomsm_pfs, 4},
     {"_oncomsm_rtruncweibull", (DL_FUNC) &_oncomsm_rtruncweibull, 4},

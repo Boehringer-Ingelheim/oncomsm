@@ -4,13 +4,12 @@
 \name{oncomsm-package}
 \alias{oncomsm-package}
 \alias{oncomsm}
-\title{The oncomsm package.}
+\title{The oncomsm package}
 \description{
 This package implements methods to dynamically predict response
 and progression of individuals in early oncology trials using parametric
 multi-state models and Bayesian inference.
 This allows the dynamic computation of Probability of Success for a wide
-range of success criteria.
 The inference is implemented using stan.
 }
 \references{

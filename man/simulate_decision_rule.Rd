@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_decision_rule.R
 \name{simulate_decision_rule}
 \alias{simulate_decision_rule}
-\title{Simulate a custom decision rule}
+\title{Simulate results under a custom decision rule}
 \usage{
 simulate_decision_rule(
   model,
@@ -38,5 +38,19 @@ returned by \code{decision_rule} applied to each of the \code{nsim} datasets sam
 from the predictive distribution.
 }
 \description{
-Simulate a custom decision rule
+\code{simulate_decision_rule()} simulates from the prior or posterior
+predictive distribution of a model and applies a custom decision rule to each
+simulated data set.
+}
+\details{
+The sampling is implementing using \code{furrr::future_map()} and thus
+supports parallel execution when specifying a \code{future::plan()}.
+}
+\examples{
+mdl <- create_srpmodel(A = define_srp_prior())
+rule <- function(model, data) {
+  tibble::tibble(decision = sample(c(0,1), 1))
+}
+simulate_decision_rule(mdl, 5, rule, nsim = 3)
+
 }

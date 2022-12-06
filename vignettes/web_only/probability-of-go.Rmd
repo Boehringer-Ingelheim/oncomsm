@@ -94,8 +94,8 @@ observed up to time $t$.
 
 
 ```{r prior-specification}
-mdl <- create_srp_model(
-  A = srp_group_prior(
+mdl <- create_srpmodel(
+  A = define_srp_prior(
     p_mean = 0.5, p_n = 3, p_eta = 0.2,
     recruitment_rate = 2
   )

@@ -158,13 +158,13 @@ to divergent MCMC samples.
 The shape thus has to be kept almost fixed in most cases when doing inference.
 
 ```{r specify-model}
-mdl <- create_srp_model(
-  A = srp_group_prior(
+mdl <- create_srpmodel(
+  A = define_srp_prior(
     p_mean = 0.4, p_n = 10,
     median_t_q05 = c(3, 2, 6) - 1, # s->r s->p r->p
     median_t_q95 = c(3, 2, 6) + 1
   ),
-  B = srp_group_prior(
+  B = define_srp_prior(
     p_mean = 0.6, p_n = 10,
     median_t_q05 = c(2, 8, 3) - 1, # s->r s->p r->p
     median_t_q95 = c(2, 8, 12) + 1,

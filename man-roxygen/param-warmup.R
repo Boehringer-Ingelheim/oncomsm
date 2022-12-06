@@ -1,3 +1,2 @@
-#' @param warmup integer, number of warmup samples for the rstan sampler before retaining samples; these are used to
-#' tune the hyperparameters of the MCMC algorithm.
-#'
+#' @param warmup integer, number of warm-up samples for the MCMC sampler
+#' before retaining samples; see `warmup` parameter in [rstan::stan()].
