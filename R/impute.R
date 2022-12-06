@@ -1,41 +1,8 @@
-#' Impute visits from predictive distribution
-#'
-#' `impute()` samples visits for individuals in `data` and potentially missing
+#' @description `impute()` samples visits for individuals in `data` and potentially missing
 #' individuals up to a maximum of `n_per_group` from the posterior
 #' predictive distribution of the given model.
 #'
-#' @template param-model
-#' @template param-data-condition
-#' @param n_per_group the number of individuals per group to be recruited.
-#' @param now exact time point relative to start of the trial
-#' @template param-nsim
-#' @template param-seed
-#' @param recruitment_rates vector of recruitment rates
-#' @param sample a stanfit object containing samples. These parameter samples
-#'   represent the parameter distribution over which the predictive distribution
-#'   averages. Technically, the parameters are resampled with replacement from
-#'   this sample to match the desired number of imputations.
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
-#' @template param-nuts_control
-#' @template param-dotdotdot
-#'
-#' @return a data frame with variables
-#' `subject_id<chr>` (subject identifier),
-#' `group_id<chr>` (group identifier),
-#' `t<dbl>` (time of visit, relative to first visit in study),
-#' `state<chr>` (state recorded at visit)
-#' `iter<int>` (re-sample indicator).
-#' Allowed states are "stable", "response", "progression" (or death),
-#' and "EOF" (end of follow-up).
-#' The EOF state marks the end of an individual's follow-up before the absorbing
-#' state "progression". The input data is copied for each re-sample and missing
-#' data is sampled from the predictive distribution.
-#'
-#' @seealso [sample_prior()] [sample_posterior()] [sample_predictive()]
-#'
 #' @examples
-#' mdl <- create_srpmodel(A = define_srp_prior())
 #' tbl <- tibble::tibble(
 #'   subject_id = c("A1", "A1"),
 #'   group_id = c("A", "A"),
@@ -44,26 +11,28 @@
 #' )
 #' impute(mdl, tbl, 1L, seed = 38L)
 #'
+#' @rdname sample_predictive
 #' @export
 impute <- function(model,
                    data,
                    nsim,
                    n_per_group = NULL,
-                   now = NULL,
-                   seed = NULL,
-                   recruitment_rate = model$recruitment_rate,
+                   sample = NULL,
                    p = NULL,
                    shape = NULL,
                    scale = NULL,
-                   sample = NULL,
+                   now = NULL,
+                   seed = NULL,
                    nsim_parameters = 1000L,
                    warmup_parameters = 250L,
                    nuts_control = list(),
+                   as_mstate = FALSE,
                    ...) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed)
   }
+  recruitment_rate <- model$recruitment_rate
   group_ids <- model$group_id
   if (is.null(sample)) {
     sample <- sample_posterior(model,
@@ -120,20 +89,9 @@ impute <- function(model,
     }
   }
   tbl_data <- bind_rows(data, tbl_to_recruit)
-  res <- .impute(model = model, data = tbl_data, parameter_sample = sample,
-                 nsim = nsim, seed = seed, p = p, scale = scale, shape = shape,
-                 ...)
-  return(res) # problem with forward sampling?
-}
-
-# helper function to handle forward sampling
-.impute <- function(model, data, nsim, parameter_sample = NULL, # nolint
-                    seed = NULL, p = NULL, shape = NULL,
-                    scale = NULL, as_mstate = FALSE, ...) {
-  checkmate::check_class(model, classes = c("srpmodel", "list"))
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
+  # do actual imputation
+  data = tbl_data
+  parameter_sample = sample
   n_groups <- length(model$group_id)
   # make sure that either parameter sample or p, scale, shape are given
   if (!is.null(parameter_sample)) {

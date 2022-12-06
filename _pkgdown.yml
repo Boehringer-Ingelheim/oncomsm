@@ -22,26 +22,24 @@ reference:
 - title: "Package documentation"
   contents:
   - oncomsm
+- title: "Stable-Response-Progression model"
+  contents:
+  - srpmodel
+  - print.srpmodel
 - title: "Sampling functions"
   contents:
-  - sample_prior
   - sample_posterior
   - sample_predictive
-  - impute
 - title: "Plotting functions"
   contents:
   - plot_transition_times
   - plot_pfs
   - plot_response_probability
   - plot_mstate
+  - plot.srpmodel
 - title: "Other functions"
   contents:
   - visits_to_mstate
   - parameter_sample_to_tibble
   - compute_pfs
   - simulate_decision_rule
-- title: "Stable-Response-Progression model"
-  contents:
-  - srpmodel
-  - plot.srpmodel
-  - print.srpmodel

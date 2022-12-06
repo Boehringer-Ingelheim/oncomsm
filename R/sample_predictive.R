@@ -6,12 +6,20 @@
 #' @template param-model
 #' @template param-n_per_group
 #' @template param-sample
+#' @param p numeric, vector of optional fixed response probabilities to use for
+#' sampling
+#' @param scale numeric, matrix of optional fixed Weibull scale parameters to
+#' use for sampling must be a matrix of dim c(n_groups, 3) where the second
+#' dimension corresponds to the transitions between s->r, s->p, r->p
+#' @param shape numeric, matrix of optional fixed Weibull shape parameters to
+#' use for sampling must be a matrix of dim c(n_groups, 3) where the second
+#' dimension corresponds to the transitions between s->r, s->p, r->p
 #' @template param-nsim
 #' @template param-seed
 #' @template param-nsim_parameters
 #' @template param-warmup_parameters
-#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
 #' @template param-nuts_control
+#' @param as_mstate logical, return data in mstate format?
 #' @template param-dotdotdot
 #'
 #' @return a data frame with variables
@@ -25,25 +33,26 @@
 #' The EOF state marks the end of an individual's follow-up before the absorbing
 #' state "progression".
 #'
-#' @seealso [sample_prior()] [sample_posterior()] [impute()]
+#' @seealso [sample_prior()] [sample_posterior()]
 #'
 #' @examples
 #' mdl <- create_srpmodel(A = define_srp_prior())
-#' sample_predictive(mdl, 1L, nsim = 1L, seed = 38L)
+#' sample_predictive(mdl, 1L, 20L, seed = 38L)
 #'
+#' @aliases impute
 #' @export
 sample_predictive <- function(model,
+                              nsim,
                               n_per_group,
                               sample = NULL,
-                              recruitment_rate = model$recruitment_rate,
                               p = NULL,
                               shape = NULL,
                               scale = NULL,
-                              nsim = 100L,
                               seed = NULL,
                               nsim_parameters = 1000L,
                               warmup_parameters = 250,
                               nuts_control = list(),
+                              as_mstate = FALSE,
                               ...) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
   # just call impute with empty data set
@@ -54,7 +63,7 @@ sample_predictive <- function(model,
     n_per_group = n_per_group,
     now = 0, # we start with empty data set hence 0
     seed = seed,
-    recruitment_rate = recruitment_rate,
+    recruitment_rate = model$recruitment_rate,
     p = p,
     shape = shape,
     scale = scale,
@@ -62,6 +71,7 @@ sample_predictive <- function(model,
     nsim_parameters = nsim_parameters,
     warmup_parameters = warmup_parameters,
     nuts_control = nuts_control,
+    as_mstate = as_mstate,
     ...
   )
 }

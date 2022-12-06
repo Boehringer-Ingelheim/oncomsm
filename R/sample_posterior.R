@@ -1,4 +1,4 @@
-#' Sample from posterior distribution of a model
+#' Sample parameters from a model
 #'
 #' @description `sample_posterior()` draws samples from the
 #' posterior distribution of the specified model given a data set with
@@ -6,6 +6,8 @@
 #'
 #' @template param-model
 #' @template param-data-condition
+#' @param now numeric, time from first visit in data if different form last
+#' recorded visit
 #' @template param-nsim
 #' @template param-seed
 #' @template param-warmup
@@ -15,7 +17,7 @@
 #'
 #' @return A [rstan::stanfit] object with posterior samples.
 #'
-#' @seealso [rstan::stan()] [parameter_sample_to_tibble()] [sample_prior()]
+#' @seealso [rstan::stan()] [parameter_sample_to_tibble()]
 #' [sample_predictive()] [impute()]
 #'
 #' @examples
@@ -29,21 +31,39 @@
 #' sample_posterior(mdl, tbl, 500L, 42L)
 #'
 #' @export
-sample_posterior <- function(
-  model,
-  data,
-  nsim = 2000L,
-  seed = NULL,
-  warmup = 500L,
-  nuts_control = list(),
-  pars = attr(model, "parameter_names"),
-  ...
-) {
+sample_posterior <- function(model,
+                             data,
+                             now = NULL,
+                             nsim = 1000L,
+                             seed = NULL,
+                             warmup = 500L,
+                             nuts_control = list(),
+                             pars = attr(model, "parameter_names"),
+                             ...) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
-  res <- .sample(
-    model, data = data,
-    warmup = warmup, nsim = nsim, seed = seed, pars = pars,
-    nuts_control = nuts_control, ...
+  if (is.null(seed)) # generate seed if none was specified
+    seed <- sample.int(.Machine$integer.max, 1)
+  if (is.null(data)) {
+    data <- .nodata(model)
+  } else {
+    if (is.null(now)) {
+      now <- max(data$t)
+    }
+    data <- visits_to_mstate(data, model, now)
+  }
+  # combine prior information with data for stan
+  stan_data <- data2standata(data, model)
+  # global seed affects permutation of extracted parameters if not set
+  set.seed(seed)
+  # sample
+  res <- rstan::sampling(
+    model$stan_model,
+    data = stan_data,
+    chains = 1L, cores = 1L,
+    iter = warmup + nsim, warmup = warmup,
+    seed = seed, pars = pars, refresh = 0L,
+    control = nuts_control,
+    ...
   )
   return(res)
 }

@@ -56,3 +56,113 @@ get_mu_sigma <- function(q05, q95) {
     sigma = res$par[2]
   ))
 }
+
+.nodata <- function(model) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
+  tibble(
+    subject_id = integer(),
+    group_id = integer(),
+    from = integer(),
+    to = integer(),
+    t_min = numeric(),
+    t_max = numeric(),
+    t_sot = numeric()
+  )
+}
+
+
+
+# create a data set with no observed data
+.emptydata <- function(model, n_per_group, seed = NULL) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
+  if (!is.null(seed)) {
+    set.seed(seed) # nocov
+  }
+  n <- sum(n_per_group)
+  group_ids <- model$group_id
+  rr <- model$recruitment_rate
+  res <- tibble()
+  for (i in seq_along(group_ids)) {
+    if (n_per_group[i] < 1) {
+      next
+    }
+    subject_ids <- get_identifier(n = n_per_group[i])
+    recruitment_times <- cumsum(stats::rexp(n_per_group[i], rate = rr[i]))
+    res <- bind_rows(res, tibble(
+      subject_id = subject_ids,
+      group_id = group_ids[i],
+      t = recruitment_times,
+      state = "stable" # first visits are always stable
+    ))
+  }
+  return(arrange(res, t))
+}
+
+
+
+# generic for digesting data into rstan-ready list
+data2standata <- function(data, model) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
+  # first prepare any data (if available)
+  lst_stan_data <- data %>%
+    mutate(
+      group_id = as.integer(factor(.data$group_id,
+                                   levels = model$group_id
+      )),
+      subject_id = as.integer(factor(.data$subject_id)),
+      from = as.integer(factor(.data$from, levels = model$states)),
+      to = if_else(
+        is.na(.data$to),
+        "unknown",
+        as.character(.data$to)
+      ) %>%
+        factor(levels = c(model$states, "unknown")) %>%
+        as.integer(),
+      t_min = .data$t_min - .data$t_sot,
+      t_max = .data$t_max - .data$t_sot
+    ) %>%
+    arrange(.data$subject_id, .data$from) %>%
+    as.list()
+  # make sure everything is an array
+  for (i in seq_along(lst_stan_data)) {
+    lst_stan_data[[i]] <- as.array(lst_stan_data[[i]])
+  }
+  # data meta information
+  lst_stan_data$N <- nrow(data)
+  lst_stan_data$N_subjects <- length(unique(data$subject_id))
+  # model meta information and priors
+  lst_stan_data$M_groups <- length(model$group_id)
+  lst_stan_data$maximal_time <- model$maximal_time
+  lst_prior_parameters <- list(
+    p_mean = model$prior$p[, "mean"] %>% as.array(),
+    p_n = model$prior$p[, "n"] %>% as.array(),
+    p_eta = model$prior$p[, "eta"] %>% as.array(),
+    p_min = model$prior$p[, "min"] %>% as.array(),
+    p_max = model$prior$p[, "max"] %>% as.array(),
+    median_t_mu = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3) %>%
+      matrix(ncol = 3),
+    median_t_sigma = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3) %>%  # nolint
+      matrix(ncol = 3),
+    shape_mu = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3),
+    shape_sigma = matrix(NA_real_, nrow = lst_stan_data$M_groups, ncol = 3)
+  )
+  # calculate mu/sigma for log-normal priors based on modes/90% quantiles
+  for (g in 1:lst_stan_data$M_groups) {
+    for (trans in 1:3) {
+      res <- get_mu_sigma(
+        model$prior$median_t[g, trans, "q05"],
+        model$prior$median_t[g, trans, "q95"]
+      )
+      lst_prior_parameters$median_t_mu[g, trans] <- res$mu
+      lst_prior_parameters$median_t_sigma[g, trans] <- res$sigma
+      res <- get_mu_sigma(
+        model$prior$shape[g, trans, "q05"],
+        model$prior$shape[g, trans, "q95"]
+      )
+      lst_prior_parameters$shape_mu[g, trans] <- res$mu
+      lst_prior_parameters$shape_sigma[g, trans] <- res$sigma
+    }
+  }
+  lst_stan_data <- c(lst_stan_data, lst_prior_parameters)
+  return(lst_stan_data)
+}
