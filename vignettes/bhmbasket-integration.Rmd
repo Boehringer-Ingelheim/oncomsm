@@ -44,7 +44,7 @@ plan(multisession) # instruct future how to run in parallel
 ```
 
 
-**tl;dr:** *The [`bhmbasket`](https://cran.r-project.org/web/packages/bhmbasket/index.html) 
+**tl;dr:** *The [`bhmbasket`](https://cran.r-project.org/package=bhmbasket) 
 package implements Bayesian hierarchical methods for basket trials with binary endpoints.
 Although `oncomsm` does not support hierarchical modelling,
 `bhmbasket` can be used to define 'go' criteria based on hierarchical models.*
