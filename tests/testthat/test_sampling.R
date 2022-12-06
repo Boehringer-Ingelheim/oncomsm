@@ -256,16 +256,19 @@ test_that("Testing sampling multiple individuals", {
 
 
 test_that("posterior shifts as expected", {
+  # use very tight viistig spacing to avoid overlooking responses
   mdl <- create_srpmodel(
-    A = define_srp_prior(p_n = 5, p_eta = .1),
-    B = define_srp_prior(p_n = 5, p_eta = .1)
+    A = define_srp_prior(p_n = 5, p_eta = .1, visit_spacing = 0.01),
+    B = define_srp_prior(p_n = 5, p_eta = .1, visit_spacing = 0.01)
   )
   tbl_data <- sample_predictive(
     mdl,
     n_per_group = c(20, 20),
     nsim = 1,
     seed = 42L,
-    p = c(0, 1)
+    p = c(0, 1),
+    # use very small scale to avoid censoring issues
+    scale = matrix(1, nrow = 2, ncol = 3)
   )
   p_obs <- tbl_data %>%
     group_by(group_id, iter, subject_id) %>%
@@ -278,9 +281,7 @@ test_that("posterior shifts as expected", {
       p_response = mean(responder)
     ) %>%
     pull(p_response)
-  suppressWarnings(
-    smpl_posterior <- sample_posterior(mdl, tbl_data)
-  )
+  smpl_posterior <- sample_posterior(mdl, tbl_data)
   p <- parameter_sample_to_tibble(mdl, smpl_posterior) %>%
     filter(parameter == "p") %>%
     group_by(group_id) %>%

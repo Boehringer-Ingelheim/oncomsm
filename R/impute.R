@@ -45,19 +45,21 @@
 #' impute(mdl, tbl, 1L, seed = 38L)
 #'
 #' @export
-impute <- function(
-  model,
-  data,
-  nsim,
-  n_per_group = NULL,
-  now = NULL,
-  seed = NULL,
-  recruitment_rates = model$recruitment_rate,
-  sample = NULL,
-  nsim_parameters = 1000L,
-  warmup_parameters = 250L,
-  nuts_control = list(),
-  ...) {
+impute <- function(model,
+                   data,
+                   nsim,
+                   n_per_group = NULL,
+                   now = NULL,
+                   seed = NULL,
+                   recruitment_rate = model$recruitment_rate,
+                   p = NULL,
+                   shape = NULL,
+                   scale = NULL,
+                   sample = NULL,
+                   nsim_parameters = 1000L,
+                   warmup_parameters = 250L,
+                   nuts_control = list(),
+                   ...) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed)
@@ -83,7 +85,7 @@ impute <- function(
       .[group_ids] %>%
       as.numeric()
   } else {
-    if (is.null(recruitment_rates)) {
+    if (is.null(recruitment_rate)) {
       stop("recruitment_rates must be specified") # nocov
     }
   }
@@ -108,7 +110,7 @@ impute <- function(
       subject_ids <- get_identifier(n = n_to_be_recruited,
                                     exclude = ids_to_exclude)
       recruitment_times <- now +
-        cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rates[i]))
+        cumsum(stats::rexp(n_to_be_recruited, rate = recruitment_rate[i]))
       tbl_to_recruit <- bind_rows(tbl_to_recruit, tibble(
         subject_id = subject_ids,
         group_id = group_ids[i],
@@ -119,7 +121,8 @@ impute <- function(
   }
   tbl_data <- bind_rows(data, tbl_to_recruit)
   res <- .impute(model = model, data = tbl_data, parameter_sample = sample,
-                 nsim = nsim, seed = seed, ...)
+                 nsim = nsim, seed = seed, p = p, scale = scale, shape = shape,
+                 ...)
   return(res) # problem with forward sampling?
 }
 
@@ -186,7 +189,7 @@ impute <- function(
   idx <- sample(seq_len(n_params_sample), size = nsim, replace = TRUE)
   sample_once <- function(iter) {
     # extract a set of parameters
-    response_probabilities <- p[idx[iter], , drop = FALSE]
+    response_probabilities <- as.array(p[idx[iter], ])
     shapes <- matrix(shape[idx[iter], , ], ncol = 3)
     scales <- matrix(scale[idx[iter], , ], ncol = 3)
     # sample using C++ implementation

@@ -32,32 +32,36 @@
 #' sample_predictive(mdl, 1L, nsim = 1L, seed = 38L)
 #'
 #' @export
-sample_predictive <- function(
-  model,
-  n_per_group,
-  sample = NULL,
-  p = NULL,
-  shape = NULL,
-  scale = NULL,
-  nsim = 100L,
-  seed = NULL,
-  nsim_parameters = 1000L,
-  warmup_parameters = 250,
-  as_mstate = FALSE,
-  nuts_control = list(),
-  ...) {
+sample_predictive <- function(model,
+                              n_per_group,
+                              sample = NULL,
+                              recruitment_rate = model$recruitment_rate,
+                              p = NULL,
+                              shape = NULL,
+                              scale = NULL,
+                              nsim = 100L,
+                              seed = NULL,
+                              nsim_parameters = 1000L,
+                              warmup_parameters = 250,
+                              nuts_control = list(),
+                              ...) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
-  if (is.null(sample)) {
-    sample <- sample_prior(model,
-                           warmup = warmup_parameters, nsim = nsim_parameters,
-                           nuts_control = nuts_control)
-  }
-  # construct an empty data set
-  data <- .emptydata(model, n_per_group)
-  # call model-specific imputation method
-  .impute(model = model, data = data, parameter_sample = sample, now = 0,
-          nsim = nsim, as_mstate = as_mstate, shape = shape, scale = scale, p = p, ...)
+  # just call impute with empty data set
+  impute(
+    model,
+    data = .emptydata(model, n_per_group), # construct an empty data set
+    nsim = nsim,
+    n_per_group = n_per_group,
+    now = 0, # we start with empty data set hence 0
+    seed = seed,
+    recruitment_rate = recruitment_rate,
+    p = p,
+    shape = shape,
+    scale = scale,
+    sample = sample,
+    nsim_parameters = nsim_parameters,
+    warmup_parameters = warmup_parameters,
+    nuts_control = nuts_control,
+    ...
+  )
 }

@@ -9,6 +9,7 @@ double rtruncweibull(double shape, double scale, double a, double b);
 
 
 // calculate conditional response probability given stable up to at least time t
+// [[Rcpp::export]]
 double conditional_response_probability_srp(
   double t,
   double p,
@@ -115,8 +116,12 @@ DataFrame impute_srp_model(
           t(i) - t_first_visit, response_probabilities(g), shapes(g, 0), shapes(g, 1),
           scales(g, 0), scales(g, 1));
         response = R::rbinom(1, p_response);
-        dt_response_interval = {t(i) - t_first_visit, INFINITY};
-      } else { // decided
+        // Rcout << group(i) << ": " << response << "\n\r";
+        if (response == 1) {
+          dt_response_interval = {t(i) - t_first_visit, INFINITY};
+        }
+      } else { // decided, state must be response
+        // Rcout << group(i) << ", " << subject_id(i) << ": " << state(i) << "\n\r";
         response = true;
       }
       if (response) {
