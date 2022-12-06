@@ -34,6 +34,12 @@ library(oncomsm)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
 
+m_cores <- if (as.logical(Sys.getenv("NOT_CRAN", unset = "FALSE"))) {
+  parallel::detectCores()
+} else {
+  2L # need to restrict parallel processing on CRAN
+}
+
 plan(multisession) # instruct future how to run in parallel
 ```
 

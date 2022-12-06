@@ -17,7 +17,7 @@
 #' `to<chr>`, `t_min<dbl>`, `t_max<dbl>`, `t_sot<dble>, where
 #' `to` and `from` indicate the state from which and into which the transitions
 #' occurs (stable, response, progression), `t_max` and `t_min` specify the
-#' interval in which the transition occured relative to `t_sot`
+#' interval in which the transition occurred relative to `t_sot`
 #' (start of treatment).
 #'
 #' @examples
