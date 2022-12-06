@@ -35,7 +35,7 @@ The conversion assumes that visit spacing is tight enough to not miss any
 transitions.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 tbl_visits <- sample_predictive(mdl, n_per_group = 5L, nsim = 1, seed = 468L)
 visits_to_mstate(tbl_visits, mdl)
 

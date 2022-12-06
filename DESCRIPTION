@@ -18,11 +18,10 @@ Authors@R: c(
     )
   )
 Description: This package implements methods to fit a parametric Bayesian 
-    multi-state model to tumor response data and to use the model to predict
-    probability of success on the study level.
-    The use of a multi-state model allows the dynamic computation of 
-    probability of success during an ongoing study for a wide
-    range of success criteria.
+    multi-state model to tumor response data.
+    The model can be used to sample from the predictive distribution to impute
+    missing data and calculate probability of success for custom decision
+    criteria in early clinical trials during an ongoing trial.
     The inference is implemented using stan.
 License: Apache License 2.0 | file LICENSE
 Encoding: UTF-8
