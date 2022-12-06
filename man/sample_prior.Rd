@@ -2,12 +2,9 @@
 % Please edit documentation in R/sample_prior.R
 \name{sample_prior}
 \alias{sample_prior}
-\alias{sample_prior.model}
 \title{Sample from prior distribution of a model}
 \usage{
-sample_prior(model, nsim, seed, ...)
-
-\method{sample_prior}{model}(
+sample_prior(
   model,
   nsim = 2000L,
   seed = NULL,
@@ -18,13 +15,11 @@ sample_prior(model, nsim, seed, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{nsim}{integer, number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
-
-\item{...}{further arguments passed to method implementations}
 
 \item{warmup}{integer, number of warm-up samples for the MCMC sampler
 before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
@@ -33,6 +28,8 @@ before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]
 
 \item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
 A \link[rstan:stanfit-class]{rstan::stanfit} object with sampled prior parameters.
@@ -42,7 +39,7 @@ A \link[rstan:stanfit-class]{rstan::stanfit} object with sampled prior parameter
 prior distribution of the specified model object.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 sample_prior(mdl, 1000L, seed = 42L)
 
 }

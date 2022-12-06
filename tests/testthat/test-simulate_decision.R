@@ -1,6 +1,6 @@
 test_that("decision rules can be simulated", {
-  mdl <- create_model(
-    A = group_prior(recruitment_rate = 2)
+  mdl <- create_srpmodel(
+    A = define_srp_prior(recruitment_rate = 2)
   )
   # create some interim data with only successes
   tbl_interim <- sample_predictive(mdl, 10, nsim = 1, seed = 45968, p = 1) %>%

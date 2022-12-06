@@ -8,6 +8,10 @@
 #' @template param-sample
 #' @template param-nsim
 #' @template param-seed
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
+#' @template param-nuts_control
 #' @template param-dotdotdot
 #'
 #' @return a data frame with variables
@@ -23,34 +27,26 @@
 #'
 #' @seealso [sample_prior()] [sample_posterior()] [impute()]
 #'
-#' @export
-sample_predictive <- function(model, n_per_group, sample, nsim, seed, ...) {
-  UseMethod("sample_predictive")
-}
-
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
-#' @param as_mstate return data in multi-state forma, see [visits_to_mstate()]
-#' @template param-nuts_control
-#'
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' sample_predictive(mdl, 1L, nsim = 1L, seed = 38L)
 #'
-#' @rdname sample_predictive
 #' @export
-sample_predictive.model <- function(
+sample_predictive <- function(
   model,
   n_per_group,
   sample = NULL,
+  p = NULL,
+  shape = NULL,
+  scale = NULL,
   nsim = 100L,
   seed = NULL,
   nsim_parameters = 1000L,
   warmup_parameters = 250,
   as_mstate = FALSE,
   nuts_control = list(),
-  ...
-) {
+  ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -63,5 +59,5 @@ sample_predictive.model <- function(
   data <- .emptydata(model, n_per_group)
   # call model-specific imputation method
   .impute(model = model, data = data, parameter_sample = sample, now = 0,
-          nsim = nsim, as_mstate = as_mstate, ...)
+          nsim = nsim, as_mstate = as_mstate, shape = shape, scale = scale, p = p, ...)
 }

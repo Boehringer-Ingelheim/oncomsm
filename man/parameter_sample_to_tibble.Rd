@@ -2,15 +2,12 @@
 % Please edit documentation in R/parameter_sample_to_tibble.R
 \name{parameter_sample_to_tibble}
 \alias{parameter_sample_to_tibble}
-\alias{parameter_sample_to_tibble.model}
 \title{Convert parameter sample to data table}
 \usage{
 parameter_sample_to_tibble(model, sample, ...)
-
-\method{parameter_sample_to_tibble}{model}(model, sample, ...)
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{sample}{a stanfit object with samples from the respective model.}
 
@@ -24,7 +21,7 @@ a tibble with the sampled parameters, in long format
 a model, extracts the paramters values and returns them in a data frame.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 smpl <- sample_prior(mdl, seed = 3647L)
 parameter_sample_to_tibble(mdl, smpl)
 

@@ -19,21 +19,16 @@
 #'
 #' @seealso [visits_to_mstate()]
 #'
-#' @export
-plot_mstate <- function(data, model, now, relative_to_sot, ...) {
-  UseMethod("plot_mstate", object = model)
-}
-
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' tbl_visits <- sample_predictive(mdl, n_per_group = 5L, nsim = 1, seed = 468L)
 #' tbl_mstate <- visits_to_mstate(tbl_visits, mdl)
 #' plot_mstate(tbl_mstate, mdl)
 #'
-#' @rdname plot_mstate
 #' @export
-plot_mstate.model <- function(data, model, now = max(tbl_mstate$t_max), # nolint
+plot_mstate <- function(data, model, now = max(tbl_mstate$t_max), # nolint
                               relative_to_sot = TRUE, ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   starting_state <- model$states[1]
   tbl_mstate <- data %>%
     rename(`Group ID` = "group_id")

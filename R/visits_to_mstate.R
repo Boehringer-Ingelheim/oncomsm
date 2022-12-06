@@ -20,9 +20,15 @@
 #' interval in which the transition occured relative to `t_sot`
 #' (start of treatment).
 #'
+#' @examples
+#' mdl <- create_model(A = group_prior())
+#' tbl_visits <- sample_predictive(mdl, n_per_group = 5L, nsim = 1, seed = 468L)
+#' visits_to_mstate(tbl_visits, mdl)
+#'
 #' @export
 visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
                              eof_indicator = "EOF") {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!inherits(tbl_visits, "data.frame")) {
     stop("'tbl_visits' must be a data.frame") # nocov
   } else {
@@ -31,26 +37,10 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
     checkmate::test_true(inherits(tbl_visits$t, "numeric"))
     checkmate::test_true(inherits(tbl_visits$state, "character"))
   }
-  UseMethod("visits_to_mstate", object = model)
-}
-
-
-
-#' @examples
-#' mdl <- create_model(A = group_prior())
-#' tbl_visits <- sample_predictive(mdl, n_per_group = 5L, nsim = 1, seed = 468L)
-#' visits_to_mstate(tbl_visits, mdl)
-#'
-#' @rdname visits_to_mstate
-#' @export
-visits_to_mstate.model <- function(tbl_visits, model, # nolint
-                                   now = max(tbl_visits$t),
-                                   eof_indicator = "EOF") {
+  checkmate::check_class(model, c("srpmodel", "list"))
   # make sure everything is sorted
   tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t)
-
   tbl_mstate <- list()
-
   subject_id_lagged <- 0L
   state_lagged <- 0L
   t_sot <- 0 # start of treatment

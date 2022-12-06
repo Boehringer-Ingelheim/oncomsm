@@ -11,19 +11,14 @@
 #'
 #' @seealso [sample_prior()] [sample_posterior()]
 #'
-#' @export
-parameter_sample_to_tibble <- function(model, sample, ...) {
-  UseMethod("parameter_sample_to_tibble")
-}
-
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' smpl <- sample_prior(mdl, seed = 3647L)
 #' parameter_sample_to_tibble(mdl, smpl)
 #'
-#' @rdname parameter_sample_to_tibble
 #' @export
-parameter_sample_to_tibble.model <- function(model, sample, ...) { # nolint
+parameter_sample_to_tibble <- function(model, sample, ...) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   stopifnot(isa(sample, "stanfit"))
   as.matrix(sample) %>%
     as_tibble() %>%

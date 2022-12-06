@@ -8,6 +8,9 @@
 #' @template param-data-condition
 #' @template param-nsim
 #' @template param-seed
+#' @template param-warmup
+#' @template param-nuts_control
+#' @template param-pars
 #' @template param-dotdotdot
 #'
 #' @return A [rstan::stanfit] object with posterior samples.
@@ -15,17 +18,8 @@
 #' @seealso [rstan::stan()] [parameter_sample_to_tibble()] [sample_prior()]
 #' [sample_predictive()] [impute()]
 #'
-#' @export
-sample_posterior <- function(model, data, nsim, seed, ...) {
-  UseMethod("sample_posterior")
-}
-
-#' @template param-warmup
-#' @template param-nuts_control
-#' @template param-pars
-#'
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' tbl <- tibble::tibble(
 #'   subject_id = c("A1", "A1"),
 #'   group_id = c("A", "A"),
@@ -34,9 +28,8 @@ sample_posterior <- function(model, data, nsim, seed, ...) {
 #' )
 #' sample_posterior(mdl, tbl, 500L, 42L)
 #'
-#' @rdname sample_posterior
 #' @export
-sample_posterior.model <- function(
+sample_posterior <- function(
   model,
   data,
   nsim = 2000L,
@@ -46,6 +39,7 @@ sample_posterior.model <- function(
   pars = attr(model, "parameter_names"),
   ...
 ) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   res <- .sample(
     model, data = data,
     warmup = warmup, nsim = nsim, seed = seed, pars = pars,

@@ -2,15 +2,15 @@
 % Please edit documentation in R/sample_predictive.R
 \name{sample_predictive}
 \alias{sample_predictive}
-\alias{sample_predictive.model}
 \title{Sample visits from predictive distribution}
 \usage{
-sample_predictive(model, n_per_group, sample, nsim, seed, ...)
-
-\method{sample_predictive}{model}(
+sample_predictive(
   model,
   n_per_group,
   sample = NULL,
+  p = NULL,
+  shape = NULL,
+  scale = NULL,
   nsim = 100L,
   seed = NULL,
   nsim_parameters = 1000L,
@@ -21,7 +21,7 @@ sample_predictive(model, n_per_group, sample, nsim, seed, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{n_per_group}{integer vector with number of individuals per group.}
 
@@ -31,8 +31,6 @@ sample_predictive(model, n_per_group, sample, nsim, seed, ...)
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
-\item{...}{further arguments passed to method implementations}
-
 \item{nsim_parameters}{integer, number of parameter samples}
 
 \item{warmup_parameters}{integer, number of warmup samples for the rstan sampler before retaining samples of the parameters.}
@@ -41,6 +39,8 @@ sample_predictive(model, n_per_group, sample, nsim, seed, ...)
 
 \item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
 a data frame with variables
@@ -59,7 +59,7 @@ state "progression".
 model given a parameter sample.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 sample_predictive(mdl, 1L, nsim = 1L, seed = 38L)
 
 }

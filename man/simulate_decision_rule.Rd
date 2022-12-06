@@ -47,7 +47,7 @@ The sampling is implementing using \code{furrr::future_map()} and thus
 supports parallel execution when specifying a \code{future::plan()}.
 }
 \examples{
-mdl <- create_srp_model(A = srp_group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 rule <- function(model, data) {
   tibble::tibble(decision = sample(c(0,1), 1))
 }

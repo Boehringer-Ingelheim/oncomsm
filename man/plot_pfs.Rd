@@ -2,12 +2,9 @@
 % Please edit documentation in R/plot_pfs.R
 \name{plot_pfs}
 \alias{plot_pfs}
-\alias{plot_pfs.model}
 \title{Plot progression-free-survival function}
 \usage{
-plot_pfs(model, parameter_sample, ...)
-
-\method{plot_pfs}{model}(
+plot_pfs(
   model,
   parameter_sample = NULL,
   seed = 42L,
@@ -23,11 +20,9 @@ plot_pfs(model, parameter_sample, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{parameter_sample}{a stanfit object with samples from the respective model.}
-
-\item{...}{further arguments passed to method implementations}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
@@ -52,15 +47,14 @@ automatic interval detection}
 
 \item{confidence}{numeric in (0, 1) confidence level for point-wise
 confidence bands around mean; none plotted if NULL.}
-}
-\value{
-a \link[ggplot2:ggplot]{ggplot2::ggplot} object
+
+\item{...}{further arguments passed to method implementations}
 }
 \description{
 \code{plot_pfs()} plots the progression-free-survival function of a model.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 plot_pfs(mdl)
 
 }

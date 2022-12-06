@@ -1,40 +1,32 @@
 #' Plot the response probability distributions
 #'
 #' `plot_response_probability()` plots the distribution over the response
-#' probability paramter in the specified model.
+#' probability parameter in the specified model.
 #'
 #' @template param-model
 #' @template param-parameter_sample
-#' @template param-dotdotdot
-#'
-#' @seealso [plot_transition_times()] [plot_pfs()]
-#'
-#' @export
-plot_response_probability <- function(model, parameter_sample, ...) {
-  UseMethod("plot_response_probability")
-}
-
 #' @template param-parameter_sample
 #' @template param-seed
 #' @template param-nsim
 #' @template param-warmup
 #' @template param-nuts_control
+#' @template param-dotdotdot
 #'
-#' @return a [ggplot2::ggplot] object
+#' @seealso [plot_transition_times()] [plot_pfs()]
 #'
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' plot_response_probability(mdl)
 #'
-#' @rdname plot_response_probability
 #' @export
-plot_response_probability.model <- function(model, # nolint
-                                            parameter_sample = NULL,
-                                            seed = 42L,
-                                            nsim = 500L,
-                                            warmup = 250,
-                                            nuts_control = list(),
-                                            ...) {
+plot_response_probability <- function(model, # nolint
+                                      parameter_sample = NULL,
+                                      seed = 42L,
+                                      nsim = 500L,
+                                      warmup = 250,
+                                      nuts_control = list(),
+                                      ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (is.null(parameter_sample)) { # sample parameters from prior if none given
     parameter_sample <- sample_prior(model,
                                      seed = seed, nsim = nsim,

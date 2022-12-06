@@ -1,1 +1,1 @@
-#' @param model an object of class [model] containing prior information
+#' @param model an object of class [srpmodel] containing prior information

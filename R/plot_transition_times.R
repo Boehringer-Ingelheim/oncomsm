@@ -5,15 +5,6 @@
 #'
 #' @template param-model
 #' @template param-parameter_sample
-#' @template param-dotdotdot
-#'
-#' @seealso [plot_pfs()] [plot_response_probability()]
-#'
-#' @export
-plot_transition_times <- function(model, parameter_sample, ...) {
-  UseMethod("plot_transition_times")
-}
-
 #' @template param-parameter_sample
 #' @template param-seed
 #' @template param-nsim
@@ -22,27 +13,28 @@ plot_transition_times <- function(model, parameter_sample, ...) {
 #' @template param-nuts_control
 #' @param confidence numeric in (0, 1) confidence level for point-wise
 #' confidence bands around mean; none plotted if NULL.
+#' @template param-dotdotdot
 #'
-#' @return a [ggplot2::ggplot] object
+#' @seealso [plot_pfs()] [plot_response_probability()]
 #'
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' plot_transition_times(mdl)
 #'
-#' @rdname plot_transition_times
 #' @export
-plot_transition_times.model <- function(model, # nolint
-                                        parameter_sample = NULL,
-                                        seed = 42L,
-                                        nsim = 500L,
-                                        warmup = 250,
-                                        nuts_control = list(),
-                                        dt_interval = NULL,
-                                        dt_n_grid = 25,
-                                        dt_expand = 1.1,
-                                        dt_grid = NULL,
-                                        confidence = NULL,
-                                        ...) {
+plot_transition_times <- function(model, # nolint
+                                  parameter_sample = NULL,
+                                  seed = 42L,
+                                  nsim = 500L,
+                                  warmup = 250,
+                                  nuts_control = list(),
+                                  dt_interval = NULL,
+                                  dt_n_grid = 25,
+                                  dt_expand = 1.1,
+                                  dt_grid = NULL,
+                                  confidence = NULL,
+                                  ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (is.null(parameter_sample)) { # sample parameters from prior if none given
     parameter_sample <- sample_prior(model,
                                      seed = seed, nsim = nsim,

@@ -6,41 +6,32 @@
 #' @template param-model
 #' @param t a vector of time-points at which the PFS rate should be computed
 #' @template param-parameter_sample
+#' @template param-warmup
+#' @template param-nsim
+#' @template param-seed
 #' @template param-dotdotdot
 #'
 #' @return a data frame with samples of PFS rates at each of the time points
 #' in the vector t.
 #'
-#' @export
-compute_pfs <- function(model, t, parameter_sample, ...) {
-  UseMethod("compute_pfs")
-}
-
-
-
-#' @template param-warmup
-#' @template param-nsim
-#' @template param-seed
-#'
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' smpl <- sample_prior(mdl, nsim = 500, seed = 34L)
 #' dplyr::filter(
 #'   compute_pfs(mdl, t = seq(0, 12), parameter_sample = smpl),
 #'   iter == 1
 #' )
 #'
-#' @rdname compute_pfs
 #' @export
-compute_pfs.model <- function( # nolint
+compute_pfs <- function(
   model,
   t,
   parameter_sample = NULL,
   warmup = 500L,
   nsim = 1000L,
   seed = NULL,
-  ...
-) {
+  ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (is.null(parameter_sample)) {
     parameter_sample <- sample_prior(model,
                                      warmup = warmup, nsim = nsim, seed = seed,

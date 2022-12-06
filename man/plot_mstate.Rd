@@ -2,12 +2,9 @@
 % Please edit documentation in R/plot_mstate.R
 \name{plot_mstate}
 \alias{plot_mstate}
-\alias{plot_mstate.model}
 \title{Swimmer plot of multi-state data}
 \usage{
-plot_mstate(data, model, now, relative_to_sot, ...)
-
-\method{plot_mstate}{model}(
+plot_mstate(
   data,
   model,
   now = max(tbl_mstate$t_max),
@@ -21,7 +18,7 @@ plot_mstate(data, model, now, relative_to_sot, ...)
 \verb{to<chr>}, \verb{t_min<dbl>}, \verb{t_max<dbl>}, \verb{t_sot<dble>, where }to\code{and}from\verb{indicate the state from which and into which the transitions occurs (stable, response, progression),}t_max\code{and}t_min\verb{specify the interval in which the transition occured relative to}t_sot`
 (start of treatment).}
 
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{now}{the current time relative to the start of the trial}
 
@@ -37,7 +34,7 @@ a \link[ggplot2:ggplot]{ggplot2::ggplot} object
 \code{plot_mstate()} plots data in 'multi-state-format' as swimmer plot.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 tbl_visits <- sample_predictive(mdl, n_per_group = 5L, nsim = 1, seed = 468L)
 tbl_mstate <- visits_to_mstate(tbl_visits, mdl)
 plot_mstate(tbl_mstate, mdl)

@@ -1,10 +1,6 @@
 # Checks for internal consistency of object "Model"
 # Returns TRUE if consistent, otherwise throws an error
-check_valid <- function(model) {
-  UseMethod("check_valid")
-}
-
-check_valid.model <- function(model) { # nolint # nocov start
+check_valid <- function(model){ # nolint # nocov start
   checkmate::assert_character(model$group_id)
   group_ids <- model$group_id
   k <- length(group_ids)

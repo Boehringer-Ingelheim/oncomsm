@@ -23,7 +23,7 @@
 #' from the predictive distribution.
 #'
 #' @examples
-#' mdl <- create_srp_model(A = srp_group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' rule <- function(model, data) {
 #'   tibble::tibble(decision = sample(c(0,1), 1))
 #' }
@@ -39,6 +39,7 @@ simulate_decision_rule <- function(model,
                                    parameter_sample = NULL,
                                    seed = NULL,
                                    nsim = 1L) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   # sample parameters
   if (!is.null(seed)) {
     set.seed(seed) # nocov

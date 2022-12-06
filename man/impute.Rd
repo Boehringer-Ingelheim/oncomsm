@@ -2,12 +2,9 @@
 % Please edit documentation in R/impute.R
 \name{impute}
 \alias{impute}
-\alias{impute.model}
 \title{Impute visits from predictive distribution}
 \usage{
-impute(model, data, nsim, n_per_group, now, seed, ...)
-
-\method{impute}{model}(
+impute(
   model,
   data,
   nsim,
@@ -23,7 +20,7 @@ impute(model, data, nsim, n_per_group, now, seed, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{data}{a data frame with variables
 \verb{subject_id<chr>} (subject identifier),
@@ -43,8 +40,6 @@ state "progression".}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
-\item{...}{further arguments passed to method implementations}
-
 \item{recruitment_rates}{vector of recruitment rates}
 
 \item{sample}{a stanfit object containing samples. These parameter samples
@@ -58,6 +53,8 @@ this sample to match the desired number of imputations.}
 
 \item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
 a data frame with variables
@@ -74,11 +71,11 @@ data is sampled from the predictive distribution.
 }
 \description{
 \code{impute()} samples visits for individuals in \code{data} and potentially missing
-indivduals up to a maximum of \code{n_per_group} from the posterior
+individuals up to a maximum of \code{n_per_group} from the posterior
 predictive distribution of the given model.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 tbl <- tibble::tibble(
   subject_id = c("A1", "A1"),
   group_id = c("A", "A"),

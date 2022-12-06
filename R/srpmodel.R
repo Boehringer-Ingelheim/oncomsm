@@ -4,11 +4,12 @@
 #' SRP multi-state model and combines them into a single model object.
 #' Groups are still treated as independent.
 #'
-#' `group_prior()` specifies a prior distribution for a
+#' `define_srp_prior()` specifies a prior distribution for a
 #' three state model (stable, response, progression) for
 #' a single group.
 #'
-#' @name model
+#' @name srpmodel
+#' @aliases srp-model
 NULL
 
 #' @param p_mean numeric, mean of the beta prior for the response probability
@@ -35,11 +36,11 @@ NULL
 #' @examples
 #' # a model with prior 25% response rate and variance equivalent to
 #' # 10 data points (i.e. a Beta(2.5, 7.5) distribution).
-#' grp <- group_prior(p_mean = 0.25, p_n = 10)
+#' grp <- define_srp_prior(p_mean = 0.25, p_n = 10)
 #'
-#' @rdname model
+#' @rdname srpmodel
 #' @export
-group_prior <- function(
+define_srp_prior <- function(
   p_mean = 0.5,
   p_n = 3,
   p_eta = 0.0,
@@ -65,14 +66,14 @@ group_prior <- function(
     as.list(environment()),
     visit_spacing = visit_spacing,
     recruitment_rate = recruitment_rate,
-    class = "group_prior"
+    class = "srp_prior"
   )
   return(res)
 }
 
 
 
-#' @param ... named [`group_prior`] objects; the argument names serve as
+#' @param ... named `srp_prior` objects; the argument names serve as
 #' group labels
 #' @param maximal_time the maximal overall runtime of the trial as measured from
 #' the first visit of any group. No visits past this point are sampled.
@@ -80,14 +81,14 @@ group_prior <- function(
 #' @examples
 #' # a model with two groups and different priors on the respective response
 #' # probabilities
-#' mdl <- create_model(
-#'   A = group_prior(),
-#'   B = group_prior(p_mean = 0.33, p_n = 10)
+#' create_srpmodel(
+#'   A = define_srp_prior(),
+#'   B = define_srp_prior(p_mean = 0.33, p_n = 10)
 #' )
 #'
-#' @rdname model
+#' @rdname srpmodel
 #' @export
-create_model <- function(
+create_srpmodel <- function(
   ...,
   maximal_time = 10 * 12
 ) {
@@ -135,7 +136,7 @@ create_model <- function(
         p = p, median_t = median_t, shape = shape
       )
     ),
-    class = c("model", "list"),
+    class = c("srpmodel", "list"),
     parameter_names = c("p", "median_t", "shape", "scale")
   )
   check_valid(res)
@@ -144,32 +145,8 @@ create_model <- function(
 
 
 
-#' @param x SRP model to format
-#' @template param-dotdotdot
-#' @examples
-#' format(create_model(A = group_prior()))
-#' @rdname model
-#' @export
-format.model <- function(x, ...) {
-  sprintf("model<%s>", paste(x$group_id, collapse = ","))
-}
-
-#' @param x Model to print
-#' @template param-dotdotdot
-#' @examples
-#' print(create_model(A = group_prior()))
-#' @rdname model
-#' @export
-print.model <- function(x, ...) cat(format(x, ...), "\n") # nocov
-
-
-
-# create a data set with no observations
-.nodata <- function(model) {
-  UseMethod(".nodata")
-}
-
-.nodata.model <- function(model) { # nolint
+.nodata <- function(model) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   tibble(
     subject_id = integer(),
     group_id = integer(),
@@ -184,11 +161,8 @@ print.model <- function(x, ...) cat(format(x, ...), "\n") # nocov
 
 
 # create a data set with no observed data
-.emptydata <- function(model, n_per_group, seed) {
-  UseMethod(".emptydata")
-}
-
-.emptydata.model <- function(model, n_per_group, seed = NULL) { # nolint
+.emptydata <- function(model, n_per_group, seed = NULL) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed) # nocov
   }
@@ -215,11 +189,8 @@ print.model <- function(x, ...) cat(format(x, ...), "\n") # nocov
 
 
 # generic for digesting data into rstan-ready list
-data2standata <- function(data, model, ...) {
-  UseMethod("data2standata", model)
-}
-
-data2standata.model <- function(data, model) { # nolint
+data2standata <- function(data, model) { # nolint
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   # first prepare any data (if available)
   lst_stan_data <- data %>%
     mutate(
@@ -285,13 +256,8 @@ data2standata.model <- function(data, model) { # nolint
 }
 
 
-
-.sample <- function(model, data, ...) {
-  UseMethod(".sample")
-}
-
 # sample from stan model (hidden)
-.sample.model <- function( # nolint
+.sample <- function( # nolint
   model,
   data = NULL,
   now = NULL,
@@ -301,8 +267,8 @@ data2standata.model <- function(data, model) { # nolint
   pars = attr(model, "parameter_names"),
   refresh = 0L,
   nuts_control = list(),
-  ...
-) {
+  ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
   if (is.null(data)) {
@@ -328,61 +294,4 @@ data2standata.model <- function(data, model) { # nolint
     ...
   )
   return(res)
-}
-
-
-#' Summary plot of model prior
-#'
-#' @param x the model to plot
-#' @template param-parameter_sample
-#' @template param-seed
-#' @template param-nsim
-#' @template param-warmup
-#' @template param-nuts_control
-#' @template param-dt-params
-#' @template param-dotdotdot
-#' @param confidence numeric in (0, 1) confidence level for point-wise
-#' confidence bands around mean; none plotted if NULL.
-#'
-#' @seealso [plot_pfs()] [plot_transition_times()]
-#' [plot_response_probability()]
-#'
-#' @export
-plot.model <- function(x,
-                       parameter_sample = NULL,
-                       seed = 42L,
-                       nsim = 500L,
-                       warmup = 250,
-                       nuts_control = list(),
-                       dt_interval = NULL,
-                       dt_n_grid = 25,
-                       dt_expand = 1.1,
-                       dt_grid = NULL,
-                       confidence = NULL,
-                       ...) {
-  if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("the patchwork package is required to plot SRP models") # nocov
-  }
-  if (is.null(parameter_sample)) { # sample parameters from prior if none given
-    parameter_sample <- sample_prior(x,
-                                     seed = seed, nsim = nsim,
-                                     warmup = warmup,
-                                     nuts_control = nuts_control, ...)
-  }
-  if (is.null(dt_grid)) {
-    # determine plotting grid
-    dt_grid <- get_dt_grid(x, parameter_sample, dt_interval,
-                           dt_n_grid, dt_expand, seed)
-  }
-  plt_trans <- plot_transition_times(x, parameter_sample, dt_grid = dt_grid,
-                                     confidence = confidence)
-  plt_pfs <- plot_pfs(x, parameter_sample, dt_grid = dt_grid,
-                      confidence = confidence)
-  plt_pr <- plot_response_probability(x, parameter_sample)
-  design <- "
-  111
-  234
-  "
-  plt_trans + plt_pfs + plt_pr + patchwork::guide_area() +
-    patchwork::plot_layout(design = design, guides = "collect")
 }

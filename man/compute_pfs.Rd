@@ -2,12 +2,9 @@
 % Please edit documentation in R/compute_pfs.R
 \name{compute_pfs}
 \alias{compute_pfs}
-\alias{compute_pfs.model}
 \title{Compute progression-free-survival rate given sample}
 \usage{
-compute_pfs(model, t, parameter_sample, ...)
-
-\method{compute_pfs}{model}(
+compute_pfs(
   model,
   t,
   parameter_sample = NULL,
@@ -18,13 +15,11 @@ compute_pfs(model, t, parameter_sample, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{t}{a vector of time-points at which the PFS rate should be computed}
 
 \item{parameter_sample}{a stanfit object with samples from the respective model.}
-
-\item{...}{further arguments passed to method implementations}
 
 \item{warmup}{integer, number of warm-up samples for the MCMC sampler
 before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
@@ -32,6 +27,8 @@ before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]
 \item{nsim}{integer, number of samples to draw}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
 a data frame with samples of PFS rates at each of the time points
@@ -42,7 +39,7 @@ in the vector t.
 times given a paramter sample.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 smpl <- sample_prior(mdl, nsim = 500, seed = 34L)
 dplyr::filter(
   compute_pfs(mdl, t = seq(0, 12), parameter_sample = smpl),

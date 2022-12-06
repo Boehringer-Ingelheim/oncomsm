@@ -1,26 +1,26 @@
 test_that("can create model", {
-  mdl <- create_model(
-    B = group_prior(),
-    A = group_prior()
+  mdl <- create_srpmodel(
+    B = define_srp_prior(),
+    A = define_srp_prior()
   )
   # check class
   expect_true(
-    isa(mdl, c("model", "list"))
+    isa(mdl, c("srpmodel", "list"))
   )
   # check print method
   expect_true(
-    format(mdl) == "model<B,A>",
-    capture.output(print(mdl)) == "model<B,A> ",
+    format(mdl) == "srpmodel<B,A>",
+    capture.output(print(mdl)) == "srpmodel<B,A> ",
     all(mdl$group_id == c("B", "A"))
   )
   # single-group model
-  mdl <- create_model(
-    A = group_prior()
+  mdl <- create_srpmodel(
+    A = define_srp_prior()
   )
   # check print method
   expect_true(
-    format(mdl) == "model<A>",
-    capture.output(print(mdl)) == "model<A> ",
+    format(mdl) == "srpmodel<A>",
+    capture.output(print(mdl)) == "srpmodel<A> ",
     all(mdl$group_id == "A")
   )
 })
@@ -28,8 +28,8 @@ test_that("can create model", {
 
 
 test_that("can calculate PFS rate", {
-  mdl <- create_model(
-    A = group_prior()
+  mdl <- create_srpmodel(
+    A = define_srp_prior()
   )
   smpl <- sample_prior(mdl, 500L, seed = 42132L)
   res1 <- compute_pfs(mdl, t = 12, parameter_sample = smpl)

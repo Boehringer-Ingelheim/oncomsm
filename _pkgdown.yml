@@ -42,5 +42,6 @@ reference:
   - simulate_decision_rule
 - title: "Stable-Response-Progression model"
   contents:
-  - model
-  - plot.model
+  - srpmodel
+  - plot.srpmodel
+  - print.srpmodel

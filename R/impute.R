@@ -1,7 +1,7 @@
 #' Impute visits from predictive distribution
 #'
 #' `impute()` samples visits for individuals in `data` and potentially missing
-#' indivduals up to a maximum of `n_per_group` from the posterior
+#' individuals up to a maximum of `n_per_group` from the posterior
 #' predictive distribution of the given model.
 #'
 #' @template param-model
@@ -10,6 +10,14 @@
 #' @param now exact time point relative to start of the trial
 #' @template param-nsim
 #' @template param-seed
+#' @param recruitment_rates vector of recruitment rates
+#' @param sample a stanfit object containing samples. These parameter samples
+#'   represent the parameter distribution over which the predictive distribution
+#'   averages. Technically, the parameters are resampled with replacement from
+#'   this sample to match the desired number of imputations.
+#' @template param-nsim_parameters
+#' @template param-warmup_parameters
+#' @template param-nuts_control
 #' @template param-dotdotdot
 #'
 #' @return a data frame with variables
@@ -26,22 +34,8 @@
 #'
 #' @seealso [sample_prior()] [sample_posterior()] [sample_predictive()]
 #'
-#' @export
-impute <- function(model, data, nsim, n_per_group, now, seed, ...) {
-  UseMethod("impute")
-}
-
-#' @param recruitment_rates vector of recruitment rates
-#' @param sample a stanfit object containing samples. These parameter samples
-#'   represent the parameter distribution over which the predictive distribution
-#'   averages. Technically, the parameters are resampled with replacement from
-#'   this sample to match the desired number of imputations.
-#' @template param-nsim_parameters
-#' @template param-warmup_parameters
-#' @template param-nuts_control
-#'
 #' @examples
-#' mdl <- create_model(A = group_prior())
+#' mdl <- create_srpmodel(A = define_srp_prior())
 #' tbl <- tibble::tibble(
 #'   subject_id = c("A1", "A1"),
 #'   group_id = c("A", "A"),
@@ -50,9 +44,8 @@ impute <- function(model, data, nsim, n_per_group, now, seed, ...) {
 #' )
 #' impute(mdl, tbl, 1L, seed = 38L)
 #'
-#' @rdname impute
 #' @export
-impute.model <- function(
+impute <- function(
   model,
   data,
   nsim,
@@ -64,8 +57,8 @@ impute.model <- function(
   nsim_parameters = 1000L,
   warmup_parameters = 250L,
   nuts_control = list(),
-  ...
-) {
+  ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -130,14 +123,11 @@ impute.model <- function(
   return(res) # problem with forward sampling?
 }
 
-# must be implemented by "Model" subclass
-.impute <- function(model, data, sim, now, parameter_sample, ...) {
-  UseMethod(".impute")
-}
-
-.impute.model <- function(model, data, nsim, parameter_sample = NULL, # nolint
-                          seed = NULL, p = NULL, shape = NULL,
-                          scale = NULL, as_mstate = FALSE, ...) {
+# helper function to handle forward sampling
+.impute <- function(model, data, nsim, parameter_sample = NULL, # nolint
+                    seed = NULL, p = NULL, shape = NULL,
+                    scale = NULL, as_mstate = FALSE, ...) {
+  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -166,6 +156,15 @@ impute.model <- function(
     # expand fixed parameters to same format as rstan parameters
     p <- t(array(p, dim = c(n_groups, n_params_sample)))
   }
+  if (is.null(shape)) {
+    shape <- rstan::extract(parameter_sample, "shape")[[1]]
+  } else {
+    # need to add one dimension (iterations to fit format)
+    shape <- aperm(
+      array(shape, dim = c(n_groups, 3, n_params_sample)),
+      c(3, 1, 2)
+    )
+  }
   if (is.null(scale)) {
     # scale[i,j,k] is the scale value for ith sample in jth group for
     # k-th transition (k being 1. stable-> response, 2. stable -> progression,
@@ -175,15 +174,6 @@ impute.model <- function(
     # need to add one dimension (iterations to fit format)
     scale <- aperm(
       array(scale, dim = c(n_groups, 3, n_params_sample)),
-      c(3, 1, 2)
-    )
-  }
-  if (is.null(shape)) {
-    shape <- rstan::extract(parameter_sample, "shape")[[1]]
-  } else {
-    # need to add one dimension (iterations to fit format)
-    shape <- aperm(
-      array(shape, dim = c(n_groups, 3, n_params_sample)),
       c(3, 1, 2)
     )
   }
@@ -203,7 +193,7 @@ impute.model <- function(
     res <- impute_srp_model(data, response_probabilities, shapes, scales,
                             visit_spacing = model$visit_spacing,
                             max_time = model$maximal_time
-    ) %>%
+      ) %>%
       as_tibble() %>%
       mutate(
         group_id = as.character(.data$group_id)

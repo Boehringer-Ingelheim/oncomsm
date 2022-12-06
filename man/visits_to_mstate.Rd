@@ -2,17 +2,9 @@
 % Please edit documentation in R/visits_to_mstate.R
 \name{visits_to_mstate}
 \alias{visits_to_mstate}
-\alias{visits_to_mstate.model}
 \title{Convert cross-sectional visit data to multi-state format}
 \usage{
 visits_to_mstate(
-  tbl_visits,
-  model,
-  now = max(tbl_visits$t),
-  eof_indicator = "EOF"
-)
-
-\method{visits_to_mstate}{model}(
   tbl_visits,
   model,
   now = max(tbl_visits$t),
@@ -22,7 +14,7 @@ visits_to_mstate(
 \arguments{
 \item{tbl_visits}{data frame, visit data in long format}
 
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{now}{time point since start of trial (might be later than last
 recorded visit)}

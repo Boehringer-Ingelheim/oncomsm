@@ -2,12 +2,9 @@
 % Please edit documentation in R/plot_response_probability.R
 \name{plot_response_probability}
 \alias{plot_response_probability}
-\alias{plot_response_probability.model}
 \title{Plot the response probability distributions}
 \usage{
-plot_response_probability(model, parameter_sample, ...)
-
-\method{plot_response_probability}{model}(
+plot_response_probability(
   model,
   parameter_sample = NULL,
   seed = 42L,
@@ -18,11 +15,9 @@ plot_response_probability(model, parameter_sample, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{parameter_sample}{a stanfit object with samples from the respective model.}
-
-\item{...}{further arguments passed to method implementations}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
@@ -33,16 +28,15 @@ before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]
 
 \item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
-}
-\value{
-a \link[ggplot2:ggplot]{ggplot2::ggplot} object
+
+\item{...}{further arguments passed to method implementations}
 }
 \description{
 \code{plot_response_probability()} plots the distribution over the response
-probability paramter in the specified model.
+probability parameter in the specified model.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 plot_response_probability(mdl)
 
 }

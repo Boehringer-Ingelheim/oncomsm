@@ -2,12 +2,9 @@
 % Please edit documentation in R/sample_posterior.R
 \name{sample_posterior}
 \alias{sample_posterior}
-\alias{sample_posterior.model}
 \title{Sample from posterior distribution of a model}
 \usage{
-sample_posterior(model, data, nsim, seed, ...)
-
-\method{sample_posterior}{model}(
+sample_posterior(
   model,
   data,
   nsim = 2000L,
@@ -19,7 +16,7 @@ sample_posterior(model, data, nsim, seed, ...)
 )
 }
 \arguments{
-\item{model}{an object of class \link{model} containing prior information}
+\item{model}{an object of class \link{srpmodel} containing prior information}
 
 \item{data}{a data frame with variables
 \verb{subject_id<chr>} (subject identifier),
@@ -35,8 +32,6 @@ state "progression".}
 
 \item{seed}{integer, fixed random seed; NULL for no fixed seed}
 
-\item{...}{further arguments passed to method implementations}
-
 \item{warmup}{integer, number of warm-up samples for the MCMC sampler
 before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]{rstan::stan()}}.}
 
@@ -44,6 +39,8 @@ before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
 
 \item{pars}{character vector of parameter names to sample}
+
+\item{...}{further arguments passed to method implementations}
 }
 \value{
 A \link[rstan:stanfit-class]{rstan::stanfit} object with posterior samples.
@@ -54,7 +51,7 @@ posterior distribution of the specified model given a data set with
 visit data.
 }
 \examples{
-mdl <- create_model(A = group_prior())
+mdl <- create_srpmodel(A = define_srp_prior())
 tbl <- tibble::tibble(
   subject_id = c("A1", "A1"),
   group_id = c("A", "A"),
