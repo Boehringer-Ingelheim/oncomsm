@@ -1,7 +1,7 @@
 Package: oncomsm
 Type: Package
 Title: Bayesian Multi-State Models for Early Oncology
-Version: 0.1.1.9000
+Version: 0.1.2
 Authors@R: c(
     person("Kevin", "Kunzmann", 
       role = c("aut", "cre"), 
@@ -17,8 +17,8 @@ Authors@R: c(
       role = c("cph", "fnd")
     )
   )
-Description: This package implements methods to fit a parametric Bayesian 
-    multi-state model to tumor response data.
+Description: Implements methods to fit a parametric Bayesian multi-state model
+    to tumor response data.
     The model can be used to sample from the predictive distribution to impute
     missing data and calculate probability of success for custom decision
     criteria in early clinical trials during an ongoing trial.
@@ -45,6 +45,7 @@ Imports:
     stringr,
     ggplot2,
     checkmate
+SystemRequirements: GNU make
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp,
@@ -52,7 +53,6 @@ LinkingTo:
     RcppNumerical (>= 0.4),
     rstan (>= 2.18),
     StanHeaders (>= 2.18)
-SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
     knitr,
@@ -61,6 +61,7 @@ Suggests:
     bhmbasket,
     vdiffr,
     DiagrammeR,
+    future,
     doFuture,
     doRNG,
     rjags
