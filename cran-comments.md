@@ -7,5 +7,6 @@
 plots being included. The package uses rstantools to pre-compiled the stan
 model used for inference this leads to a large size of the installed lib
 folder.
+* rstantools requires GNU make as system dependency
 * abort, exit, printf are found in the shared library. All of these are coming
 from the rstantools dependency.
