@@ -2,14 +2,19 @@ test_that("decision rules can be simulated", {
   mdl <- create_srpmodel(
     A = define_srp_prior(recruitment_rate = 2)
   )
-  # create some interim data with only successes
-  tbl_interim <- sample_predictive(mdl, 10, nsim = 1, seed = 45968, p = 1) %>%
-    filter(t <= 10)
-  # presample interim posterior
+  # create some interim data with only responses
+  tbl_interim <- tibble(
+    subject_id = rep(sprintf("%i", 1:5), each = 2),
+    group_id = "A",
+    t = rep(c(0, 1), times = 5),
+    state = rep(c("stable", "response"), times = 5)
+  )
+  # pre-sample interim posterior
   interim_post <- sample_posterior(mdl, tbl_interim, nsim = 500L, seed = 243756)
   # define decision rule, simply check whether posterior of response probability
   # being above a threshold is larger than confidence
-  rule <- function(model, data, threshold = 0.7, confidence = 0.75, nsim = 500L) {
+  rule <- function(model, data, threshold = 0.7, confidence = 0.75,
+                   nsim = 1000L) {
     n_groups <- length(model$group_id)
     smpl <- sample_posterior(model, data = data, warmup = 250L, nsim = nsim)
     p_post <- parameter_sample_to_tibble(mdl, smpl) %>%
