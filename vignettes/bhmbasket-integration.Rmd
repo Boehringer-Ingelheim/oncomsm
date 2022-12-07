@@ -40,7 +40,7 @@ m_cores <- if (as.logical(Sys.getenv("NOT_CRAN", unset = "FALSE"))) {
   2L # need to restrict parallel processing on CRAN
 }
 
-plan(multisession) # instruct future how to run in parallel
+plan(multisession(workers = m_cores)) # instruct future how to run in parallel
 ```
 
 
