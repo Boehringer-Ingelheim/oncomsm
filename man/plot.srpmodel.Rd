@@ -51,7 +51,7 @@ confidence bands around mean; none plotted if NULL.}
 \item{...}{further arguments passed to method implementations}
 }
 \value{
-A \code{patchwork} object, see \link{patchwork}
+A \code{patchwork} object, see \link[patchwork:patchwork-package]{patchwork::patchwork}
 }
 \description{
 Summary plot of model prior
