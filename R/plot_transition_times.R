@@ -15,6 +15,8 @@
 #' confidence bands around mean; none plotted if NULL.
 #' @template param-dotdotdot
 #'
+#' @return a [ggplot2::ggplot] object
+#'
 #' @seealso [plot_pfs()] [plot_response_probability()]
 #'
 #' @examples

@@ -14,6 +14,10 @@
 
 \item{...}{further arguments passed to method implementations}
 }
+\value{
+\code{format()} returns a character string representation of the object,
+\code{print()} prints to the console and returns the object itself invisibly.
+}
 \description{
 Print an srpmodel
 }

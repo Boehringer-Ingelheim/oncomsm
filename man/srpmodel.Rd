@@ -61,6 +61,31 @@ group labels}
 \item{maximal_time}{the maximal overall runtime of the trial as measured from
 the first visit of any group. No visits past this point are sampled.}
 }
+\value{
+\code{define_srp_prior()} returns an object of class \code{srp_prior},
+all inputs are accessible via
+\verb{$x} where \code{x} is the name of the input argument in the function call except
+for \code{visit_spacing} and \code{recruitment_rate} which are saved as attributes
+and can be retrieved using \code{attr(mdl, "visit_spacing")} and
+\code{attr(mdl, "recruitment_rate")}.
+
+\code{create_srpmodel()} returns an object of class \code{c("srpmodel", "list")} that
+holds information about potentially multiple groups in a compact format and
+can be accessed using the list operator \verb{$name}.
+\code{group_id} is a character vector with the group names,
+\code{maximal_time} is the maximal follow-up time since the first visit in the
+study, \code{visit_spacing} is the vector of per-group difference between visits
+(only relevant for forward sampling), \code{recruitment_rate} is the vector of
+per-group recruitment rates, \code{stan_model} is the pre-compiled 'stan' model
+used for inference, \code{states} is the vector of state names in the multi-state
+model, and \code{prior} is a list of hyperparamters for the model prior with
+elements \code{p}, vector, for the response probability per group,
+\code{median_t} is an \code{c(n_groups, 3, 2)} dimensional array where \code{median_t[i,j,1]}
+holds the 5\% quantile of the the lognormal prior on median transition time
+for group \code{i} and transition \code{j} and \code{median_t[i,j,2]} the corresponding
+upper 95\% quantile. The \code{shape} hyperparamter has the same format and
+specified the corresponding quantiles for the Weibull shape parameter.
+}
 \description{
 \code{create_model()} takes one or more prior-specifications for an
 SRP multi-state model and combines them into a single model object.
@@ -75,12 +100,14 @@ a single group.
 # a model with prior 25\% response rate and variance equivalent to
 # 10 data points (i.e. a Beta(2.5, 7.5) distribution).
 grp <- define_srp_prior(p_mean = 0.25, p_n = 10)
+attr(grp, "recruitment_rate")
 
 # a model with two groups and different priors on the respective response
 # probabilities
-create_srpmodel(
+mdl <- create_srpmodel(
   A = define_srp_prior(),
   B = define_srp_prior(p_mean = 0.33, p_n = 10)
 )
+mdl$median_t
 
 }

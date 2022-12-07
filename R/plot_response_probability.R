@@ -12,6 +12,8 @@
 #' @template param-nuts_control
 #' @template param-dotdotdot
 #'
+#' @return a [ggplot2::ggplot] object
+#'
 #' @seealso [plot_transition_times()] [plot_pfs()]
 #'
 #' @examples

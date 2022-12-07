@@ -33,10 +33,36 @@ NULL
 #' @param visit_spacing numeric, fixed duration between visits
 #' @param recruitment_rate numeric, constant recruitment rate
 #'
+#' @return `define_srp_prior()` returns an object of class `srp_prior`,
+#' all inputs are accessible via
+#' `$x` where `x` is the name of the input argument in the function call except
+#' for `visit_spacing` and `recruitment_rate` which are saved as attributes
+#' and can be retrieved using `attr(mdl, "visit_spacing")` and
+#' `attr(mdl, "recruitment_rate")`.
+#'
+#' `create_srpmodel()` returns an object of class `c("srpmodel", "list")` that
+#' holds information about potentially multiple groups in a compact format and
+#' can be accessed using the list operator `$name`.
+#' `group_id` is a character vector with the group names,
+#' `maximal_time` is the maximal follow-up time since the first visit in the
+#' study, `visit_spacing` is the vector of per-group difference between visits
+#' (only relevant for forward sampling), `recruitment_rate` is the vector of
+#' per-group recruitment rates, `stan_model` is the pre-compiled 'stan' model
+#' used for inference, `states` is the vector of state names in the multi-state
+#' model, and `prior` is a list of hyperparamters for the model prior with
+#' elements `p`, vector, for the response probability per group,
+#' `median_t` is an `c(n_groups, 3, 2)` dimensional array where `median_t[i,j,1]`
+#' holds the 5% quantile of the the lognormal prior on median transition time
+#' for group `i` and transition `j` and `median_t[i,j,2]` the corresponding
+#' upper 95% quantile. The `shape` hyperparamter has the same format and
+#' specified the corresponding quantiles for the Weibull shape parameter.
+#'
+#'
 #' @examples
 #' # a model with prior 25% response rate and variance equivalent to
 #' # 10 data points (i.e. a Beta(2.5, 7.5) distribution).
 #' grp <- define_srp_prior(p_mean = 0.25, p_n = 10)
+#' attr(grp, "recruitment_rate")
 #'
 #' @rdname srpmodel
 #' @export
@@ -63,7 +89,7 @@ define_srp_prior <- function(
   params$visit_spacing <- NULL
   params$recrutiment_rate <- NULL
   res <- structure(
-    as.list(environment()),
+    params,
     visit_spacing = visit_spacing,
     recruitment_rate = recruitment_rate,
     class = "srp_prior"
@@ -81,10 +107,11 @@ define_srp_prior <- function(
 #' @examples
 #' # a model with two groups and different priors on the respective response
 #' # probabilities
-#' create_srpmodel(
+#' mdl <- create_srpmodel(
 #'   A = define_srp_prior(),
 #'   B = define_srp_prior(p_mean = 0.33, p_n = 10)
 #' )
+#' mdl$median_t
 #'
 #' @rdname srpmodel
 #' @export

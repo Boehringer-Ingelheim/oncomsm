@@ -50,8 +50,16 @@ confidence bands around mean; none plotted if NULL.}
 
 \item{...}{further arguments passed to method implementations}
 }
+\value{
+A \code{patchwork} object, see \link{patchwork}
+}
 \description{
 Summary plot of model prior
+}
+\examples{
+mdl <- create_srpmodel(A = define_srp_prior())
+plot(mdl)
+
 }
 \seealso{
 \code{\link[=plot_pfs]{plot_pfs()}} \code{\link[=plot_transition_times]{plot_transition_times()}}

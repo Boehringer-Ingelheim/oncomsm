@@ -14,3 +14,4 @@
 ^cran-comments\.md$
 ^vignettes/.+_cache$
 ^.covrignore$
+^LICENSE$

@@ -11,6 +11,12 @@
 #' @param confidence numeric in (0, 1) confidence level for point-wise
 #' confidence bands around mean; none plotted if NULL.
 #'
+#' @return A `patchwork` object, see [patchwork]
+#'
+#' @examples
+#' mdl <- create_srpmodel(A = define_srp_prior())
+#' plot(mdl)
+#'
 #' @seealso [plot_pfs()] [plot_transition_times()]
 #' [plot_response_probability()]
 #'

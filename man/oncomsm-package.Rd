@@ -10,9 +10,9 @@ This package implements methods to dynamically predict response
 and progression of individuals in early oncology trials using parametric
 multi-state models and Bayesian inference.
 This allows the dynamic computation of Probability of Success for a wide
-The inference is implemented using stan.
+The inference is implemented using 'stan'.
 }
 \references{
-Stan Development Team (2021). RStan: the R interface to Stan.
+Stan Development Team (2021). "RStan: the R interface to Stan".
 R package version 2.21.3. https://mc-stan.org
 }
