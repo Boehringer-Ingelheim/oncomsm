@@ -14,7 +14,7 @@
 #'
 #' @return A data frame with multi-state data; variables are
 #' `subject_id<chr>`, `group_id<chr>`, `subject_id<chr>`, `from<chr>`,
-#' `to<chr>`, `t_min<dbl>`, `t_max<dbl>`, `t_sot<dble>, where
+#' `to<chr>`, `t_min<dbl>`, `t_max<dbl>`, `t_sot<dbl>`, where
 #' `to` and `from` indicate the state from which and into which the transitions
 #' occurs (stable, response, progression), `t_max` and `t_min` specify the
 #' interval in which the transition occurred relative to `t_sot`

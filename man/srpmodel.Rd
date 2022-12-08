@@ -65,8 +65,9 @@ the first visit of any group. No visits past this point are sampled.}
 \code{define_srp_prior()} returns an object of class \code{srp_prior},
 all inputs are accessible via
 \verb{$x} where \code{x} is the name of the input argument in the function call except
-for \code{visit_spacing} and \code{recruitment_rate} which are saved as attributes
-and can be retrieved using \code{attr(mdl, "visit_spacing")} and
+for the two parameters \code{visit_spacing} and \code{recruitment_rate}.
+These two parameters are saved as attributes
+and can be retrieved directly using \code{attr(mdl, "visit_spacing")} and
 \code{attr(mdl, "recruitment_rate")}.
 
 \code{create_srpmodel()} returns an object of class \code{c("srpmodel", "list")} that

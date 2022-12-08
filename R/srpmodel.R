@@ -36,8 +36,9 @@ NULL
 #' @return `define_srp_prior()` returns an object of class `srp_prior`,
 #' all inputs are accessible via
 #' `$x` where `x` is the name of the input argument in the function call except
-#' for `visit_spacing` and `recruitment_rate` which are saved as attributes
-#' and can be retrieved using `attr(mdl, "visit_spacing")` and
+#' for the two parameters `visit_spacing` and `recruitment_rate`.
+#' These two parameters are saved as attributes
+#' and can be retrieved directly using `attr(mdl, "visit_spacing")` and
 #' `attr(mdl, "recruitment_rate")`.
 #'
 #' `create_srpmodel()` returns an object of class `c("srpmodel", "list")` that

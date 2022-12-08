@@ -15,7 +15,10 @@ plot_mstate(
 \arguments{
 \item{data}{a data frame with multi-state data; variables are
 \verb{subject_id<chr>}, \verb{group_id<chr>}, \verb{subject_id<chr>}, \verb{from<chr>},
-\verb{to<chr>}, \verb{t_min<dbl>}, \verb{t_max<dbl>}, \verb{t_sot<dble>, where }to\code{and}from\verb{indicate the state from which and into which the transitions occurs (stable, response, progression),}t_max\code{and}t_min\verb{specify the interval in which the transition occured relative to}t_sot`
+\verb{to<chr>}, \verb{t_min<dbl>}, \verb{t_max<dbl>}, \verb{t_sot<dbl>}, where
+\code{to} and \code{from} indicate the state from which and into which the transitions
+occurs (stable, response, progression), \code{t_max} and \code{t_min} specify the
+interval in which the transition occurred relative to \code{t_sot}
 (start of treatment).}
 
 \item{model}{an object of class \link{srpmodel} containing prior information}
