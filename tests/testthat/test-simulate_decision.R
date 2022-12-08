@@ -1,4 +1,5 @@
 test_that("decision rules can be simulated", {
+  skip_on_cran() # runs for a while
   mdl <- create_srpmodel(
     A = define_srp_prior(recruitment_rate = 2)
   )
@@ -54,4 +55,3 @@ test_that("decision rules can be simulated", {
     mean(tbl_decisions$go) < 0.5
   )
 })
-

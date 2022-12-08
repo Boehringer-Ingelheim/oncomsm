@@ -111,5 +111,12 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
       ))
     }
   }
+  if (!is.null(attr(tbl_visits, "isemptydata"))) {
+    # this is only used in conjunction with .emptydata since the global now
+    # does not make sense in that context; minimum time to first event is
+    # assumed to be equal to visit spacing / 2
+    tbl_mstate <- tbl_mstate %>%
+      mutate(t_min = model$visit_spacing[.data$group_id] / 2 + .data$t_sot)
+  }
   return(tbl_mstate)
 }

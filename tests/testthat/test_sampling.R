@@ -256,10 +256,14 @@ test_that("Testing sampling multiple individuals", {
 
 
 test_that("posterior shifts as expected", {
-  # use very tight viistig spacing to avoid overlooking responses
+  # use very tight visitig spacing to avoid overlooking responses
   mdl <- create_srpmodel(
-    A = define_srp_prior(p_n = 5, p_eta = .1, visit_spacing = 0.01),
-    B = define_srp_prior(p_n = 5, p_eta = .1, visit_spacing = 0.01)
+    A = define_srp_prior(
+      p_n = 5, p_eta = .1,
+      visit_spacing = 0.01, recruitment_rate = 100),
+    B = define_srp_prior(
+      p_n = 5, p_eta = .1,
+      visit_spacing = 0.01, recruitment_rate = 100)
   )
   tbl_data <- sample_predictive(
     mdl,
@@ -268,7 +272,7 @@ test_that("posterior shifts as expected", {
     seed = 42L,
     p = c(0, 1),
     # use very small scale to avoid censoring issues
-    scale = matrix(1, nrow = 2, ncol = 3)
+    scale = matrix(5, nrow = 2, ncol = 3)
   )
   p_obs <- tbl_data %>%
     group_by(group_id, iter, subject_id) %>%

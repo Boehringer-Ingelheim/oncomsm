@@ -373,9 +373,8 @@ in the direction of the observed response rates.
 
 ```{r}
 smpl_posterior <- sample_posterior(mdl, tbl_data_interim, seed = 43L)
-
-plot(mdl, parameter_sample = smpl_posterior, confidence = 0.9) # plot under posterior
-
+# plot under posterior
+plot(mdl, parameter_sample = smpl_posterior, confidence = 0.9)
 # calculate posterior quantiles of response probability
 smpl_posterior %>%
   parameter_sample_to_tibble(mdl, .) %>%

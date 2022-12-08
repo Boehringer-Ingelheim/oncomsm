@@ -8,7 +8,9 @@ check_valid <- function(model){ # nolint # nocov start
   checkmate::assert_vector(model$visit_spacing, len = k)
   if (any(model$visit_spacing <= 0)) stop("visit spacing must be positive")
   checkmate::assert_vector(model$recruitment_rate, len = k)
-  if (any(model$recruitment_rate <= 0)) stop("recruitment rate must be positive")
+  if (any(model$recruitment_rate <= 0)) {
+    stop("recruitment rate must be positive")
+  }
   checkmate::assert_class(model$stan_model, "stanmodel")
   checkmate::assert_true(all(model$prior$p[, "mean"] > 0))
   checkmate::assert_true(all(model$prior$p[, "n"] > 0))

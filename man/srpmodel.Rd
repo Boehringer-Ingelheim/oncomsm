@@ -13,10 +13,10 @@ define_srp_prior(
   p_eta = 0,
   p_min = 0,
   p_max = 1,
-  median_t_q05 = c(1, 1, 3),
-  median_t_q95 = c(12, 12, 24),
-  shape_q05 = rep(0.99, 3),
-  shape_q95 = rep(1.01, 3),
+  median_t_q05 = c(1, 1, 1),
+  median_t_q95 = c(36, 26, 36),
+  shape_q05 = rep(0.9, 3),
+  shape_q95 = rep(2.5, 3),
   visit_spacing = 1,
   recruitment_rate = 1
 )
@@ -80,7 +80,8 @@ per-group recruitment rates, \code{stan_model} is the pre-compiled 'stan' model
 used for inference, \code{states} is the vector of state names in the multi-state
 model, and \code{prior} is a list of hyperparamters for the model prior with
 elements \code{p}, vector, for the response probability per group,
-\code{median_t} is an \code{c(n_groups, 3, 2)} dimensional array where \code{median_t[i,j,1]}
+\code{median_t} is an \code{c(n_groups, 3, 2)} dimensional array where
+\code{median_t[i,j,1]}
 holds the 5\% quantile of the the lognormal prior on median transition time
 for group \code{i} and transition \code{j} and \code{median_t[i,j,2]} the corresponding
 upper 95\% quantile. The \code{shape} hyperparamter has the same format and

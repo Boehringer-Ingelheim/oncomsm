@@ -98,7 +98,8 @@ The EOF state marks the end of an individual's follow-up before the absorbing
 state "progression".
 }
 \description{
-\code{impute()} samples visits for individuals in \code{data} and potentially missing
+\code{impute()} samples visits for individuals in \code{data}
+and potentially missing
 individuals up to a maximum of \code{n_per_group} from the posterior
 predictive distribution of the given model.
 

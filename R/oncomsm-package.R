@@ -12,6 +12,7 @@
 #' @useDynLib oncomsm, .registration = TRUE
 #' @import methods
 #' @import tibble
+#' @import stringr
 #' @import Rcpp
 #' @import dplyr
 #' @import purrr

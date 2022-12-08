@@ -154,7 +154,7 @@ tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = 40L,
     sample = smpl_prior,
-    p = 1, 
+    p = 1,
     shape = matrix(c(1, 1, 1), ncol = 3),
      # median = scale * log(2)^(1/shape)
     scale = matrix(c(4, 2, 24), ncol = 3) / log(2),
@@ -162,8 +162,8 @@ tbl_prior_predictive <- sample_predictive(
     seed = 34930L
   )
 
-tbl_prior_predictive %>% 
-  visits_to_mstate(mdl) %>% 
+tbl_prior_predictive %>%
+  visits_to_mstate(mdl) %>%
   plot_mstate(mdl, relative_to_sot = FALSE)
 
 go(mdl, tbl_prior_predictive)
@@ -182,7 +182,7 @@ tbl_prior_predictive <- sample_predictive(
     mdl,
     n_per_group = 40L,
     sample = smpl_prior,
-    p = 0.6, 
+    p = 0.6,
     shape = matrix(c(1, 1, 1), ncol = 3),
      # median = scale * log(2)^(1/shape)
     scale = matrix(c(3, 12, 24), ncol = 3) / log(2),
@@ -220,7 +220,7 @@ The same functionality is available is the function
 `oncomsm::simulate_decision_rule`.
 
 ```{r eval=FALSE}
-simulate_decision_rule(mdl, 40L, go, nsim = 100L, seed = 324879) %>% 
+simulate_decision_rule(mdl, 40L, go, nsim = 100L, seed = 324879) %>%
   group_by(group_id) %>%
   summarize(
     `Pr[go]` = mean(go),
@@ -280,8 +280,8 @@ f <- function(tbl) {
       }
     },
     .groups = "drop_last"
-  ) %>% 
-  group_by(group_id, status) %>% 
+  ) %>%
+  group_by(group_id, status) %>%
   summarize(n = n(), .groups = "drop")
 }
 
@@ -289,7 +289,7 @@ tibble(
   t_interim = tbl_data_interims$t_interim,
   summary = purrr::map(tbl_data_interims$data, f)
 ) %>%
-unnest(summary) %>% 
+unnest(summary) %>%
 ggplot() +
   aes(t_interim, n, color = status) +
   geom_step() +
@@ -312,7 +312,7 @@ This wrapper around `oncomsm::simulate_decision_rule`
 ```{r}
 pr_go <- function(tbl, model, nsim = 100L) {
   tbl_pr_go <- simulate_decision_rule(mdl, 40, go, data = tbl,
-                                      nsim = nsim, seed = 27307) %>% 
+                                      nsim = nsim, seed = 27307) %>%
     group_by(group_id) %>%
     summarize(
       `Pr[go]` = mean(go),

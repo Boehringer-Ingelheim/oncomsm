@@ -60,7 +60,7 @@ sample_predictive <- function(model,
     data = .emptydata(model, n_per_group), # construct an empty data set
     nsim = nsim,
     n_per_group = n_per_group,
-    now = 0, # we start with empty data set hence 0
+    now = NULL,
     seed = seed,
     recruitment_rate = model$recruitment_rate,
     p = p,

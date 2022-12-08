@@ -129,8 +129,8 @@ test_that("impute from 'response' works", {
            "s1",       "A",  0, "response"
   )
   tbl_test <- impute(mdl,
-         data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
-         nuts_control = list(adapt_delta = 0.99))
+       data = tbl_data, n_per_group = 1, nsim = 1, seed = 32,
+     )
   expect_true(
     all(tbl_test$subject_id == "s1"),
     all(tbl_test$state[2:(nrow(tbl_test) - 1)] == "response"),

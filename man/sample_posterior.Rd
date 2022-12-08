@@ -13,6 +13,7 @@ sample_posterior(
   seed = NULL,
   warmup = 500L,
   nuts_control = list(),
+  acceptable_divergent_transition_fraction = 0.1,
   ...
 )
 
@@ -50,6 +51,10 @@ before retaining samples; see \code{warmup} parameter in \code{\link[rstan:stan]
 
 \item{nuts_control}{list, parameters for NUTS algorithm see \code{control}
 argument in\code{\link[rstan:stan]{rstan::stan()}}}
+
+\item{acceptable_divergent_transition_fraction, }{numeric between 0 and 1
+giving the acceptable fraction of divergent transitions before throwing an
+error}
 
 \item{...}{further arguments passed to method implementations}
 }

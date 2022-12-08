@@ -51,7 +51,8 @@ NULL
 #' used for inference, `states` is the vector of state names in the multi-state
 #' model, and `prior` is a list of hyperparamters for the model prior with
 #' elements `p`, vector, for the response probability per group,
-#' `median_t` is an `c(n_groups, 3, 2)` dimensional array where `median_t[i,j,1]`
+#' `median_t` is an `c(n_groups, 3, 2)` dimensional array where
+#' `median_t[i,j,1]`
 #' holds the 5% quantile of the the lognormal prior on median transition time
 #' for group `i` and transition `j` and `median_t[i,j,2]` the corresponding
 #' upper 95% quantile. The `shape` hyperparamter has the same format and
@@ -72,10 +73,10 @@ define_srp_prior <- function(
   p_eta = 0.0,
   p_min = 0.0,
   p_max = 1.0,
-  median_t_q05 = c(1, 1, 3),
-  median_t_q95 = c(12, 12, 24),
-  shape_q05 = rep(0.99, 3),
-  shape_q95 = rep(1.01, 3),
+  median_t_q05 = c(1, 1, 1),
+  median_t_q95 = c(36, 26, 36),
+  shape_q05 = rep(0.9, 3),
+  shape_q95 = rep(2.5, 3),
   visit_spacing = 1, # months
   recruitment_rate = 1
 ) {
