@@ -73,7 +73,7 @@ sample_posterior <- function(model,
       if (stringr::str_detect(w$message, pattern)) {
         n_divergent <- as.integer(stringr::str_extract(w$message, pattern))
         if (n_divergent / nsim > acceptable_divergent_transition_fraction) {
-          stop(w$message)
+          stop(w$message) # nocov
         }
       }
       rlang::cnd_muffle(w)
