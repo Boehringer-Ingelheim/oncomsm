@@ -15,8 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 7,
   fig.height = 7 / 1.61,
-  fig.align = "center",
-  cache = TRUE
+  fig.align = "center"
 )
 ```
 

@@ -16,7 +16,7 @@ articles:
   contents:
   - prior-choice
   - web_only/probability-of-go
-  - bhmbasket-integration
+  - web_only/bhmbasket-integration
 
 reference:
 - title: "Package documentation"

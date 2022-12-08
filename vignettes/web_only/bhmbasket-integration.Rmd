@@ -24,8 +24,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 7,
   fig.height = 7 / 1.61,
-  fig.align = "center",
-  cache = TRUE
+  fig.align = "center"
 )
 ```
 
@@ -33,14 +32,7 @@ knitr::opts_chunk$set(
 library(oncomsm)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
-
-m_cores <- if (as.logical(Sys.getenv("NOT_CRAN", unset = "FALSE"))) {
-  parallel::detectCores()
-} else {
-  2L # need to restrict parallel processing on CRAN
-}
-
-plan(tweak(multisession, workers = m_cores)) # instruct future how to run in parallel
+plan(multisession)
 ```
 
 
