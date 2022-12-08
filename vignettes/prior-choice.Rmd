@@ -95,7 +95,7 @@ Weibull distribution.
 Additionally, the Weibull distribution is the only distribution which can be
 interpreted both in terms of proportional hazards and accelerated failure
 times.
-Note that covariate modelling is not yet implemented in `oncomsm`.
+Note that covariate modeling is not yet implemented in `oncomsm`.
 Realistically, proper model selection or the identification of more complex
 patterns in the hazard function are unfeasible with small sample sizes.
 The Weibull distribution is this primarily chosen due to the intuitive
@@ -221,7 +221,7 @@ ggplot() +
 Even with such a strong regularization, small samples might lead to a small 
 number divergent transitions during sampling from the posterior.
 This small number can be ignored or the prior can be chosen even narrower around a
-suspected shape parameters to avoid sampling issues completey.
+suspected shape parameters to avoid sampling issues completely.
 
 A sample from the joint prior then reflects the overall variability.
 

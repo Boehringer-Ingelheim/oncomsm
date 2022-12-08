@@ -10,7 +10,5 @@ folder.
 * rstantools requires GNU make as system dependency
 * abort, exit, printf are found in the shared library. All of these are coming
 from the rstantools dependency.
-* removed LICENSE file, not necessary with Apache 2.0
-* addressed high-commas around 'stan'
-* there is no direct reference I would like to cite in the DESCRIPTION file
+* there is no reference I would like to cite in the DESCRIPTION file
 'stan' is referenced from the package description.
