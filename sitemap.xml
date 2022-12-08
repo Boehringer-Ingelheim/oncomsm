@@ -10,7 +10,7 @@
     <loc>https://boehringer-ingelheim.github.io/oncomsm/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html</loc>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/avoiding-bias.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/index.html</loc>
@@ -20,6 +20,9 @@
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/prior-choice.html</loc>
+  </url>
+  <url>
+    <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/bhmbasket-integration.html</loc>
   </url>
   <url>
     <loc>https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/probability-of-go.html</loc>

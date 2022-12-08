@@ -42,8 +42,9 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/prior-choice.html">Prior Choice</a>
+    <a class="dropdown-item" href="../articles/avoiding-bias.html">Avoiding Bias During Interim Analyses</a>
     <a class="dropdown-item" href="../articles/web_only/probability-of-go.html">Application to Probability of 'go'</a>
-    <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
+    <a class="dropdown-item" href="../articles/web_only/bhmbasket-integration.html">Integration with bhmbasket</a>
   </div>
 </li>
 <li class="nav-item">
@@ -136,7 +137,7 @@ hazard functions either more intricate (non-monotonous) or less flexible
 than the Weibull distribution. Additionally, the Weibull distribution is
 the only distribution which can be interpreted both in terms of
 proportional hazards and accelerated failure times. Note that covariate
-modelling is not yet implemented in <code>oncomsm</code>. Realistically,
+modeling is not yet implemented in <code>oncomsm</code>. Realistically,
 proper model selection or the identification of more complex patterns in
 the hazard function are unfeasible with small sample sizes. The Weibull
 distribution is this primarily chosen due to the intuitive
@@ -149,12 +150,14 @@ supports multi-state models as well.</p>
 <div class="section level2">
 <h2 id="parameterization-and-prior-classes">Parameterization and prior classes<a class="anchor" aria-label="anchor" href="#parameterization-and-prior-classes"></a>
 </h2>
-<p>Since both parameters are of interest, the reference prior for a
-Weibull distribution is proportional to <span class="math inline">\(1/(a\, b)\)</span> (see, <a href="https://doi.org/10.1016/S0378-3758(96)00155-3" class="external-link">A note on
+<p>Both scale and shape are of interest. Hence, the reference prior for
+a Weibull distribution is proportional to <span class="math inline">\(1/(a\, b)\)</span> (see, <a href="https://doi.org/10.1016/S0378-3758(96)00155-3" class="external-link">A note on
 non-informative priors for Weibull distributions</a>). Any
-differentiable re-parameterization <span class="math inline">\(g^{-1}:g(a,b)\mapsto (a,b)\)</span> whose
-Jacobian’s absolute determinant is <span class="math inline">\(1/(a\,b)\)</span> thus leads to an (improper)
-uniform reference prior via pull-back of the reference prior on <span class="math inline">\((a,b)\)</span>. The transformation given by</p>
+differentiable re-parameterization <span class="math inline">\(g^{-1}:g(a,b)\mapsto (a,b)\)</span> with Jacobian
+absolute determinant <span class="math inline">\(1/(a\,b)\)</span> thus
+leads to an (improper) uniform reference prior via pull-back of the
+reference prior on <span class="math inline">\((a,b)\)</span>. The
+transformation given by</p>
 <p><span class="math display">\[
 g^{-1}(a, b) = \Bigg(\ \log\bigg(\ \underbrace{a
 \log(2)^{1/b}}_{\text{median}} \ \bigg),\ \log(b) \ \Bigg)
@@ -192,85 +195,82 @@ uniform component, <span class="math inline">\(\operatorname{Beta}(1,1)\)</span>
 <div class="section level2">
 <h2 id="choice-of-hyperparameters">Choice of hyperparameters<a class="anchor" aria-label="anchor" href="#choice-of-hyperparameters"></a>
 </h2>
-<p>Instead of specifying mean and variance of the underlying normal
-distribution on the log median and log shape directly, the <span class="math inline">\(0.05\)</span> and <span class="math inline">\(0.95\)</span> quantiles of the median and shape
-can be elicited to cover a broad range of plausible values. These two
-constraints are then sufficient to identify the mean and variance
-parameters of the log-normal distribution.</p>
-<p>If, for instance, a typical time from stable to response is 2 to 6
-months the corresponding log-normal prior for the median
-time-to-response would be:</p>
+<p>Directly specifying the mean and variance of the lognormal priors for
+shape and median time to event can be unintuitive. Instead, the <span class="math inline">\(0.05\)</span> and <span class="math inline">\(0.95\)</span> quantiles of the median and shape
+can be specified. These two constraints are then sufficient to identify
+the mean and variance parameters of the log-normal distribution.</p>
+<p>If, for instance, very little is known about the median time to
+response but it is implausible that the median is lower than 1 or
+greater than 36 months, the lognormal prior on median time to response
+is depicted in the following plot.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">36</span><span class="op">)</span></span>
 <span><span class="va">median_transition_time</span> <span class="op">&lt;-</span> <span class="va">t</span></span>
 <span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
-<span>  median_transition_time <span class="op">=</span> <span class="va">median_transition_time</span>, </span>
+<span>  median_transition_time <span class="op">=</span> <span class="va">median_transition_time</span>,</span>
 <span>  pdf <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm</a></span><span class="op">(</span><span class="va">median_transition_time</span>, <span class="va">res</span><span class="op">$</span><span class="va">mu</span>, <span class="va">res</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">median_transition_time</span>, <span class="va">pdf</span><span class="op">)</span> <span class="op">+</span> </span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">median_transition_time</span>, <span class="va">pdf</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="prior-choice_files/figure-html/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;"></p>
+<p>This is the default vague prior on the median time to next event for
+all three transitions.</p>
 <p>The choice of the prior on the shape is more difficult since the
-shape parameter is almost unidentifiable from only a few data points per
-transition. To avoid convergence issues <code>oncomsm</code> uses a
-default of a point prior on <span class="math inline">\(1\)</span>,
-i.e. an exponential model. If changes in the hazards over time are
-expected, it can make sense to relax the prior at the risk of divergent
-transitions during sampling. A small number of divergent transitions can
-usually be tolerated. In practice, it is always possible to reduce the
-prior variability post-hoc or (fine-tune the MCMC parameters to obtain
-stable inference)[<a href="https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions" class="external-link uri">https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions</a>].</p>
-<p>A sensible default choice seems to be to chose the quantiles <span class="math inline">\(\pm 0.2\)</span> around <span class="math inline">\(\log(1.2)\)</span> on the log scale, more
-variation allows extreme deviations in the shape that are less likely to
-occur in practice.</p>
+shape parameter is harder to identify from only a few (interval
+censored) data points per transition. To avoid convergence issues
+<code>oncomsm</code> uses a default of a lognormal prior with 5%
+quantile 0.9 and 95% quantile 2.5. If changes in the hazards over time
+are expected, it can make sense to relax the prior at the risk of more
+divergent transitions during sampling. A small number of divergent
+transitions can usually be tolerated (default: up to 10%). In practice,
+it is always possible to reduce the prior variability post-hoc or to
+fine-tune the MCMC parameters to obtain stable inference[<a href="https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions" class="external-link uri">https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions</a>].</p>
+<p>The following plot shows the variability in shape for fixed scale of
+this default prior.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">0.98</span>, <span class="fl">1.46</span><span class="op">)</span> <span class="co"># exp(log(1.2) - 0.2), exp(log(1.2) + 0.2)</span></span>
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">0.9</span>, <span class="fl">2.5</span><span class="op">)</span></span>
 <span><span class="va">shape</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">5</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">251L</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="va">res</span><span class="op">$</span><span class="va">mu</span>, <span class="va">res</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span>,</span>
 <span>  a <span class="op">=</span> <span class="fl">6</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">t</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">t</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>  survival <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">pweibull</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">b</span>, <span class="va">a</span><span class="op">)</span>, </span>
+<span>  survival <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">pweibull</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">b</span>, <span class="va">a</span><span class="op">)</span>,</span>
 <span>  label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"a=%5.2f, b=%5.2f"</span>, <span class="va">a</span>, <span class="va">b</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">survival</span>, group <span class="op">=</span> <span class="va">label</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></span></code></pre></div>
 <p><img src="prior-choice_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>The resulting Weibull density is</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="va">shape</span>, pdf <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm</a></span><span class="op">(</span><span class="va">shape</span>, <span class="va">res</span><span class="op">$</span><span class="va">mu</span>, <span class="va">res</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">shape</span>, <span class="va">pdf</span><span class="op">)</span> <span class="op">+</span> </span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="va">shape</span>, pdf <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm</a></span><span class="op">(</span><span class="va">shape</span>, <span class="va">res</span><span class="op">$</span><span class="va">mu</span>, <span class="va">res</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">shape</span>, <span class="va">pdf</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="prior-choice_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;"></p>
-<p>Even with such a strong regularization, small samples might lead to a
-small number divergent transitions during sampling from the posterior.
-This small number can be ignored or the prior can be chosen even
-narrower around a suspected shape parameters to avoid sampling issues
-completey.</p>
 <p>A sample from the joint prior then reflects the overall
 variability.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">251L</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
-<span>  b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">0.98</span>, <span class="fl">1.46</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span>, <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">0.98</span>, <span class="fl">1.46</span><span class="op">)</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span>,</span>
+<span>  b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">0.75</span>, <span class="fl">3</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span>,</span>
+<span>             <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">0.75</span>, <span class="fl">3</span><span class="op">)</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span>,</span>
 <span>  a <span class="op">=</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">b</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
 <span>      <span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">oncomsm</span><span class="fu">:::</span><span class="fu">get_mu_sigma</span><span class="op">(</span><span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span></span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">res</span><span class="op">$</span><span class="va">mu</span>, <span class="va">res</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">^</span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="va">x</span><span class="op">)</span></span>
 <span>    <span class="op">}</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">t</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">t</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>  survival <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">pweibull</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">b</span>, <span class="va">a</span><span class="op">)</span>, </span>
+<span>  survival <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">pweibull</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">b</span>, <span class="va">a</span><span class="op">)</span>,</span>
 <span>  label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"a=%5.2f, b=%5.2f"</span>, <span class="va">a</span>, <span class="va">b</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">survival</span>, group <span class="op">=</span> <span class="va">label</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></span></code></pre></div>
 <p><img src="prior-choice_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;"></p>

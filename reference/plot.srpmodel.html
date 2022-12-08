@@ -25,8 +25,9 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/prior-choice.html">Prior Choice</a>
+    <a class="dropdown-item" href="../articles/avoiding-bias.html">Avoiding Bias During Interim Analyses</a>
     <a class="dropdown-item" href="../articles/web_only/probability-of-go.html">Application to Probability of 'go'</a>
-    <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
+    <a class="dropdown-item" href="../articles/web_only/bhmbasket-integration.html">Integration with bhmbasket</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -133,11 +134,27 @@ confidence bands around mean; none plotted if NULL.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p>A <code>patchwork</code> object, see <a href="https://patchwork.data-imaginist.com/reference/patchwork-package.html" class="external-link">patchwork::patchwork</a></p>
+
+
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="plot_pfs.html">plot_pfs()</a></code> <code><a href="plot_transition_times.html">plot_transition_times()</a></code>
 <code><a href="plot_response_probability.html">plot_response_probability()</a></code></p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="srpmodel.html">create_srpmodel</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="srpmodel.html">define_srp_prior</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="plot.srpmodel-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

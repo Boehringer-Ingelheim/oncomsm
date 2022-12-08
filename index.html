@@ -52,8 +52,9 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="articles/prior-choice.html">Prior Choice</a>
+    <a class="dropdown-item" href="articles/avoiding-bias.html">Avoiding Bias During Interim Analyses</a>
     <a class="dropdown-item" href="articles/web_only/probability-of-go.html">Application to Probability of 'go'</a>
-    <a class="dropdown-item" href="articles/bhmbasket-integration.html">Integration with bhmbasket</a>
+    <a class="dropdown-item" href="articles/web_only/bhmbasket-integration.html">Integration with bhmbasket</a>
   </div>
 </li>
 <li class="nav-item">
@@ -82,10 +83,13 @@
 <div class="section level1">
 <div class="page-header"><h1 id="bayesian-multi-state-models-for-early-oncology">Bayesian multi-state models for early oncology<a class="anchor" aria-label="anchor" href="#bayesian-multi-state-models-for-early-oncology"></a>
 </h1></div>
-<p>The R package <strong>oncomsm</strong> implements methods to dynamically predict response and progression of individuals in early oncology trials using parametric <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html">multi-state models</a> and Bayesian inference. This allows the <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html">dynamic computation of “probability of success”</a> for a wide range of success (or “go”) criteria. For instance, the <a href="https://cran.r-project.org/web/packages/bhmbasket/index.html" class="external-link">bhmbasket</a> R package <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html">can be used to define study success based on Bayesian hierarchical models</a>.</p>
+<p>The R package <strong>oncomsm</strong> implements methods to dynamically predict response and progression of individuals in early oncology trials using parametric <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/oncomsm.html">multi-state models</a> and Bayesian inference. This allows the <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/web_only/application-to-probability-of-success.html">dynamic computation of “probability of success”</a> for a wide range of success (or “go”) criteria. For instance, the <a href="https://cran.r-project.org/package=bhmbasket" class="external-link">bhmbasket</a> R package <a href="https://boehringer-ingelheim.github.io/oncomsm/articles/bhmbasket-integration.html">can be used to define study success based on Bayesian hierarchical models</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
+<p>The development version can be installed from this repository.</p>
+<pre class="{r}"><code><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"oncomsm"</span><span class="op">)</span></span></code></pre>
+<p>The development version can be installed from this repository.</p>
 <pre class="{r}"><code><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/Boehringer-Ingelheim/oncomsm"</span><span class="op">)</span></span></code></pre>
 </div>
@@ -112,8 +116,7 @@
 <div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>Apache License 2.0 | file <a href="LICENSE-text.html">LICENSE</a>
-</li>
+<li>Apache License 2.0</li>
 </ul>
 </div>
 

@@ -29,8 +29,9 @@ Groups are still treated as independent."><!-- mathjax --><script src="https://c
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/prior-choice.html">Prior Choice</a>
+    <a class="dropdown-item" href="../articles/avoiding-bias.html">Avoiding Bias During Interim Analyses</a>
     <a class="dropdown-item" href="../articles/web_only/probability-of-go.html">Application to Probability of 'go'</a>
-    <a class="dropdown-item" href="../articles/bhmbasket-integration.html">Integration with bhmbasket</a>
+    <a class="dropdown-item" href="../articles/web_only/bhmbasket-integration.html">Integration with bhmbasket</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -71,10 +72,10 @@ Groups are still treated as independent.</p>
 <span>  p_eta <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  p_min <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  p_max <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">12</span>, <span class="fl">24</span><span class="op">)</span>,</span>
-<span>  shape_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.99</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  shape_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1.01</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  median_t_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  median_t_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">36</span>, <span class="fl">26</span>, <span class="fl">36</span><span class="op">)</span>,</span>
+<span>  shape_q05 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.9</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  shape_q95 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  visit_spacing <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  recruitment_rate <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
@@ -148,6 +149,39 @@ the first visit of any group. No visits past this point are sampled.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p><code>define_srp_prior()</code> returns an object of class <code>srp_prior</code>,
+all inputs are accessible via
+<code>$x</code> where <code>x</code> is the name of the input argument in the function call except
+for the two parameters <code>visit_spacing</code> and <code>recruitment_rate</code>.
+These two parameters are saved as attributes
+and can be retrieved directly using <code>attr(mdl, "visit_spacing")</code> and
+<code>attr(mdl, "recruitment_rate")</code>.</p>
+
+
+<p><code>create_srpmodel()</code> returns an object of class <code>c("srpmodel", "list")</code> that
+holds information about potentially multiple groups in a compact format and
+can be accessed using the list operator <code>$name</code>.
+<code>group_id</code> is a character vector with the group names,
+<code>maximal_time</code> is the maximal follow-up time since the first visit in the
+study, <code>visit_spacing</code> is the vector of per-group difference between visits
+(only relevant for forward sampling), <code>recruitment_rate</code> is the vector of
+per-group recruitment rates, <code>stan_model</code> is the pre-compiled 'stan' model
+used for inference, <code>states</code> is the vector of state names in the multi-state
+model, and <code>prior</code> is a list of hyperparamters for the model prior with
+elements <code>p</code>, vector, for the response probability per group,
+<code>median_t</code> is an <code>c(n_groups, 3, 2)</code> dimensional array where
+<code>median_t[i,j,1]</code></p>
+
+
+<p>holds the 5% quantile of the the lognormal prior on median transition time
+for group <code>i</code> and transition <code>j</code> and <code>median_t[i,j,2]</code> the corresponding
+upper 95% quantile. The <code>shape</code> hyperparamter has the same format and
+specified the corresponding quantiles for the Weibull shape parameter.</p>
+    </div>
+    <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>define_srp_prior()</code> specifies a prior distribution for a
 three state model (stable, response, progression) for
@@ -159,14 +193,17 @@ a single group.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># a model with prior 25% response rate and variance equivalent to</span></span></span>
 <span class="r-in"><span><span class="co"># 10 data points (i.e. a Beta(2.5, 7.5) distribution).</span></span></span>
 <span class="r-in"><span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu">define_srp_prior</span><span class="op">(</span>p_mean <span class="op">=</span> <span class="fl">0.25</span>, p_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">grp</span>, <span class="st">"recruitment_rate"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a model with two groups and different priors on the respective response</span></span></span>
 <span class="r-in"><span><span class="co"># probabilities</span></span></span>
-<span class="r-in"><span><span class="fu">create_srpmodel</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu">create_srpmodel</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  A <span class="op">=</span> <span class="fu">define_srp_prior</span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  B <span class="op">=</span> <span class="fu">define_srp_prior</span><span class="op">(</span>p_mean <span class="op">=</span> <span class="fl">0.33</span>, p_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> srpmodel&lt;A,B&gt; </span>
+<span class="r-in"><span><span class="va">mdl</span><span class="op">$</span><span class="va">median_t</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
