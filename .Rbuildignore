@@ -15,3 +15,4 @@
 ^vignettes/.+_cache$
 ^.covrignore$
 ^LICENSE$
+^CRAN-SUBMISSION$

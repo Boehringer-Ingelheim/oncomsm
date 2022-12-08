@@ -15,6 +15,7 @@ articles:
   navbar: ~
   contents:
   - prior-choice
+  - avoiding-bias
   - web_only/probability-of-go
   - web_only/bhmbasket-integration
 
