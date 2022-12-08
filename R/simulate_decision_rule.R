@@ -53,7 +53,8 @@ simulate_decision_rule <- function(model,
   }
   # simulate from predictive distribution
   tbl_complete <- if (is.null(data)) {
-    sample_predictive(model, n_per_group = n_per_group, nsim = nsim, sample = smpl)
+    sample_predictive(model, n_per_group = n_per_group, nsim = nsim,
+                      sample = smpl)
   } else {
     impute(model, data, n_per_group = n_per_group, nsim = nsim, sample = smpl)
   }

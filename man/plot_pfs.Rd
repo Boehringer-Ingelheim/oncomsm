@@ -50,6 +50,9 @@ confidence bands around mean; none plotted if NULL.}
 
 \item{...}{further arguments passed to method implementations}
 }
+\value{
+a \link[ggplot2:ggplot]{ggplot2::ggplot} object
+}
 \description{
 \code{plot_pfs()} plots the progression-free-survival function of a model.
 }

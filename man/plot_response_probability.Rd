@@ -31,6 +31,9 @@ argument in\code{\link[rstan:stan]{rstan::stan()}}}
 
 \item{...}{further arguments passed to method implementations}
 }
+\value{
+a \link[ggplot2:ggplot]{ggplot2::ggplot} object
+}
 \description{
 \code{plot_response_probability()} plots the distribution over the response
 probability parameter in the specified model.

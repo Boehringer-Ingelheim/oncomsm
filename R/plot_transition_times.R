@@ -15,6 +15,8 @@
 #' confidence bands around mean; none plotted if NULL.
 #' @template param-dotdotdot
 #'
+#' @return a [ggplot2::ggplot] object
+#'
 #' @seealso [plot_pfs()] [plot_response_probability()]
 #'
 #' @examples
@@ -88,9 +90,11 @@ plot_transition_times <- function(model, # nolint
     )
   plt <- ggplot2::ggplot(tbl)
   if (!is.null(confidence)) {
-    plt <- plt + ggplot2::geom_ribbon(ggplot2::aes(.data$dt, ymin = .data$lo,
-                                                   ymax = .data$hi, fill = .data$group_id),
-                                      alpha = 0.2)
+    plt <- plt + ggplot2::geom_ribbon(
+      ggplot2::aes(.data$dt, ymin = .data$lo,
+                   ymax = .data$hi, fill = .data$group_id),
+      alpha = 0.2
+    )
   }
   plt <- plt + ggplot2::geom_line(ggplot2::aes(.data$dt, .data$survival,
                                                color = .data$group_id)) +

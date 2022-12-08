@@ -50,6 +50,9 @@ confidence bands around mean; none plotted if NULL.}
 
 \item{...}{further arguments passed to method implementations}
 }
+\value{
+a \link[ggplot2:ggplot]{ggplot2::ggplot} object
+}
 \description{
 \code{plot_transition_times()} plots a the survival functions for the transition
 times in a multi-state model.

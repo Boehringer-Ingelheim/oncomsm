@@ -1,4 +1,5 @@
-#' @description `impute()` samples visits for individuals in `data` and potentially missing
+#' @description `impute()` samples visits for individuals in `data`
+#' and potentially missing
 #' individuals up to a maximum of `n_per_group` from the posterior
 #' predictive distribution of the given model.
 #'
@@ -39,15 +40,15 @@ impute <- function(model,
   }
   recruitment_rate <- model$recruitment_rate
   group_ids <- model$group_id
+  if (is.null(now)) { # convert to visits and take the last time point
+    now <- max(data$t)
+  }
   if (is.null(sample)) {
     sample <- sample_posterior(model,
-                               data = data, seed = seed,
+                               data = data, now = now, seed = seed,
                                warmup = warmup_parameters,
                                nsim = nsim_parameters,
                                nuts_control = nuts_control)
-  }
-  if (is.null(now)) { # convert to visits and take the last time point
-    now <- max(data$t)
   }
   if (is.null(n_per_group)) {
     # no new individuals
@@ -95,8 +96,8 @@ impute <- function(model,
   }
   tbl_data <- bind_rows(data, tbl_to_recruit)
   # do actual imputation
-  data = tbl_data
-  parameter_sample = sample
+  data <- tbl_data
+  parameter_sample <- sample
   n_groups <- length(model$group_id)
   # make sure that either parameter sample or p, scale, shape are given
   if (!is.null(parameter_sample)) {

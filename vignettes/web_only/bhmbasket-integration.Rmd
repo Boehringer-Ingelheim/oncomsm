@@ -24,8 +24,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 7,
   fig.height = 7 / 1.61,
-  fig.align = "center",
-  cache = TRUE
+  fig.align = "center"
 )
 ```
 
@@ -33,14 +32,7 @@ knitr::opts_chunk$set(
 library(oncomsm)
 library(dplyr, warn.conflicts = FALSE)
 library(future) # parallel processing
-
-m_cores <- if (as.logical(Sys.getenv("NOT_CRAN", unset = "FALSE"))) {
-  parallel::detectCores()
-} else {
-  2L # need to restrict parallel processing on CRAN
-}
-
-plan(multisession) # instruct future how to run in parallel
+plan(multisession)
 ```
 
 
@@ -135,14 +127,14 @@ go <- function(model, data, nsim = 250) {
 The 'go' criterion can then be applied to each of the resampled data sets.
 
 ```{r, warning=FALSE}
-tbl_decisions <- simulate_decision_rule(mdl, 
-                                        c(40, 40, 40), 
+tbl_decisions <- simulate_decision_rule(mdl,
+                                        c(40, 40, 40),
                                         go,
                                         nsim = 250,
                                         seed = 32487)
 
-tbl_pr_go_planning <- tbl_decisions %>% 
-  group_by(group_id) %>% 
+tbl_pr_go_planning <- tbl_decisions %>%
+  group_by(group_id) %>%
   summarize(`Pr[go] planning` = mean(go))
 
 tbl_pr_go_planning
@@ -164,10 +156,8 @@ tbl_interim <- tribble(
           "s2", "A", 2, "response",
           "s3", "A", 3, "stable",
           "s3", "A", 4.5, "response",
-          
           "s4", "B", 0, "stable",
           "s5", "B", 1.5, "stable",
-          
           "s6", "C", 0, "stable",
           "s6", "C", 1.5, "progression",
           "s7", "C", 2.25, "stable",
@@ -182,7 +172,7 @@ tbl_interim <- tribble(
 )
 
 # plot it
-visits_to_mstate(tbl_interim, mdl) %>% 
+visits_to_mstate(tbl_interim, mdl) %>%
   plot_mstate(mdl, relative_to_sot = FALSE)
 ```
 
@@ -205,17 +195,17 @@ posterior predictive.
 ```{r, warning=FALSE}
 tbl_decisions_interim <- simulate_decision_rule(
   mdl,
-  c(40, 40, 40), 
+  c(40, 40, 40),
   go,
   data = tbl_interim,
   nsim = 250,
   seed = 32487
 )
 
-tbl_pr_go_planning %>% 
+tbl_pr_go_planning %>%
   left_join(
-    tbl_decisions_interim %>% 
-    group_by(group_id) %>% 
+    tbl_decisions_interim %>%
+    group_by(group_id) %>%
     summarize(
       `Pr[go] interim` = mean(go)
     ),

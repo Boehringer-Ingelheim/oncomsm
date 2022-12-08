@@ -14,7 +14,7 @@
 #'
 #' @return A data frame with multi-state data; variables are
 #' `subject_id<chr>`, `group_id<chr>`, `subject_id<chr>`, `from<chr>`,
-#' `to<chr>`, `t_min<dbl>`, `t_max<dbl>`, `t_sot<dble>, where
+#' `to<chr>`, `t_min<dbl>`, `t_max<dbl>`, `t_sot<dbl>`, where
 #' `to` and `from` indicate the state from which and into which the transitions
 #' occurs (stable, response, progression), `t_max` and `t_min` specify the
 #' interval in which the transition occurred relative to `t_sot`
@@ -110,6 +110,13 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
         t_sot = t_sot
       ))
     }
+  }
+  if (!is.null(attr(tbl_visits, "isemptydata"))) {
+    # this is only used in conjunction with .emptydata since the global now
+    # does not make sense in that context; minimum time to first event is
+    # assumed to be equal to visit spacing / 2
+    tbl_mstate <- tbl_mstate %>%
+      mutate(t_min = model$visit_spacing[.data$group_id] / 2 + .data$t_sot)
   }
   return(tbl_mstate)
 }

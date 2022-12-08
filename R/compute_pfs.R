@@ -62,7 +62,7 @@ compute_pfs <- function(
   for (i in seq_along(group_ids)) {
     tbl_pfs <- dplyr::bind_rows(
       tbl_pfs,
-      as_tibble(t(res[ , , i])) %>%
+      as_tibble(t(res[, , i])) %>%
         mutate(t = t) %>%
         tidyr::pivot_longer(
           -t, names_to = "iter", values_to = "pfs"

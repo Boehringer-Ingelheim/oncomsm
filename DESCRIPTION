@@ -8,9 +8,8 @@ Authors@R: c(
       email = "kevin.kunzmann@boehringer-ingelheim.com",
       comment = c(ORCID = "0000-0002-1140-7143")
     ),
-    person("Karhtik", "Ananthakrishnan",
-      role = c("ctb"),
-      email = "karthik.ananthakrishnan@boehringer-ingelheim.com"
+    person("Karthik", "Ananthakrishnan",
+      role = c("ctb")
     ),
     person(
       "Boehringer Ingelheim Ltd.", 
@@ -22,8 +21,9 @@ Description: Implements methods to fit a parametric Bayesian multi-state model
     The model can be used to sample from the predictive distribution to impute
     missing data and calculate probability of success for custom decision
     criteria in early clinical trials during an ongoing trial.
-    The inference is implemented using stan.
-License: Apache License 2.0 | file LICENSE
+    The inference is implemented using 'stan'.
+Language: en-US
+License: Apache License 2.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1

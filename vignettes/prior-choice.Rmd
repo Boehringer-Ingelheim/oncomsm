@@ -63,20 +63,20 @@ over time.
 
 ```{r weibull-hazards, echo=FALSE, warning=FALSE}
 h <- function(t, a, b) b / a * (t / a)^(b - 1)
-shapes <- c(0.5, 0.75, 1, 2, 3)
+shapes <- c(0.75, 1, 2, 3)
 t <- pmax(0.1, seq(0, 12, length.out = 100))
 tidyr::expand_grid(
-  t = t , 
+  t = t,
   tibble(
-    a = rep(6, length(shapes)) / log(2)^(1/shapes), 
+    a = rep(6, length(shapes)) / log(2)^(1 / shapes),
     b = shapes
   )
-) %>% 
+) %>%
 mutate(
   hazard = h(t, a, b),
-  label = sprintf("median=%5.2f, b=%5.2f", a * log(2)^(1/shapes), b)
-) %>% 
-ggplot() + 
+  label = sprintf("median=%5.2f, b=%5.2f", a * log(2)^(1 / shapes), b)
+) %>%
+ggplot() +
   aes(t, hazard, color = label) +
   geom_line() +
   scale_y_continuous(limits = c(0, 1))
@@ -95,7 +95,7 @@ Weibull distribution.
 Additionally, the Weibull distribution is the only distribution which can be
 interpreted both in terms of proportional hazards and accelerated failure
 times.
-Note that covariate modelling is not yet implemented in `oncomsm`.
+Note that covariate modeling is not yet implemented in `oncomsm`.
 Realistically, proper model selection or the identification of more complex
 patterns in the hazard function are unfeasible with small sample sizes.
 The Weibull distribution is this primarily chosen due to the intuitive
@@ -109,11 +109,12 @@ multi-state models as well.
 
 ## Parameterization and prior classes
 
-Since both parameters are of interest, the reference prior for a Weibull 
+Both scale and shape are of interest.
+Hence, the reference prior for a Weibull 
 distribution is proportional to $1/(a\, b)$ 
 (see, [A note on non-informative priors for Weibull distributions](https://doi.org/10.1016/S0378-3758(96)00155-3)).
-Any differentiable re-parameterization $g^{-1}:g(a,b)\mapsto (a,b)$ whose
-Jacobian's absolute determinant is $1/(a\,b)$ thus leads to an (improper)
+Any differentiable re-parameterization $g^{-1}:g(a,b)\mapsto (a,b)$ with
+Jacobian absolute determinant $1/(a\,b)$ thus leads to an (improper)
 uniform reference prior via pull-back of the reference prior on $(a,b)$.
 The transformation given by
 
@@ -155,56 +156,62 @@ uniform component, $\operatorname{Beta}(1,1)$, with weight $\eta$ is suggested.
 
 ## Choice of hyperparameters
 
-Instead of specifying mean and variance of the underlying normal distribution on
-the log median and log shape directly,
-the $0.05$ and $0.95$ quantiles of the median and shape can be elicited to cover
-a broad range of plausible values.
+Directly specifying the mean and variance of the lognormal priors for shape and
+median time to event can be unintuitive.
+Instead,
+the $0.05$ and $0.95$ quantiles of the median and shape can be specified.
 These two constraints are then sufficient to identify the mean and variance
 parameters of the log-normal distribution.
 
-If, for instance, a typical time from stable to response is 2 to 6 months
-the corresponding log-normal prior for the median time-to-response would be:
+If, for instance, very little is known about the median time to response but
+it is implausible that the median is lower than 1 or greater than 36 months,
+the lognormal prior on  median time to response is depicted in the
+following plot.
 
 ```{r}
-res <- oncomsm:::get_mu_sigma(2, 6)
+res <- oncomsm:::get_mu_sigma(1, 36)
 median_transition_time <- t
 tibble(
-  median_transition_time = median_transition_time, 
+  median_transition_time = median_transition_time,
   pdf = dlnorm(median_transition_time, res$mu, res$sigma)
-) %>% 
-ggplot() + 
-  aes(median_transition_time, pdf) + 
+) %>%
+ggplot() +
+  aes(median_transition_time, pdf) +
   geom_line()
 ```
 
-The choice of the prior on the shape is more difficult since the shape parameter
-is almost unidentifiable from only a few data points per transition.
-To avoid convergence issues `oncomsm` uses a default of a point prior on $1$,
-i.e. an exponential model.
-If changes in the hazards over time are expected, it can make sense to
-relax the prior at the risk of divergent transitions during sampling.
-A small number of divergent transitions can usually be tolerated.
-In practice, it is always possible to reduce the prior variability post-hoc or
-(fine-tune the MCMC parameters to obtain stable inference)[https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions]. 
+This is the default vague prior on the median time to next event for all three
+transitions.
 
-A sensible default choice seems to be to chose the quantiles $\pm 0.2$ around $\log(1.2)$
-on the log scale, more variation allows extreme deviations in the shape that are 
-less likely to occur in practice.
+The choice of the prior on the shape is more difficult since the shape parameter
+is harder to identify from only a few (interval censored) data points per
+transition.
+To avoid convergence issues `oncomsm` uses a default of a lognormal prior 
+with 5% quantile 0.9 and 95% quantile 2.5.
+If changes in the hazards over time are expected, it can make sense to
+relax the prior at the risk of more divergent transitions during sampling.
+A small number of divergent transitions can usually be tolerated
+(default: up to 10%).
+In practice, it is always possible to reduce the prior variability post-hoc 
+or to fine-tune the MCMC parameters to obtain stable inference[https://mc-stan.org/docs/2_19/reference-manual/divergent-transitions]. 
+
+The following plot shows the variability in shape for fixed scale of this
+default prior.
 
 ```{r}
-res <- oncomsm:::get_mu_sigma(0.98, 1.46) # exp(log(1.2) - 0.2), exp(log(1.2) + 0.2)
+res <- oncomsm:::get_mu_sigma(0.9, 2.5)
 shape <- seq(0, 5, length.out = 100)
 set.seed(251L)
 tibble(
   b = rlnorm(100, res$mu, res$sigma),
   a = 6
-) %>% 
-expand_grid(t = t) %>% 
+) %>%
+expand_grid(t = t) %>%
 mutate(
-  survival = 1 - pweibull(t, b, a), 
+  survival = 1 - pweibull(t, b, a),
   label = sprintf("a=%5.2f, b=%5.2f", a, b)
-) %>% 
-ggplot() + 
+) %>%
+ggplot() +
   aes(t, survival, group = label) +
   geom_line(alpha = .2)
 ```
@@ -212,35 +219,31 @@ ggplot() +
 The resulting Weibull density is 
 
 ```{r}
-tibble(shape = shape, pdf = dlnorm(shape, res$mu, res$sigma)) %>% 
-ggplot() + 
-  aes(shape, pdf) + 
+tibble(shape = shape, pdf = dlnorm(shape, res$mu, res$sigma)) %>%
+ggplot() +
+  aes(shape, pdf) +
   geom_line()
 ```
-
-Even with such a strong regularization, small samples might lead to a small 
-number divergent transitions during sampling from the posterior.
-This small number can be ignored or the prior can be chosen even narrower around a
-suspected shape parameters to avoid sampling issues completey.
 
 A sample from the joint prior then reflects the overall variability.
 
 ```{r}
 set.seed(251L)
 tibble(
-  b = rlnorm(100, oncomsm:::get_mu_sigma(0.98, 1.46)$mu, oncomsm:::get_mu_sigma(0.98, 1.46)$sigma),
+  b = rlnorm(100, oncomsm:::get_mu_sigma(0.75, 3)$mu,
+             oncomsm:::get_mu_sigma(0.75, 3)$sigma),
   a = purrr::map_dbl(b, function(x) {
       res <- oncomsm:::get_mu_sigma(2, 6)
       rlnorm(1, res$mu, res$sigma) / log(2)^(1 / x)
     }
   )
-) %>% 
-expand_grid(t = t) %>% 
+) %>%
+expand_grid(t = t) %>%
 mutate(
-  survival = 1 - pweibull(t, b, a), 
+  survival = 1 - pweibull(t, b, a),
   label = sprintf("a=%5.2f, b=%5.2f", a, b)
-) %>% 
-ggplot() + 
+) %>%
+ggplot() +
   aes(t, survival, group = label) +
   geom_line(alpha = .2)
 ```

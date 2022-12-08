@@ -95,7 +95,9 @@ get_mu_sigma <- function(q05, q95) {
       state = "stable" # first visits are always stable
     ))
   }
-  return(arrange(res, t))
+  res <- arrange(res, t)
+  attr(res, "isemptydata") <- TRUE
+  return(res)
 }
 
 
@@ -105,21 +107,32 @@ data2standata <- function(data, model) { # nolint
   checkmate::check_class(model, classes = c("srpmodel", "list"))
   # first prepare any data (if available)
   lst_stan_data <- data %>%
-    mutate(
+    transmute(
       group_id = as.integer(factor(.data$group_id,
                                    levels = model$group_id
       )),
       subject_id = as.integer(factor(.data$subject_id)),
       from = as.integer(factor(.data$from, levels = model$states)),
       to = if_else(
-        is.na(.data$to),
-        "unknown",
-        as.character(.data$to)
-      ) %>%
+          is.na(.data$to),
+          "unknown",
+          as.character(.data$to)
+        ) %>%
         factor(levels = c(model$states, "unknown")) %>%
         as.integer(),
       t_min = .data$t_min - .data$t_sot,
-      t_max = .data$t_max - .data$t_sot
+      t_max = .data$t_max - .data$t_sot,
+    )
+  # adjust data for numerical stability
+  lst_stan_data <- lst_stan_data %>%
+    group_by(.data$subject_id) %>%
+    mutate(
+      # within transition spacing
+      t_min = pmax(.data$t_min, model$visit_spacing[.data$group_id] / 2),
+      t_max = pmax(.data$t_max, .data$t_min + 1 / 30), # 1 day
+      # align within subject spacing
+      t_min = pmax(.data$t_min, lag(.data$t_max, default = 0)),
+      t_max = pmax(.data$t_max, .data$t_min + 1 / 30)
     ) %>%
     arrange(.data$subject_id, .data$from) %>%
     as.list()
