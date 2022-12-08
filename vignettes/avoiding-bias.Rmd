@@ -89,4 +89,7 @@ hist(p_posterior)
 summary(p_posterior)
 ```
 
-Indeed this is the case.
+Indeed this is the case. 
+The multi-state model can thus support a more principled approach to estimating
+key quantities like response probability or duration of response during interim
+analyses.
