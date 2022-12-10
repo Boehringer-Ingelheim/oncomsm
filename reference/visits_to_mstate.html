@@ -117,18 +117,17 @@ interval in which the transition occurred relative to <code>t_sot</code></p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="srpmodel.html">create_srpmodel</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="srpmodel.html">define_srp_prior</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">tbl_visits</span> <span class="op">&lt;-</span> <span class="fu"><a href="sample_predictive.html">sample_predictive</a></span><span class="op">(</span><span class="va">mdl</span>, n_per_group <span class="op">=</span> <span class="fl">5L</span>, nsim <span class="op">=</span> <span class="fl">1</span>, seed <span class="op">=</span> <span class="fl">468L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">visits_to_mstate</span><span class="op">(</span><span class="va">tbl_visits</span>, <span class="va">mdl</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 9 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 8 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   subject_id group_id from     to          t_min t_max t_sot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ID05135273 A        stable   progression 17.8  18.8   5.84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ID05135273 A        stable   progression  8.84  9.84  5.84</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> ID05466621 A        stable   response     5.01  6.01  1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> ID05466621 A        response progression 26.0  27.0   1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> ID05466621 A        response progression  6.01  7.01  1.01</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ID05662273 A        stable   response    13.8  14.8   3.81</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> ID05662273 A        response progression 28.8  29.8   3.81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> ID05662273 A        response progression 14.8  15.8   3.81</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> ID05729114 A        stable   response    16.3  17.3   6.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> ID05729114 A        response progression 33.3  34.3   6.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">8</span> ID07955012 A        stable   response    29.9  30.9   4.94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">9</span> ID07955012 A        response progression 31.9  32.9   4.94</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> ID05729114 A        response progression 17.3  18.3   6.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">8</span> ID07955012 A        stable   progression 32.9  33.9   4.94</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
