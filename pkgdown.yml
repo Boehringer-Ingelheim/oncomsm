@@ -1,5 +1,5 @@
 pandoc: 2.19.2
-pkgdown: 2.0.6
+pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   avoiding-bias: avoiding-bias.html
@@ -7,7 +7,7 @@ articles:
   prior-choice: prior-choice.html
   bhmbasket-integration: web_only/bhmbasket-integration.html
   probability-of-go: web_only/probability-of-go.html
-last_built: 2022-12-10T01:08Z
+last_built: 2022-12-19T15:02Z
 urls:
   reference: https://boehringer-ingelheim.github.io/oncomsm/reference
   article: https://boehringer-ingelheim.github.io/oncomsm/articles
