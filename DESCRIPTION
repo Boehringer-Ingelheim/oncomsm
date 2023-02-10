@@ -3,8 +3,8 @@ Type: Package
 Title: Bayesian Multi-State Models for Early Oncology
 Version: 0.1.3.9000
 Authors@R: c(
-    person("Kevin", "Kunzmann", 
-      role = c("aut", "cre"), 
+    person("Kevin", "Kunzmann",
+      role = c("aut", "cre"),
       email = "kevin.kunzmann@boehringer-ingelheim.com",
       comment = c(ORCID = "0000-0002-1140-7143")
     ),
@@ -12,7 +12,7 @@ Authors@R: c(
       role = c("ctb")
     ),
     person(
-      "Boehringer Ingelheim Ltd.", 
+      "Boehringer Ingelheim Ltd.",
       role = c("cph", "fnd")
     )
   )
@@ -28,9 +28,9 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 Biarch: true
-Depends: 
+Depends:
     R (>= 3.6)
-Imports: 
+Imports:
     methods,
     Rcpp,
     RcppNumerical (>= 0.4),
@@ -46,14 +46,15 @@ Imports:
     ggplot2,
     checkmate
 SystemRequirements: GNU make
-LinkingTo: 
+LinkingTo:
     BH (>= 1.66.0),
     Rcpp,
     RcppEigen (>= 0.3),
     RcppNumerical (>= 0.4),
     rstan (>= 2.18),
-    StanHeaders (>= 2.18)
-Suggests: 
+    StanHeaders (>= 2.18),
+    RcppParallel
+Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
