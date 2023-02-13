@@ -124,7 +124,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
   smpl_prior <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl <- sample_predictive(mdl,
     sample = smpl_prior,
-    n_per_group = c(1L, 1L), nsim = 5*1e3, seed = 423
+    n_per_group = c(1L, 1L), nsim = 5 * 1e3, seed = 423
   )
   # test that observed response rate is close enough to true rate
   res_test <- tbl %>%

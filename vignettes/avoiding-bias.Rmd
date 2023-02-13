@@ -60,9 +60,13 @@ tbl_data_interim <- tibble::tribble(
         "subj5",  2, "EOF",
         "subj6",  0, "stable",
         "subj6",  6, "progression"
-  ) %>% 
+  ) %>%
   mutate(group_id = "A")
-plot_mstate(visits_to_mstate(tbl_data_interim, mdl), mdl, relative_to_sot = FALSE)
+plot_mstate(
+  visits_to_mstate(tbl_data_interim, mdl),
+  mdl,
+  relative_to_sot = FALSE
+)
 ``` 
 
 A naive estimate of the response rate at month 6 would be $1/2$.
@@ -80,8 +84,8 @@ a value smaller than $0.5$.
 p_posterior <- parameter_sample_to_tibble(
     mdl,
     sample_posterior(mdl, tbl_data_interim)
-  ) %>% 
-  filter(parameter == "p") %>% 
+  ) %>%
+  filter(parameter == "p") %>%
   pull(value)
 
 hist(p_posterior)

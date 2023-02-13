@@ -156,7 +156,6 @@ tbl_prior_predictive <- sample_predictive(
     sample = smpl_prior,
     p = 1,
     shape = matrix(c(1, 1, 1), ncol = 3),
-     # median = scale * log(2)^(1/shape)
     scale = matrix(c(4, 2, 24), ncol = 3) / log(2),
     nsim = 1L,
     seed = 34930L
@@ -184,7 +183,6 @@ tbl_prior_predictive <- sample_predictive(
     sample = smpl_prior,
     p = 0.6,
     shape = matrix(c(1, 1, 1), ncol = 3),
-     # median = scale * log(2)^(1/shape)
     scale = matrix(c(3, 12, 24), ncol = 3) / log(2),
     nsim = 100L,
     seed = 34930L

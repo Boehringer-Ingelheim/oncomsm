@@ -100,6 +100,7 @@ plot_transition_times <- function(model, # nolint
                                                color = .data$group_id)) +
     ggplot2::labs(x = "time to next event", y = "'Survival' fraction") +
     ggplot2::scale_color_discrete("") +
+    ggplot2::scale_fill_discrete("") +
     ggplot2::scale_y_continuous(
       limits = c(0, 1),
       breaks = seq(0, 1, by = .1)
