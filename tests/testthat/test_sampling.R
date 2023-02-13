@@ -84,11 +84,10 @@ test_that("Testing marginal calibration of sampling from the prior", {
   tbl_means <- tbl_prior_predictive %>%
     distinct(subject_id, iter, state, .keep_all = TRUE) %>%
     group_by(iter, group_id, subject_id) %>%
-    summarize(
+    mutate(
       dt = t - lag(t),
       from = lag(state),
-      to = state,
-      .groups = "drop"
+      to = state
     ) %>%
     filter(to != "stable") %>%
     group_by(group_id, from, to) %>%
@@ -184,11 +183,10 @@ test_that("Testing marginal calibration of sampling from the prior", {
     tbl_means <- tbl_prior_predictive %>%
       distinct(subject_id, iter, state, .keep_all = TRUE) %>%
       group_by(iter, group_id, subject_id) %>%
-      summarize(
+      mutate(
         dt = t - lag(t),
         from = lag(state),
-        to = state,
-        .groups = "drop"
+        to = state
       ) %>%
       filter(to != "stable") %>%
       group_by(group_id, from, to) %>%
