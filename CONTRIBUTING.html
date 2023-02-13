@@ -114,7 +114,7 @@
 <h2 id="updating-stan-models">Updating stan models<a class="anchor" aria-label="anchor" href="#updating-stan-models"></a></h2>
 <p>The stan models contained in <code>inst/stan</code> are not automatically updated to avoid taking a dependency on the <code>rstantools</code> package.<br>
 After modifying or adding new models, run</p>
-<pre class="{r}"><code><span><span class="fu">rstantools</span><span class="fu">::</span><span class="fu">rstan_config</span><span class="op">(</span><span class="op">)</span></span></code></pre>
+<pre class="{r}"><code><span><span class="fu">rstantools</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/rstan_config.html" class="external-link">rstan_config</a></span><span class="op">(</span><span class="op">)</span></span></code></pre>
 <p>and silence <code>R/stanmodels.R</code> via <code><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output()</a></code>.</p>
 </div>
 <div class="section level2">
