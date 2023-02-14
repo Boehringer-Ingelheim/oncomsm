@@ -29,11 +29,11 @@ test_that("visits to mstate conversion works", {
   # check longer trajectory
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id, ~t, ~state,
-    1, 1, 0, "stable",
-    1, 1, 1.2, "stable",
-    1, 1, 2.4, "response",
-    1, 1, 3.6, "progression"
-  ) %>%
+      1, 1, 0, "stable",
+      1, 1, 1.2, "stable",
+      1, 1, 2.4, "response",
+      1, 1, 3.6, "progression"
+    ) %>%
     mutate(
       group_id = as.character(group_id),
       subject_id = as.character(subject_id)
@@ -47,11 +47,11 @@ test_that("visits to mstate conversion works", {
   # check EOF trajectory
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id, ~t, ~state,
-    1, 1, 0, "stable",
-    1, 1, 1.2, "stable",
-    1, 1, 2.4, "response",
-    1, 1, 3.6, "EOF"
-  ) %>%
+      1, 1, 0, "stable",
+      1, 1, 1.2, "stable",
+      1, 1, 2.4, "response",
+      1, 1, 3.6, "EOF"
+    ) %>%
     mutate(
       group_id = as.character(group_id),
       subject_id = as.character(subject_id)
@@ -63,19 +63,44 @@ test_that("visits to mstate conversion works", {
   expect_equal(tbl_mstate$t_min, c(1.2, 3.6))
   expect_equal(tbl_mstate$t_max, c(2.4, -Inf))
 
+  # check different labels
+  mdl <- create_srpmodel(
+    A = define_srp_prior(),
+    states = c("A", "B", "C"),
+    censored = "blub"
+  )
+  tbl_visits <- tibble::tribble(
+    ~group_id, ~subject_id,  ~t, ~state,
+            1,           1, 0.0,    "A",
+            1,           1, 1.2,    "A",
+            1,           1, 2.4,    "B",
+            1,           1, 3.6, "blub"
+    ) %>%
+    mutate(
+      group_id = as.character(group_id),
+      subject_id = as.character(subject_id)
+    )
+  tbl_mstate <- visits_to_mstate(tbl_visits, mdl, now = max(tbl_visits$t) + 1)
+  expect_true(all(tbl_mstate$from == c("A", "B")))
+  expect_true(tbl_mstate$to[1] == "B")
+  expect_equal(tbl_mstate$t_max, c(2.4, -Inf))
+
   # check multiple individuals
+  mdl <- create_srpmodel(
+    A = define_srp_prior()
+  )
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id, ~t, ~state,
-    1, 1, 0, "stable",
-    1, 1, 1.2, "stable",
-    1, 1, 2.4, "response",
-    1, 1, 3.6, "progression",
-    1, 2, 2, "stable",
-    1, 2, 3, "response",
-    1, 3, 1.5, "stable",
-    1, 3, 3, "response",
-    1, 3, 3.5, "EOF"
-  ) %>%
+      1, 1, 0, "stable",
+      1, 1, 1.2, "stable",
+      1, 1, 2.4, "response",
+      1, 1, 3.6, "progression",
+      1, 2, 2, "stable",
+      1, 2, 3, "response",
+      1, 3, 1.5, "stable",
+      1, 3, 3, "response",
+      1, 3, 3.5, "EOF"
+    ) %>%
     mutate(
       group_id = as.character(group_id),
       subject_id = as.character(subject_id)
@@ -92,12 +117,12 @@ test_that("visits to mstate conversion works", {
   # throw error
   tbl_visits <- tibble::tribble(
     ~group_id, ~subject_id, ~t, ~state,
-    1, 1, 0, "stable",
-    1, 1, 1.2, "stable",
-    1, 1, 2.4, "response",
-    1, 1, 3.6, "progression",
-    1, 2, 3, "response"
-  ) %>%
+      1, 1, 0, "stable",
+      1, 1, 1.2, "stable",
+      1, 1, 2.4, "response",
+      1, 1, 3.6, "progression",
+      1, 2, 3, "response"
+    ) %>%
     mutate(
       group_id = as.character(group_id),
       subject_id = as.character(subject_id)

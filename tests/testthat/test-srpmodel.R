@@ -52,14 +52,26 @@ test_that("can calculate PFS rate", {
 
 
 
-test_that("can create model", {
+test_that("can modify state labels", {
   mdl <- create_srpmodel(
     A = define_srp_prior(),
     states = c("A", "B", "C"),
     censored = "blub"
   )
-  tmp <- sample_predictive(mdl, nsim = 1000L, n_per_group = 100L)
-  exptect_true({
-    nrow(tmp) > 0
+  # can we sample predictive?
+  tbl_smpl <- sample_predictive(mdl, nsim = 10L, n_per_group = 10L, seed = 42L)
+  expect_true({
+    all(tbl_smpl$state %in% mdl$states)
   })
+  # can we sample posterior?
+  tbl_visits <- tibble::tribble(
+    ~group_id, ~subject_id,  ~t, ~state,
+          "A",         "1", 0.0,    "A",
+          "A",         "1", 1.2,    "A",
+          "A",         "1", 2.4,    "B",
+          "A",         "1", 3.6, "blub"
+    )
+  testthat::expect_no_error(
+    sample_posterior(mdl, tbl_visits, nsim = 500, seed = 42L)
+  )
 })

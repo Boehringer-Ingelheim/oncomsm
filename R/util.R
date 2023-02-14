@@ -135,6 +135,7 @@ data2standata <- function(data, model) { # nolint
       t_max = pmax(.data$t_max, .data$t_min + 1 / 30)
     ) %>%
     arrange(.data$subject_id, .data$from) %>%
+    ungroup() %>%
     as.list()
   # make sure everything is an array
   for (i in seq_along(lst_stan_data)) {

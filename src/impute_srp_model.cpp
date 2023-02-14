@@ -38,7 +38,8 @@ DataFrame impute_srp_model(
     NumericMatrix shapes,
     NumericMatrix scales,
     NumericVector visit_spacing,
-    double max_time // maximal time
+    double max_time,
+    CharacterVector states
 ) {
   // extract columns from df
   CharacterVector subject_id = df["subject_id"];
@@ -48,8 +49,8 @@ DataFrame impute_srp_model(
   // save factor information
   CharacterVector group_ids = group.attr("levels");
   // check that df starts with "stable" (must be if properly sorted)
-  if (state(0) != "stable") {
-    stop("df must start with 'stable' state");  // # nocov
+  if (state(0) != states(0)) {
+    stop("df must start with initial state");  // # nocov
   }
   // compute maximal output length
   const int max_visits = floor(max_time/min(visit_spacing));
@@ -83,23 +84,19 @@ DataFrame impute_srp_model(
           stop("group assignment must be constant within individuals");
         }
         if ((state(i + 1) == "response") && (state(i) != "response")) {
-          if (state(i) != "stable") {
-            stop("last visit before response must be 'stable'"); // # nocov
+          if (state(i) != states(0)) {
+            stop("last visit before response must be initial state"); // # nocov
           }
           // record response interval
           dt_response_interval = {t(i) - t_first_visit, t(i + 1) - t_first_visit};
         }
       } else {
         // next visit is from different subject - check whether we need to sample
-        sample = ((state(i) == "stable") || (state(i) == "response"));
-        // make sure new subject start with 'stable'
-        if (state(i + 1) != "stable") {
-          stop("first visit of each individual must be 'stable' (start of treatment)"); // # nocov
-        }
+        sample = ((state(i) == states(0)) || (state(i) == states(1)));
       }
     } else {
       // no next visit
-      sample = ((state(i) == "stable") || (state(i) == "response"));
+      sample = ((state(i) == states(0)) || (state(i) == states(0)));
     }
     // copy existing data
     subject_id_out(row_idx) = subject_id(i);
@@ -111,7 +108,7 @@ DataFrame impute_srp_model(
     if (sample) {
       g = group(i) - 1;
       // 1. determine response status
-      if (state(i) == "stable") { // still undecided, sample
+      if (state(i) == states(0)) { // still undecided, sample
         p_response = conditional_response_probability_srp(
           t(i) - t_first_visit, response_probabilities(g), shapes(g, 0), shapes(g, 1),
           scales(g, 0), scales(g, 1));
@@ -147,20 +144,20 @@ DataFrame impute_srp_model(
         group_out(row_idx) = group(i);
         t_out(row_idx) = tt;
         if (tt < t_first_visit + dt_response) {
-          state_out(row_idx) = "stable";
+          state_out(row_idx) = states(0);
         } else {
           if (tt < t_first_visit + dt_progression) {
             if (response) {
-              state_out(row_idx) = "response";
+              state_out(row_idx) = states(1);
             } else {
-              state_out(row_idx) = "stable";
+              state_out(row_idx) = states(0);
             }
           } else {
-            state_out(row_idx) = "progression";
+            state_out(row_idx) = states(2);
           }
         }
         row_idx += 1;
-        if (state_out(row_idx - 1) == "progression") {
+        if (state_out(row_idx - 1) == states(2)) {
           break; // no need to sample multiple visits form absorbing state
         }
       } // end while
