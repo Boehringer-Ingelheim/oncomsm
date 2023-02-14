@@ -1,8 +1,8 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/check.yml)
 [![R-CMD-check-windows](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/rcmd-check-windows.yml/badge.svg?branch=main)](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/rcmd-check-windows.yml)
-[![pages-build-deployment](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/Boehringer-Ingelheim/oncomsm/actions/workflows/pages/pages-build-deployment)
-[![metacran version](https://www.r-pkg.org/badges/version/oncomsm)](https://cran.r-project.org/package=oncomsm)
+[![metacran version](https://www.r-pkg.org/badges/version-last-release/oncomsm)](https://cran.r-project.org/package=oncomsm)
+[![metacran version](https://cranlogs.r-pkg.org/badges/grand-total/oncomsm)](https://cran.r-project.org/package=oncomsm)
 [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/Boehringer-Ingelheim/oncomsm)
 <!-- badges: end -->
 
