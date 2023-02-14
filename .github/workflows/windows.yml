@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main]
 
-name: R-CMD-check-windows
+name: Windows
 
 jobs:
   R-CMD-check:
