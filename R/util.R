@@ -92,7 +92,7 @@ get_mu_sigma <- function(q05, q95) {
       subject_id = subject_ids,
       group_id = group_ids[i],
       t = recruitment_times,
-      state = "stable" # first visits are always stable
+      state = model$states[1] # first visits are always initial state
     ))
   }
   res <- arrange(res, t)

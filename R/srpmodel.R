@@ -119,7 +119,9 @@ define_srp_prior <- function(
 #' @export
 create_srpmodel <- function(
   ...,
-  maximal_time = 10 * 12
+  maximal_time = 10 * 12,
+  states = c("stable", "response", "progression"),
+  censored = "EOF"
 ) {
   group_priors <- list(...)
   group_id <- names(group_priors)
@@ -160,7 +162,8 @@ create_srpmodel <- function(
       visit_spacing = visit_spacing,
       recruitment_rate = recruitment_rate,
       stan_model = stanmodels$srp_model_simple,
-      states = c("stable", "response", "progression"),
+      states = states,
+      censored = censored,
       prior = list(
         p = p, median_t = median_t, shape = shape
       )

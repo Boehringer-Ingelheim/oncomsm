@@ -9,7 +9,7 @@
 #' @template param-model
 #' @param now time point since start of trial (might be later than last
 #'   recorded visit)
-#' @param eof_indicator state name indicating (exactly observed) end of
+#' @param model$censored state name indicating (exactly observed) end of
 #'   follow up.
 #'
 #' @return A data frame with multi-state data; variables are
@@ -26,8 +26,7 @@
 #' visits_to_mstate(tbl_visits, mdl)
 #'
 #' @export
-visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
-                             eof_indicator = "EOF") {
+visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t)) {
   checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!inherits(tbl_visits, "data.frame")) {
     stop("'tbl_visits' must be a data.frame") # nocov
@@ -48,7 +47,7 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
     if (tbl_visits$subject_id[i] != subject_id_lagged || i == 1) {
       # switch to new subject
       subject_id_lagged <- tbl_visits$subject_id[i]
-      state_lagged <- "stable"
+      state_lagged <- model$states[1]
       t_sot <- tbl_visits$t[i]
       if (tbl_visits$state[i] != state_lagged) {
         # record jump
@@ -61,7 +60,7 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
     }
     # handle jumps
     if (tbl_visits$state[i] != state_lagged) {
-      if (tbl_visits$state[i] == eof_indicator) { # record eof
+      if (tbl_visits$state[i] == model$censored) { # record eof
         tbl_mstate <- bind_rows(tbl_mstate, tibble(
           subject_id = tbl_visits$subject_id[i],
           group_id = tbl_visits$group_id[i],
@@ -90,7 +89,7 @@ visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t),
     }
     # handle non-eof censoring
     censored <- FALSE
-    if (!(tbl_visits$state[i] %in% c("progression", eof_indicator))) {
+    if (!(tbl_visits$state[i] %in% c(model$states[3], model$censored))) {
       if (i < nrow(tbl_visits)) {
         if (tbl_visits$subject_id[i] != tbl_visits$subject_id[i + 1]) {
           censored <- TRUE
