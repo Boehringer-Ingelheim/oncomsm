@@ -105,6 +105,9 @@ define_srp_prior <- function(
 #' group labels
 #' @param maximal_time the maximal overall runtime of the trial as measured from
 #' the first visit of any group. No visits past this point are sampled.
+#' @param states character vector of three states (initial, intermediate, terminal)
+#' @param censored string, indicator of premature censoring events;
+#' no data is imputed after this point.
 #'
 #' @examples
 #' # a model with two groups and different priors on the respective response

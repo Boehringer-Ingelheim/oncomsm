@@ -9,14 +9,12 @@
 #' @template param-model
 #' @param now time point since start of trial (might be later than last
 #'   recorded visit)
-#' @param model$censored state name indicating (exactly observed) end of
-#'   follow up.
 #'
 #' @return A data frame with multi-state data; variables are
 #' `subject_id<chr>`, `group_id<chr>`, `subject_id<chr>`, `from<chr>`,
 #' `to<chr>`, `t_min<dbl>`, `t_max<dbl>`, `t_sot<dbl>`, where
 #' `to` and `from` indicate the state from which and into which the transitions
-#' occurs (stable, response, progression), `t_max` and `t_min` specify the
+#' occurs, `t_max` and `t_min` specify the
 #' interval in which the transition occurred relative to `t_sot`
 #' (start of treatment).
 #'
