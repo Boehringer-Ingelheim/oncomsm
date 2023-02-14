@@ -14,14 +14,19 @@ define_srp_prior(
   p_min = 0,
   p_max = 1,
   median_t_q05 = c(1, 1, 1),
-  median_t_q95 = c(36, 26, 36),
+  median_t_q95 = c(60, 60, 60),
   shape_q05 = rep(0.9, 3),
   shape_q95 = rep(2.5, 3),
   visit_spacing = 1,
   recruitment_rate = 1
 )
 
-create_srpmodel(..., maximal_time = 10 * 12)
+create_srpmodel(
+  ...,
+  maximal_time = 10 * 12,
+  states = c("stable", "response", "progression"),
+  censored = "EOF"
+)
 }
 \arguments{
 \item{p_mean}{numeric, mean of the beta prior for the response probability}
@@ -60,6 +65,11 @@ group labels}
 
 \item{maximal_time}{the maximal overall runtime of the trial as measured from
 the first visit of any group. No visits past this point are sampled.}
+
+\item{states}{character vector of three states (initial, intermediate, terminal)}
+
+\item{censored}{string, indicator of premature censoring events;
+no data is imputed after this point.}
 }
 \value{
 \code{define_srp_prior()} returns an object of class \code{srp_prior},

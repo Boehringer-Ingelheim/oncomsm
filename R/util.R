@@ -92,7 +92,7 @@ get_mu_sigma <- function(q05, q95) {
       subject_id = subject_ids,
       group_id = group_ids[i],
       t = recruitment_times,
-      state = "stable" # first visits are always stable
+      state = model$states[1] # first visits are always initial state
     ))
   }
   res <- arrange(res, t)
@@ -135,6 +135,7 @@ data2standata <- function(data, model) { # nolint
       t_max = pmax(.data$t_max, .data$t_min + 1 / 30)
     ) %>%
     arrange(.data$subject_id, .data$from) %>%
+    ungroup() %>%
     as.list()
   # make sure everything is an array
   for (i in seq_along(lst_stan_data)) {

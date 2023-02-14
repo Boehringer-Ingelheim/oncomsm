@@ -4,12 +4,7 @@
 \alias{visits_to_mstate}
 \title{Convert cross-sectional visit data to multi-state format}
 \usage{
-visits_to_mstate(
-  tbl_visits,
-  model,
-  now = max(tbl_visits$t),
-  eof_indicator = "EOF"
-)
+visits_to_mstate(tbl_visits, model, now = max(tbl_visits$t))
 }
 \arguments{
 \item{tbl_visits}{data frame, visit data in long format}
@@ -18,16 +13,13 @@ visits_to_mstate(
 
 \item{now}{time point since start of trial (might be later than last
 recorded visit)}
-
-\item{eof_indicator}{state name indicating (exactly observed) end of
-follow up.}
 }
 \value{
 A data frame with multi-state data; variables are
 \verb{subject_id<chr>}, \verb{group_id<chr>}, \verb{subject_id<chr>}, \verb{from<chr>},
 \verb{to<chr>}, \verb{t_min<dbl>}, \verb{t_max<dbl>}, \verb{t_sot<dbl>}, where
 \code{to} and \code{from} indicate the state from which and into which the transitions
-occurs (stable, response, progression), \code{t_max} and \code{t_min} specify the
+occurs, \code{t_max} and \code{t_min} specify the
 interval in which the transition occurred relative to \code{t_sot}
 (start of treatment).
 }
