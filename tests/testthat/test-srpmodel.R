@@ -49,3 +49,17 @@ test_that("can calculate PFS rate", {
       diff() < 0
   ))
 })
+
+
+
+test_that("can create model", {
+  mdl <- create_srpmodel(
+    A = define_srp_prior(),
+    states = c("A", "B", "C"),
+    censored = "blub"
+  )
+  tmp <- sample_predictive(mdl, nsim = 1000L, n_per_group = 100L)
+  exptect_true({
+    nrow(tmp) > 0
+  })
+})
