@@ -44,10 +44,11 @@ check_data <- function(data, model) {
   states_sorted <- data %>%
     group_by(.data$subject_id) %>%
     summarize(
-      sorted = factor(.data$state, levels = model$states) %>% # ignore censored here!
+      # ignore censored here, handled further down!
+      sorted = factor(.data$state, levels = model$states) %>%
         as.integer() %>%
         diff() %>%
-        {. >= 0} %>%
+        {. >= 0} %>% # nolint
         all(na.rm = TRUE)
     ) %>%
     pull(.data$sorted) %>%

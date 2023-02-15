@@ -44,3 +44,4 @@ reference:
   - parameter_sample_to_tibble
   - compute_pfs
   - simulate_decision_rule
+  - check_data
