@@ -25,18 +25,19 @@
 #'
 #' @export
 visits_to_mstate <- function(tbl_visits, model, now = max(tbl_visits$t)) {
-  checkmate::check_class(model, classes = c("srpmodel", "list"))
-  if (!inherits(tbl_visits, "data.frame")) {
-    stop("'tbl_visits' must be a data.frame") # nocov
-  } else {
-    checkmate::test_true(inherits(tbl_visits$subject_id, "character"))
-    checkmate::test_true(inherits(tbl_visits$group_id, "character"))
-    checkmate::test_true(inherits(tbl_visits$t, "numeric"))
-    checkmate::test_true(inherits(tbl_visits$state, "character"))
+  if (nrow(tbl_visits) == 0) {
+    # no data
+    return(tibble(
+      subject_id = integer(),
+      group_id = integer(),
+      from = integer(),
+      to = integer(),
+      t_min = numeric(),
+      t_max = numeric(),
+      t_sot = numeric()
+    ))
   }
-  checkmate::check_class(model, c("srpmodel", "list"))
-  # make sure everything is sorted
-  tbl_visits <- arrange(tbl_visits, .data$subject_id, .data$t)
+  check_data(tbl_visits, model)
   tbl_mstate <- list()
   subject_id_lagged <- 0L
   state_lagged <- 0L

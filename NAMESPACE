@@ -3,6 +3,7 @@
 S3method(format,srpmodel)
 S3method(plot,srpmodel)
 S3method(print,srpmodel)
+export(check_data)
 export(compute_pfs)
 export(create_srpmodel)
 export(define_srp_prior)

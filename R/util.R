@@ -57,24 +57,8 @@ get_mu_sigma <- function(q05, q95) {
   ))
 }
 
-.nodata <- function(model) { # nolint
-  checkmate::check_class(model, classes = c("srpmodel", "list"))
-  tibble(
-    subject_id = integer(),
-    group_id = integer(),
-    from = integer(),
-    to = integer(),
-    t_min = numeric(),
-    t_max = numeric(),
-    t_sot = numeric()
-  )
-}
-
-
-
 # create a data set with no observed data
 .emptydata <- function(model, n_per_group, seed = NULL) { # nolint
-  checkmate::check_class(model, classes = c("srpmodel", "list"))
   if (!is.null(seed)) {
     set.seed(seed) # nocov
   }
@@ -104,7 +88,6 @@ get_mu_sigma <- function(q05, q95) {
 
 # generic for digesting data into rstan-ready list
 data2standata <- function(data, model) { # nolint
-  checkmate::check_class(model, classes = c("srpmodel", "list"))
   # first prepare any data (if available)
   lst_stan_data <- data %>%
     transmute(
