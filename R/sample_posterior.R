@@ -42,17 +42,14 @@ sample_posterior <- function(model,
                              nuts_control = list(),
                              acceptable_divergent_transition_fraction = 0.1, # nolint
                              ...) {
-  checkmate::check_class(model, classes = c("srpmodel", "list"))
+  check_data(data, model)
   if (is.null(seed)) # generate seed if none was specified
     seed <- sample.int(.Machine$integer.max, 1)
-  if (is.null(data)) {
-    data <- .nodata(model)
-  } else {
-    if (is.null(now)) {
-      now <- max(data$t)
-    }
-    data <- visits_to_mstate(data, model, now)
+  if (is.null(now)) {
+    now <- max(data$t)
   }
+  # convert to multi state representation for model fitting
+  data <- visits_to_mstate(data, model, now)
   # combine prior information with data for stan
   stan_data <- data2standata(data, model)
   # global seed affects permutation of extracted parameters if not set

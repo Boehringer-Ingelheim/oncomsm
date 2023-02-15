@@ -27,8 +27,7 @@ test_that("impute remainder of trial from interim data, no new individuals", {
   )
   # sample some data and reduce to first visits
   tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
-                                 nsim_parameters = 1500L
-    ) %>%
+                                 nsim_parameters = 1500L) %>%
     group_by(subject_id) %>%
     filter(row_number() == 1) %>%
     ungroup()
@@ -49,8 +48,7 @@ test_that("impute remainder, without adding subjects", {
   )
   # sample some data and reduce to first visits
   tbl_data1 <- sample_predictive(mdl, 10, nsim = 1, seed = 43L,
-                                 nsim_parameters = 1500L
-    ) %>%
+                                 nsim_parameters = 1500L) %>%
     group_by(subject_id) %>%
     filter(row_number() == 1) %>%
     ungroup()

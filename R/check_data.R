@@ -22,12 +22,17 @@ check_data <- function(data, model) {
   if (length(names_missing) > 0) {
     stop(sprintf("columns: %s; missing from data", paste(names_missing, collapse = ", "))) # nolint
   }
+  checkmate::test_true(inherits(data$subject_id, "character"))
+  checkmate::test_true(inherits(data$group_id, "character"))
+  checkmate::test_true(inherits(data$t, "numeric"))
+  checkmate::test_true(inherits(data$state, "character"))
   # check no missing data
-  if (any(!complete.cases(data))) {
+  if (any(!stats::complete.cases(data))) {
     stop("no missing data in visits allowed")
   }
   # check sorted, by patient and t
-  properly_sorted <- all(diff(order(data$subject_id, data$t)) > 0)
+  sid <- factor(data$subject_id, levels = unique(data$subject_id))
+  properly_sorted <- all(diff(order(sid, data$t)) > 0)
   if (!properly_sorted) {
     stop("data needs to be sorted by 'subject_id' and 't'")
   }
@@ -39,13 +44,13 @@ check_data <- function(data, model) {
   states_sorted <- data %>%
     group_by(.data$subject_id) %>%
     summarize(
-      sorted = factor(state, levels = model$states) %>% # ignore censored here!
+      sorted = factor(.data$state, levels = model$states) %>% # ignore censored here!
         as.integer() %>%
         diff() %>%
         {. >= 0} %>%
         all(na.rm = TRUE)
     ) %>%
-    pull(sorted) %>%
+    pull(.data$sorted) %>%
     all()
   if (!states_sorted) {
     stop("no reverse jumps in state are allowed")
@@ -56,9 +61,9 @@ check_data <- function(data, model) {
   }
   # handle eof after terminal state
   data_ <- data %>%
-    group_by(subject_id) %>%
+    group_by(.data$subject_id) %>%
     filter({
-      idx <- which(state %in% c(model$states[3], model$censored))
+      idx <- which(.data$state %in% c(model$states[3], model$censored))
       if (length(idx) > 0) {
         row_number() <= idx[1]
       } else {

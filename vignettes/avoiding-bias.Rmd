@@ -36,12 +36,13 @@ mdl <- create_srpmodel(
   A = define_srp_prior(
     median_t_q05 = c(1, 4, 12), # shorter time to response than progression
     median_t_q95 = c(6, 8, 36),
-    shape_q05 = c(.99, .99, .99), # fixed shape
-    shape_q95 = c(1, 1, 1),
+    # essentially fixed shape:
+    shape_q05 = c(0.99, 0.99, 0.99),
+    shape_q95 = c(1.00, 1.00, 1.00)
   )
 )
 
-plot(mdl, confidence = .9)
+plot(mdl, confidence = 0.9)
 ```
 
 ```{r}

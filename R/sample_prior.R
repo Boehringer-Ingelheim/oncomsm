@@ -16,7 +16,12 @@ sample_prior <- function(model,
   # just call sample_posterior without data
   res <- sample_posterior(
     model = model,
-    data = NULL,
+    data = tibble::tibble(
+        group_id = character(0L),
+        subject_id = character(0L),
+        t = numeric(0L),
+        state = character(0L)
+      ),
     now = 0,
     nsim = nsim,
     seed = seed,
