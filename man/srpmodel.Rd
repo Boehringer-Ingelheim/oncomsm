@@ -66,7 +66,8 @@ group labels}
 \item{maximal_time}{the maximal overall runtime of the trial as measured from
 the first visit of any group. No visits past this point are sampled.}
 
-\item{states}{character vector of three states (initial, intermediate, terminal)}
+\item{states}{character vector of three states (initial, intermediate,
+terminal)}
 
 \item{censored}{string, indicator of premature censoring events;
 no data is imputed after this point.}
