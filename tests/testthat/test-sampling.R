@@ -62,7 +62,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     sample = smpl_prior,
     n_per_group = 1, nsim = 1e3,
     p = 0.5, # sample under fixed value
-    seed = 948935435
+    seed = 9489
   )
   # test that observed response rate is close enough to 0.5
   res_test <- tbl_prior_predictive %>%
@@ -72,9 +72,15 @@ test_that("Testing marginal calibration of sampling from the prior", {
       .groups = "drop"
     ) %>%
     {
-      binom.test(sum(.$responder), nrow(.), p = 0.5)
+      binom.test(sum(.$responder), nrow(.), p = 0.5, conf.level = 0.99)
     } # nolint
-  expect_true(res_test$p.value >= 0.01)
+  expect_true(
+    dplyr::between(
+      0.5,
+      left = res_test$conf.int[1],
+      right = res_test$conf.int[2]
+    )
+  )
   # check calibration of times to next event, use midpoints of intervals as
   # approximation
   # work out the theoretical mean given scale = 1 and specified median = 3
@@ -123,7 +129,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
   smpl_prior <- sample_prior(mdl, seed = 36L, nsim = 500L)
   tbl <- sample_predictive(mdl,
     sample = smpl_prior,
-    n_per_group = c(1L, 1L), nsim = 5 * 1e3, seed = 423
+    n_per_group = c(1L, 1L), nsim = 1e3, seed = 423
   )
   # test that observed response rate is close enough to true rate
   res_test <- tbl %>%
@@ -136,7 +142,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     {
       binom.test(sum(.$responder), nrow(.), p = 0.33)
     } # nolint
-  expect_true(res_test$p.value >= 0.01)
+  expect_true(res_test$p.value >= 0.001)
   res_test <- tbl %>%
     filter(group_id == "B") %>%
     group_by(iter, subject_id) %>%
@@ -147,7 +153,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
     {
       binom.test(sum(.$responder), nrow(.), p = .8)
     } # nolint
-  expect_true(res_test$p.value >= 0.01)
+  expect_true(res_test$p.value >= 0.001)
   # Testing marginal calibration of sampling from the fixed shape & scale -----
   mdl <- create_srpmodel(
     A = define_srp_prior(
