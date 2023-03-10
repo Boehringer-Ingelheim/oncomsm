@@ -20,7 +20,7 @@
 #'
 #' @examples
 #' mdl <- create_srpmodel(A = define_srp_prior())
-#' plot_pfs(mdl)
+#' plot_pfs(mdl, nsim = 100L) # nsim = 100L for speed on CRAN only
 #'
 #' @export
 plot_pfs <- function(model, # nolint
