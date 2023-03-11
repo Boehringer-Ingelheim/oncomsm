@@ -15,7 +15,7 @@
 #'
 #' @examples
 #' mdl <- create_srpmodel(A = define_srp_prior())
-#' plot(mdl, nsim = 100L) # nsim = 100L for speed on CRAN only
+#' plot(mdl, nsim = 100L, dt_grid = c(1, 6, 12)) # nsim = 100L for speed on CRAN only
 #'
 #' @seealso [plot_pfs()] [plot_transition_times()]
 #' [plot_response_probability()]
