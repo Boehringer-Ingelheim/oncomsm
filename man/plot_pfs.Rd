@@ -57,9 +57,10 @@ a \link[ggplot2:ggplot]{ggplot2::ggplot} object
 \code{plot_pfs()} plots the progression-free-survival function of a model.
 }
 \examples{
+\dontrun{
 mdl <- create_srpmodel(A = define_srp_prior())
 plot_pfs(mdl)
-
+}
 }
 \seealso{
 \code{\link[=plot_transition_times]{plot_transition_times()}} \code{\link[=plot_response_probability]{plot_response_probability()}}

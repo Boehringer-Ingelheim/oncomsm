@@ -57,9 +57,10 @@ A \code{patchwork} object, see \link[patchwork:patchwork-package]{patchwork::pat
 Summary plot of model prior
 }
 \examples{
+\dontrun{
 mdl <- create_srpmodel(A = define_srp_prior())
 plot(mdl)
-
+}
 }
 \seealso{
 \code{\link[=plot_pfs]{plot_pfs()}} \code{\link[=plot_transition_times]{plot_transition_times()}}

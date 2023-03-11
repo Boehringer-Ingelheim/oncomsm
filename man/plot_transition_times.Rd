@@ -58,9 +58,10 @@ a \link[ggplot2:ggplot]{ggplot2::ggplot} object
 times in a multi-state model.
 }
 \examples{
+\dontrun{
 mdl <- create_srpmodel(A = define_srp_prior())
 plot_transition_times(mdl)
-
+}
 }
 \seealso{
 \code{\link[=plot_pfs]{plot_pfs()}} \code{\link[=plot_response_probability]{plot_response_probability()}}
