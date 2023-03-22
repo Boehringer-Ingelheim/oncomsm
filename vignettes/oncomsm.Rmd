@@ -90,7 +90,7 @@ transition rates as special cases but also allows increasing or decreasing
 hazards over time.
 
 Let $T_{S}$ be the transition time from the "stable" state and
-$T_{R}$ the transition tome from the "response" state (also "sojourn" times).
+$T_{R}$ the transition time from the "response" state (also "sojourn" times).
 Let further $R$ be a binary random variable with $R=1$ if a response occurs, 
 then the model can be specified as:
 
@@ -149,7 +149,7 @@ Default parameters assume a timescale in months.
 The following code defined the prior assumptions for a two-group trial with
 a visit-spacing of 1 months.
 The prior variance on the shape parameter is very low.
-For sampling form the prior, this does not not matter and more uncertainty about
+For sampling from the prior, this does not not matter and more uncertainty about
 the Weibull shape parameters can be assumed.
 During posterior inference, identifying shape and scale (median time to event)
 from a small sample of interval censored observations is not feasible and leads

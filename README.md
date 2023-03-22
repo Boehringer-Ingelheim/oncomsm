@@ -7,7 +7,6 @@
 <!-- badges: end -->
 
 
-
 # Bayesian multi-state models for early oncology
 
 The R package **oncomsm** implements methods to dynamically predict response 
