@@ -18,6 +18,7 @@
 #' @import purrr
 #' @import RcppNumerical
 #' @importFrom rstan sampling
+#' @importFrom rstantools rstan_config
 #' @importFrom rlang .data
 #'
 #' @references
