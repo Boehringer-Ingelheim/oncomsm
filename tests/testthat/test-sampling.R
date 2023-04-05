@@ -217,7 +217,7 @@ test_that("Testing marginal calibration of sampling from the prior", {
   }
   # test over a grid of shape/scale combinations
   for (scale_factor in c(1, 3)) {
-    for (shape in c(1, 5)) {
+    for (shape in c(0.5, 1, 5)) {
       test_calibration(scale_factor, shape)
     }
   }
