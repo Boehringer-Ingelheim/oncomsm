@@ -110,8 +110,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-b4fa4ef648e06dd4c4f7" style="width:672px;height:200px;" class="DiagrammeR html-widget "></div>
-<script type="application/json" data-for="htmlwidget-b4fa4ef648e06dd4c4f7">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-4f2223e18ff080d75178" style="width:672px;height:200px;" class="DiagrammeR html-widget "></div>
+<script type="application/json" data-for="htmlwidget-4f2223e18ff080d75178">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -274,35 +274,35 @@ re-use the sample prior sample already used for plotting.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tbl_prior_predictive</span>, n <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 58,226 × 5</span></span></span>
-<span><span class="co">#&gt;    subject_id group_id     t state     iter</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00010865 B         11.2 stable       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B         12.2 stable       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00010865 B         13.2 stable       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00010865 B         14.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00010865 B         15.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00010865 B         16.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00010865 B         17.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00010865 B         18.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID00010865 B         19.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID00010865 B         20.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> ID00010865 B         21.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> ID00010865 B         22.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> ID00010865 B         23.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> ID00010865 B         24.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> ID00010865 B         25.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> ID00010865 B         26.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> ID00010865 B         27.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> ID00010865 B         28.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> ID00010865 B         29.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> ID00010865 B         30.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> ID00010865 B         31.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> ID00010865 B         32.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> ID00010865 B         33.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> ID00010865 B         34.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> ID00010865 B         35.2 response     1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 58,201 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 58,525 × 5</span></span></span>
+<span><span class="co">#&gt;    subject_id group_id     t state        iter</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00010865 B         11.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B         12.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00010865 B         13.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00010865 B         14.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00010865 B         15.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00010865 B         16.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00010865 B         17.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00010865 B         18.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID00010865 B         19.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID00010865 B         20.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> ID00010865 B         21.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> ID00010865 B         22.2 progression     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> ID00019694 B         18.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> ID00019694 B         19.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> ID00019694 B         20.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> ID00019694 B         21.2 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> ID00019694 B         22.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> ID00019694 B         23.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> ID00019694 B         24.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> ID00019694 B         25.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> ID00019694 B         26.2 response        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> ID00019694 B         27.2 progression     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> ID00294641 B         23.8 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> ID00294641 B         24.8 stable          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> ID00294641 B         25.8 progression     1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 58,500 more rows</span></span></span></code></pre></div>
 <p>We can then run some quick checks on the sampled data, e.g., the
 observed response rates.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -320,8 +320,8 @@ observed response rates.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id p_response      se</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.377 0.008<span style="text-decoration: underline;">85</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.513 0.009<span style="text-decoration: underline;">13</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.365 0.008<span style="text-decoration: underline;">79</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.508 0.009<span style="text-decoration: underline;">13</span></span></span></code></pre></div>
 <p>A crude approximation of the median transition times can be compared
 with the prior means.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -353,7 +353,7 @@ with the prior means.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        response progression                        6</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> A        stable   progression                        2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> A        stable   response                           3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> B        response progression                        6</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> B        response progression                        7</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> B        stable   progression                        7</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> B        stable   response                           2</span></span></code></pre></div>
 <p>By default, the prior predictive distribution is given in terms of
@@ -365,20 +365,20 @@ multi-state representation, (here only first sampled trial).</p>
 <span>  <span class="fu"><a href="../reference/visits_to_mstate.html">visits_to_mstate</a></span><span class="op">(</span><span class="va">mdl</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl_mstate</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 83 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 89 × 7</span></span></span>
 <span><span class="co">#&gt;    subject_id group_id from     to          t_min t_max t_sot</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ID00010865 B        stable   response    13.2  14.2  11.2 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B        response progression 43.2  44.2  11.2 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00019694 B        stable   progression 29.2  30.2  18.2 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00294641 B        stable   progression 29.8  30.8  23.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00559801 B        stable   response    22.9  23.9  22.9 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00559801 B        response progression 34.9  35.9  22.9 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00827488 A        stable   response    11.2  12.2   7.19</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00827488 A        response progression 14.2  15.2   7.19</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID01007254 A        stable   progression 25.4  26.4  23.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ID00010865 B        response progression 21.2  22.2  11.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ID00019694 B        stable   response    21.2  22.2  18.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ID00019694 B        response progression 26.2  27.2  18.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ID00294641 B        stable   progression 24.8  25.8  23.8 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ID00559801 B        stable   response    26.9  27.9  22.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ID00559801 B        response progression 36.9  37.9  22.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ID00827488 A        stable   progression  7.19  8.19  7.19</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ID01007254 A        stable   progression 24.4  25.4  23.4 </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ID01039842 A        stable   progression  1.45  2.45  1.45</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 73 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 79 more rows</span></span></span></code></pre></div>
 <p>The multi-state data can be visualized in swimmer plots.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_mstate.html">plot_mstate</a></span><span class="op">(</span><span class="va">tbl_mstate</span>, <span class="va">mdl</span><span class="op">)</span></span></code></pre></div>
@@ -410,8 +410,8 @@ fixed values of <span class="math inline">\(0.1\)</span> and <span class="math i
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id p_response      se</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.106 0.005<span style="text-decoration: underline;">61</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.809 0.007<span style="text-decoration: underline;">17</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A             0.109 0.005<span style="text-decoration: underline;">70</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B             0.790 0.007<span style="text-decoration: underline;">43</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="a-hypothetical-interim-analysis">A hypothetical interim analysis<a class="anchor" aria-label="anchor" href="#a-hypothetical-interim-analysis"></a>
@@ -456,8 +456,8 @@ the interim time point, the response rate estimate is biased.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id p_response    se</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A               0     0  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B               0.9   0.1</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A               0   0    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B               0.7 0.153</span></span></code></pre></div>
 <p>Instead, one can now do inference by drawing sample from the
 posterior distribution this will account for censoring. Since the data
 conflicts with the prior, the posterior mass will move in the direction
@@ -481,8 +481,8 @@ of the observed response rates.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
 <span><span class="co">#&gt;   group_id p_posterior_mean   q25   q75</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                   0.307 0.223 0.399</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                   0.762 0.689 0.823</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                   0.293 0.212 0.384</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                   0.678 0.602 0.747</span></span></code></pre></div>
 <p>Alternatively, the analysis could also be run using the default
 weakly-informative prior. For details on the prior choice, see the
 corresponding vignette.</p>
@@ -509,8 +509,8 @@ corresponding vignette.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
 <span><span class="co">#&gt;   group_id p_posterior_mean   q25   q75</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                   0.270 0.154 0.387</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                   0.831 0.744 0.893</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                   0.221 0.126 0.357</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                   0.726 0.630 0.815</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
@@ -535,36 +535,37 @@ corresponding vignette.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_3.4.1      dplyr_1.1.0        oncomsm_0.1.4.9000</span></span>
+<span><span class="co">#&gt; [1] ggplot2_3.4.2      dplyr_1.1.1        oncomsm_0.1.4.9000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] Rcpp_1.0.10          tidyr_1.3.0          listenv_0.9.0       </span></span>
-<span><span class="co">#&gt;  [4] visNetwork_2.1.2     prettyunits_1.1.1    ps_1.7.3            </span></span>
+<span><span class="co">#&gt;  [4] visNetwork_2.1.2     prettyunits_1.1.1    ps_1.7.4            </span></span>
 <span><span class="co">#&gt;  [7] rprojroot_2.0.3      digest_0.6.31        utf8_1.2.3          </span></span>
-<span><span class="co">#&gt; [10] parallelly_1.34.0    R6_2.5.1             backports_1.4.1     </span></span>
+<span><span class="co">#&gt; [10] parallelly_1.35.0    R6_2.5.1             backports_1.4.1     </span></span>
 <span><span class="co">#&gt; [13] stats4_4.2.3         evaluate_0.20        highr_0.10          </span></span>
-<span><span class="co">#&gt; [16] pillar_1.8.1         rlang_1.1.0          furrr_0.3.1         </span></span>
+<span><span class="co">#&gt; [16] pillar_1.9.0         rlang_1.1.0          furrr_0.3.1         </span></span>
 <span><span class="co">#&gt; [19] callr_3.7.3          jquerylib_0.1.4      checkmate_2.1.0     </span></span>
-<span><span class="co">#&gt; [22] DiagrammeR_1.0.9     rmarkdown_2.20       pkgdown_2.0.7       </span></span>
+<span><span class="co">#&gt; [22] DiagrammeR_1.0.9     rmarkdown_2.21       pkgdown_2.0.7       </span></span>
 <span><span class="co">#&gt; [25] labeling_0.4.2       textshaping_0.3.6    desc_1.4.2          </span></span>
-<span><span class="co">#&gt; [28] stringr_1.5.0        htmlwidgets_1.6.2    loo_2.5.1           </span></span>
-<span><span class="co">#&gt; [31] munsell_0.5.0        compiler_4.2.3       xfun_0.37           </span></span>
+<span><span class="co">#&gt; [28] stringr_1.5.0        htmlwidgets_1.6.2    loo_2.6.0           </span></span>
+<span><span class="co">#&gt; [31] munsell_0.5.0        compiler_4.2.3       xfun_0.38           </span></span>
 <span><span class="co">#&gt; [34] rstan_2.21.8         pkgconfig_2.0.3      systemfonts_1.0.4   </span></span>
-<span><span class="co">#&gt; [37] pkgbuild_1.4.0       globals_0.16.2       htmltools_0.5.4     </span></span>
-<span><span class="co">#&gt; [40] tidyselect_1.2.0     tibble_3.2.1         gridExtra_2.3       </span></span>
-<span><span class="co">#&gt; [43] codetools_0.2-19     matrixStats_0.63.0   fansi_1.0.4         </span></span>
-<span><span class="co">#&gt; [46] future_1.32.0        withr_2.5.0          crayon_1.5.2        </span></span>
-<span><span class="co">#&gt; [49] grid_4.2.3           jsonlite_1.8.4       gtable_0.3.3        </span></span>
-<span><span class="co">#&gt; [52] lifecycle_1.0.3      magrittr_2.0.3       StanHeaders_2.21.0-7</span></span>
-<span><span class="co">#&gt; [55] scales_1.2.1         RcppParallel_5.1.7   cli_3.6.0           </span></span>
-<span><span class="co">#&gt; [58] stringi_1.7.12       cachem_1.0.7         farver_2.1.1        </span></span>
-<span><span class="co">#&gt; [61] fs_1.6.1             bslib_0.4.2          ellipsis_0.3.2      </span></span>
-<span><span class="co">#&gt; [64] ragg_1.2.5           generics_0.1.3       vctrs_0.6.0         </span></span>
-<span><span class="co">#&gt; [67] RColorBrewer_1.1-3   tools_4.2.3          glue_1.6.2          </span></span>
-<span><span class="co">#&gt; [70] purrr_1.0.1          processx_3.8.0       parallel_4.2.3      </span></span>
-<span><span class="co">#&gt; [73] fastmap_1.1.1        yaml_2.3.7           RcppNumerical_0.5-0 </span></span>
-<span><span class="co">#&gt; [76] inline_0.3.19        colorspace_2.1-0     memoise_2.0.1       </span></span>
-<span><span class="co">#&gt; [79] knitr_1.42           patchwork_1.1.2      sass_0.4.5</span></span></code></pre></div>
+<span><span class="co">#&gt; [37] pkgbuild_1.4.0       rstantools_2.3.1     globals_0.16.2      </span></span>
+<span><span class="co">#&gt; [40] htmltools_0.5.5      tidyselect_1.2.0     tibble_3.2.1        </span></span>
+<span><span class="co">#&gt; [43] gridExtra_2.3        codetools_0.2-19     matrixStats_0.63.0  </span></span>
+<span><span class="co">#&gt; [46] fansi_1.0.4          future_1.32.0        withr_2.5.0         </span></span>
+<span><span class="co">#&gt; [49] crayon_1.5.2         grid_4.2.3           jsonlite_1.8.4      </span></span>
+<span><span class="co">#&gt; [52] gtable_0.3.3         lifecycle_1.0.3      magrittr_2.0.3      </span></span>
+<span><span class="co">#&gt; [55] StanHeaders_2.21.0-7 scales_1.2.1         RcppParallel_5.1.7  </span></span>
+<span><span class="co">#&gt; [58] cli_3.6.1            stringi_1.7.12       cachem_1.0.7        </span></span>
+<span><span class="co">#&gt; [61] farver_2.1.1         fs_1.6.1             bslib_0.4.2         </span></span>
+<span><span class="co">#&gt; [64] ellipsis_0.3.2       ragg_1.2.5           generics_0.1.3      </span></span>
+<span><span class="co">#&gt; [67] vctrs_0.6.1          RColorBrewer_1.1-3   tools_4.2.3         </span></span>
+<span><span class="co">#&gt; [70] glue_1.6.2           purrr_1.0.1          processx_3.8.0      </span></span>
+<span><span class="co">#&gt; [73] parallel_4.2.3       fastmap_1.1.1        yaml_2.3.7          </span></span>
+<span><span class="co">#&gt; [76] RcppNumerical_0.5-0  inline_0.3.19        colorspace_2.1-0    </span></span>
+<span><span class="co">#&gt; [79] memoise_2.0.1        knitr_1.42           patchwork_1.1.2     </span></span>
+<span><span class="co">#&gt; [82] sass_0.4.5</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-aubel_bayesian_2021" class="csl-entry">
 Aubel, Paul, Marine Antigny, Ronan Fougeray, Frédéric Dubois, and Gaëlle

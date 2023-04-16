@@ -192,9 +192,9 @@ sets.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
 <span><span class="co">#&gt;   group_id `Pr[go] planning`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.248</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.66 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.876</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.312</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.716</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.884</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="update-probability-of-go">Update probability of ‘go’<a class="anchor" aria-label="anchor" href="#update-probability-of-go"></a>
@@ -243,9 +243,9 @@ extreme for both group A and group B.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id prior posterior</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.302     0.390</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.401     0.378</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.499     0.400</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A        0.302     0.391</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B        0.399     0.377</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C        0.500     0.401</span></span></code></pre></div>
 <p>The probability of ‘go’ is then updated by sampling forward from the
 posterior predictive.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -270,9 +270,9 @@ posterior predictive.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;   group_id `Pr[go] planning` `Pr[go] interim`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.248            0.584</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.66             0.616</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.876            0.504</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A                    0.312            0.644</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> B                    0.716            0.64 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> C                    0.884            0.54</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
