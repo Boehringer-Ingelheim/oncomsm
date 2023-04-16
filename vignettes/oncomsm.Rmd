@@ -398,7 +398,7 @@ mdl2 <- create_srpmodel(
 )
 smpl_posterior2 <- sample_posterior(mdl2, tbl_data_interim, seed = 43L)
 # plot under posterior
-# plot(mdl2, parameter_sample = smpl_posterior2, confidence = 0.9)
+plot(mdl2, parameter_sample = smpl_posterior2, confidence = 0.9)
 # calculate posterior quantiles of response probability
 smpl_posterior2 %>%
   parameter_sample_to_tibble(mdl2, .) %>%
