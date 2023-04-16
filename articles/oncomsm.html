@@ -110,8 +110,8 @@ simple binary analysis is biased.</p>
 response model to a three-state model for “stable”, “response”, and
 “progression or death”. The respective transition numbers are given in
 the graph below.</p>
-<div id="htmlwidget-4f2223e18ff080d75178" style="width:672px;height:200px;" class="DiagrammeR html-widget "></div>
-<script type="application/json" data-for="htmlwidget-4f2223e18ff080d75178">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
+<div id="htmlwidget-b94bb903c0703c4f6bab" style="width:672px;height:200px;" class="DiagrammeR html-widget "></div>
+<script type="application/json" data-for="htmlwidget-b94bb903c0703c4f6bab">{"x":{"diagram":"\ngraph LR\n  stable -- 1 --> response\n  response -- 3 --> progression[progression or death]\n  stable -- 2 --> progression[progression or death]\n"},"evals":[],"jsHooks":[]}</script><p>Often, a hazard-based approach is used to model multi-state data.
 However, a hazard-based approach has several disadvantages:</p>
 <ol style="list-style-type: decimal">
 <li><p>The hazard scale is difficult to interpret since it is a
@@ -255,7 +255,7 @@ event.</p>
 <code class="sourceCode R"><span><span class="va">smpl_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_prior</a></span><span class="op">(</span><span class="va">mdl</span>, seed <span class="op">=</span> <span class="fl">36L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># plot(mdl) also works but need to resample prior further below</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_prior</span>, confidence <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_prior</span>, confidence <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></code></pre></div>
 <p><img src="oncomsm_files/figure-html/plotting-the-prior-1.png" width="672" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
@@ -465,7 +465,7 @@ of the observed response rates.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">smpl_posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span><span class="va">mdl</span>, <span class="va">tbl_data_interim</span>, seed <span class="op">=</span> <span class="fl">43L</span><span class="op">)</span></span>
 <span><span class="co"># plot under posterior</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_posterior</span>, confidence <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_posterior</span>, confidence <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></code></pre></div>
 <p><img src="oncomsm_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># calculate posterior quantiles of response probability</span></span>
@@ -493,7 +493,7 @@ corresponding vignette.</p>
 <span><span class="op">)</span></span>
 <span><span class="va">smpl_posterior2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_posterior.html">sample_posterior</a></span><span class="op">(</span><span class="va">mdl2</span>, <span class="va">tbl_data_interim</span>, seed <span class="op">=</span> <span class="fl">43L</span><span class="op">)</span></span>
 <span><span class="co"># plot under posterior</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl2</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_posterior2</span>, confidence <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mdl2</span>, parameter_sample <span class="op">=</span> <span class="va">smpl_posterior2</span>, confidence <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></code></pre></div>
 <p><img src="oncomsm_files/figure-html/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># calculate posterior quantiles of response probability</span></span>
