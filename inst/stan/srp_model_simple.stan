@@ -3,17 +3,19 @@
 functions {
 
   real beta_mix_trunc_lpdf(real p, real mean, real n, real eta, real lower, real upper) {
-    real eps = 1e-6;
+    real log_eps = log(1e-6);
     real a = mean * n;
     real b = (1 - mean) * n;
+    real log1m_eta = log1m(eta);
+    real log_eta = log(eta);
     // normalizing factor (CDF upper - lower)
-    real norm = (1 - eta) * (beta_cdf(upper, a, b) - beta_cdf(lower, a, b)) +
-      eta * (upper - lower);
-    real pdf = ((1 - eta) * exp(beta_lpdf(p | a, b)) + eta) / norm;
+    real norm = log_sum_exp(log1m_eta + log_diff_exp(beta_lcdf(upper | a, b), beta_lcdf(lower | a, b)),
+                            log_eta + log(upper - lower));
+    real lpdf = log_sum_exp(log1m_eta + beta_lpdf(p | a, b), log_eta) - norm;
     if (p < lower || p > upper) {
       reject(p);
     }
-    return log(pdf + eps);
+    return log_sum_exp(lpdf, log_eps);
   }
 
 }
