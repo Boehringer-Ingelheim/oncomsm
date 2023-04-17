@@ -1,7 +1,10 @@
-# oncomsm 0.1.4
+# oncomsm 0.1.5
 
 * ...
 
+# oncomsm 0.1.4
+
+* numerical stability
 
 # oncomsm 0.1.3
 
