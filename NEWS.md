@@ -4,7 +4,7 @@
 
 # oncomsm 0.1.4
 
-* numerical stability
+* improved numerical stability (thanks to Andrew Johnson)
 
 # oncomsm 0.1.3
 
