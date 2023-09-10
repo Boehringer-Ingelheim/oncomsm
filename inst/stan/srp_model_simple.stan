@@ -133,8 +133,10 @@ model {
         // here we need to use the mixture distribution since the next state
         // is unknown
         target += log_sum_exp(
-          log_mix(p[g], log1m_exp(weibull_lcdf(t_min[i]+ eps | shape[g, 1], scale[g, 1])),
-                  log1m_exp(weibull_lcdf(t_min[i]+ eps | shape[g, 2], scale[g, 2]))),
+          log_sum_exp(
+            log(p[g]) + log1m_exp(weibull_lcdf(t_min[i]+ eps | shape[g, 1], scale[g, 1])),
+            log1m(p[g]) + log1m_exp(weibull_lcdf(t_min[i]+ eps | shape[g, 2], scale[g, 2]))
+          ),
           log_eps
         );
       }
